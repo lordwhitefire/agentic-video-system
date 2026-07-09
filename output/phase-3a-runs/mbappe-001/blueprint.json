@@ -1,0 +1,305 @@
+{
+  "reference_metadata": {
+    "duration": 862.83,
+    "duration_formatted": "14:23",
+    "form": "long",
+    "genre": "commentary",
+    "subgenre": "analytical_essay",
+    "source_path": "test-reference1.mp4 + test-reference2.mp4 (reassembled)",
+    "resolution": "854x480",
+    "fps": 25,
+    "video_codec": "h264",
+    "audio_codec": "aac"
+  },
+  "structure": [
+    {
+      "segment_id": "seg_01",
+      "label": "cold_open",
+      "start": 0.0,
+      "end": 8.04,
+      "duration": 8.04,
+      "purpose": "Pattern interrupt — PSG built around Mbappé for 7 years, never won UCL. The season he left, they won it."
+    },
+    {
+      "segment_id": "seg_02",
+      "label": "hook",
+      "start": 8.04,
+      "end": 60.08,
+      "duration": 52.04,
+      "purpose": "Establish the thesis — Mbappé signed for Madrid, same pattern repeated. 'Same player, same result.' Tease the breakdown."
+    },
+    {
+      "segment_id": "seg_03",
+      "label": "thesis_statement",
+      "start": 60.08,
+      "end": 74.08,
+      "duration": 14.0,
+      "purpose": "Explicit thesis — 'we're breaking down exactly why Real Madrid got worse after signing Mbappe, and it goes deeper than tactics.'"
+    },
+    {
+      "segment_id": "seg_04",
+      "label": "act_1_what_was_there",
+      "start": 74.08,
+      "end": 180.32,
+      "duration": 106.24,
+      "purpose": "Context — 2023-24 Real Madrid system. Collective pressing, fast transitions, Kroos as the structure. His retirement = the defining decision."
+    },
+    {
+      "segment_id": "seg_05",
+      "label": "act_2_the_wrong_signing",
+      "start": 180.32,
+      "end": 340.68,
+      "duration": 160.36,
+      "purpose": "The mistake — Board bought Mbappé instead of a holding midfielder. Left-wing collision with Vinícius Jr. Bellingham became a utility piece."
+    },
+    {
+      "segment_id": "seg_06",
+      "label": "act_3_defensive_collapse",
+      "start": 340.68,
+      "end": 474.44,
+      "duration": 133.76,
+      "purpose": "Evidence — Pressing efficiency dropped, defensive numbers collapsed. Win % without Mbappé was 80%. The tactical issues are symptoms, not the disease."
+    },
+    {
+      "segment_id": "seg_07",
+      "label": "act_4_manager_cycle",
+      "start": 474.44,
+      "end": 640.72,
+      "duration": 166.28,
+      "purpose": "Pattern — Xabi Alonso fired mid-season. PSG pattern: Tuchel → Pochettino → Galtier. Ancelotti's harmony broken. 'No tactical setup fixes it.'"
+    },
+    {
+      "segment_id": "seg_08",
+      "label": "act_5_leadership_vacuum",
+      "start": 640.72,
+      "end": 720.0,
+      "duration": 79.28,
+      "purpose": "Off-pitch cost — Kroos/Modric leadership gone. Guard of honor incident. Mbappé refused, teammates followed. Power structure shifted."
+    },
+    {
+      "segment_id": "seg_09",
+      "label": "act_6_the_cost",
+      "start": 720.0,
+      "end": 812.44,
+      "duration": 92.44,
+      "purpose": "Evidence — Makelele comparison (Bentley vs engine). PSG won UCL without Mbappé, Dembelé won Ballon d'Or. 'Enrique didn't bend, and Enrique won everything.'"
+    },
+    {
+      "segment_id": "seg_10",
+      "label": "conclusion",
+      "start": 812.44,
+      "end": 862.83,
+      "duration": 50.39,
+      "purpose": "Closing — 'The data doesn't lie, it just takes time before enough people are willing to read it honestly.' PSG won UCL the year he left, Madrid matched worst defensive record the year he arrived."
+    }
+  ],
+  "cut_rhythm": {
+    "avg_shot_length": 2.95,
+    "min_shot_length": 0.6,
+    "max_shot_length": 31.48,
+    "total_shots": 292,
+    "distribution": "Skewed toward short shots. 292 scenes over 862s = very fast cutting for long-form. Typical long-form is 4-6s avg; this is 2.95s — closer to short-form rhythm applied to long-form duration.",
+    "pacing_curve": [
+      {
+        "window": "0-60s",
+        "avg_shot": 2.6,
+        "shots": 24,
+        "phase": "cold_open+hook"
+      },
+      {
+        "window": "60-120s",
+        "avg_shot": 2.62,
+        "shots": 22,
+        "phase": "thesis+act_1_start"
+      },
+      {
+        "window": "120-180s",
+        "avg_shot": 4.46,
+        "shots": 15,
+        "phase": "act_1_kroos_analysis (slower — extended B-roll)"
+      },
+      {
+        "window": "180-240s",
+        "avg_shot": 3.05,
+        "shots": 18,
+        "phase": "act_2_wrong_signing"
+      },
+      {
+        "window": "240-300s",
+        "avg_shot": 2.52,
+        "shots": 24,
+        "phase": "act_2_left_wing_collision (fast cutting)"
+      },
+      {
+        "window": "300-360s",
+        "avg_shot": 3.09,
+        "shots": 23,
+        "phase": "act_3_defensive_stats"
+      },
+      {
+        "window": "360-420s",
+        "avg_shot": 3.39,
+        "shots": 14,
+        "phase": "act_3_extended_analysis (slower)"
+      },
+      {
+        "window": "420-480s",
+        "avg_shot": 2.66,
+        "shots": 23,
+        "phase": "act_3_to_act_4_transition"
+      },
+      {
+        "window": "480-540s",
+        "avg_shot": 2.96,
+        "shots": 20,
+        "phase": "act_4_alonso_fired"
+      },
+      {
+        "window": "540-600s",
+        "avg_shot": 2.92,
+        "shots": 21,
+        "phase": "act_4_psg_pattern"
+      },
+      {
+        "window": "600-660s",
+        "avg_shot": 2.75,
+        "shots": 23,
+        "phase": "act_4_ancelotti"
+      },
+      {
+        "window": "660-720s",
+        "avg_shot": 2.89,
+        "shots": 19,
+        "phase": "act_5_leadership"
+      },
+      {
+        "window": "720-780s",
+        "avg_shot": 3.23,
+        "shots": 19,
+        "phase": "act_6_makelele"
+      },
+      {
+        "window": "780-840s",
+        "avg_shot": 3.69,
+        "shots": 16,
+        "phase": "act_6_psg_evidence (slower — emotional weight)"
+      },
+      {
+        "window": "840-900s",
+        "avg_shot": 1.92,
+        "shots": 11,
+        "phase": "conclusion (fastest cutting — punchy closing)"
+      }
+    ],
+    "pacing_notes": "Pacing accelerates at the end (1.92s avg in final window). Slowest sections are extended B-roll analysis (Kroos at 120-180s, PSG evidence at 780-840s). Overall very fast for long-form — this is a high-energy commentary style."
+  },
+  "transcript": {
+    "segment_count": 170,
+    "word_count": 1911,
+    "language": "en",
+    "language_probability": 1.0,
+    "speaker_count": 1,
+    "speaker_style": "single commentator, analytical tone, uses direct quotes from pundits (Thierry Henry, Zinedine Zidane)",
+    "transcript_path": "output/phase-3a-runs/mbappe-001/perception/transcript/transcript.json",
+    "key_quotes": [
+      "PSG spent seven years building their entire club around Kylian Mbappe and never won the Champions League.",
+      "Same player, same result.",
+      "We're breaking down exactly why Real Madrid got worse after signing Mbappe, and it goes a lot deeper than tactics.",
+      "He didn't just hold the structure together, he was the structure. (about Kroos)",
+      "Instead, the board spent on Mbappe.",
+      "That isn't a partnership, that's two players running parallel careers on the same team.",
+      "The tactical issues were real, measurable, and consistent, but they were symptoms, not the disease.",
+      "The manager is not the authority here, the star is untouchable, and once that message lands, no tactical setup in the world fixes it.",
+      "Why put another layer of paint on a Bentley when you're losing the entire engine of this whole project? (Zidane on Makelele)",
+      "The data doesn't lie, it just takes time, before enough people are willing to read it honestly."
+    ]
+  },
+  "audio": {
+    "music": {
+      "identified": false,
+      "track_name": null,
+      "ducking_pattern": "Likely present — standard for commentary videos. Voice prominent, music bed underneath with volume reduction during speech. Cannot confirm from waveform/spectrogram visualizations alone (downsampled).",
+      "presence": "Likely continuous background music bed throughout. Spectrogram shows sustained low-frequency content consistent with music."
+    },
+    "sfx": [],
+    "layer_count": 2,
+    "layer_description": "Voice commentary (primary) + background music bed (secondary). No evidence of SFX layer in the frames examined. Pundit quotes appear to be played as audio clips within the commentary, not as separate audio layers.",
+    "analysis_confidence": "Medium — transcript confirms voice. Spectrogram suggests music. Exact ducking pattern and music identification would require audio listening (beyond visual analysis)."
+  },
+  "captions": {
+    "style": "Minimal on-screen captions. This is long-form commentary — no kinetic word-by-word captions.",
+    "cadence": "Sustained graphic overlays rather than animated text. On-screen graphics appear at key moments (UEFA arch, roster board, stat displays, quote cards).",
+    "position": "Varies — full-screen graphics (UEFA arch), lower-third style (roster board), centered (quote cards).",
+    "font": "Bold white text on colored backgrounds (blue, orange, dark). Sans-serif. No handwritten or decorative fonts observed.",
+    "on_screen_graphics": [
+      {
+        "timestamp": 30.0,
+        "type": "full_screen_graphic",
+        "description": "UEFA Champions League winners arch — Real Madrid celebration with 'WINNERS UEFA CHAMPIONS LEAGUE FINAL 2024' text"
+      },
+      {
+        "timestamp": 300.0,
+        "type": "studio_graphic",
+        "description": "Real Madrid roster decisions board — categorized lists (LOCKS, KEEP, etc.) with bold white text on orange"
+      },
+      {
+        "timestamp": 600.0,
+        "type": "quote_display",
+        "description": "Dark grid background with white text and glowing particles — 'AT MADRID, THE P...' (likely 'AT MADRID, THE PATTERN REPEATED')"
+      }
+    ]
+  },
+  "effects": [
+    {
+      "timestamp": 600.0,
+      "observed": "Dark grid background with white text and small glowing particles. Appears to be a graphic template for quote/statistic display, not a video effect on footage.",
+      "user_described": null,
+      "status": "identified",
+      "category": "graphic_template"
+    }
+  ],
+  "effects_notes": "No complex layered video effects detected in the frames examined. The video's visual interest comes from B-roll selection, cutting rhythm, and graphic overlays — not pixel-level effects. This is typical for analytical commentary videos. Individual effects on B-roll clips (zoom, slow-mo, highlight circles) may exist but are not visible from static frame extraction at 30s intervals. Law 1 note: if the Editor encounters a specific effect it cannot identify during execution, it will flag for user description.",
+  "transitions": [
+    {
+      "type": "cut",
+      "frequency": "dominant",
+      "description": "Hard cuts — 292 scenes over 862s. This is the primary transition style."
+    },
+    {
+      "type": "crossfade",
+      "frequency": "not_observed",
+      "description": "No crossfades detected in the frames examined."
+    },
+    {
+      "type": "whip",
+      "frequency": "not_observed",
+      "description": "No whip pans detected."
+    },
+    {
+      "type": "custom",
+      "frequency": "not_observed",
+      "description": "No custom transitions detected."
+    }
+  ],
+  "transitions_notes": "The cutting is so fast (avg 2.95s) that transitions are unnecessary — the cuts themselves are the rhythm. This is a high-energy editing style where the B-roll changes rapidly to match the commentary pace.",
+  "visual_vocabulary": {
+    "b_roll_types": [
+      "Match footage (player close-ups, celebrations, tactical moments)",
+      "Studio/pundit clips (hosts with graphics behind them)",
+      "Archive footage (PSG era, Real Madrid era)",
+      "Crowd/stadium shots (blurred backgrounds, atmosphere)"
+    ],
+    "graphic_templates": [
+      "UEFA Champions League winners arch (full-screen, blue background, white text)",
+      "Roster decisions board (studio, orange background, categorized lists)",
+      "Dark grid quote/stat display (black background, white text, glowing particles)"
+    ],
+    "color_grade": "Varies by content type — warm/saturated for B-roll, bright/professional for studio, dark/desaturated for stat displays. No unified LUT — grade adapts to source material.",
+    "text_style": "Bold white sans-serif on colored backgrounds. No handwritten or decorative fonts. Minimal — graphics are informational, not decorative.",
+    "on_screen_text_frequency": "Low to medium. Most of the video is B-roll with voice-over. Graphics appear at key structural moments (intro, stat reveals, quotes)."
+  },
+  "open_flags": [],
+  "flags_resolved": 0,
+  "flags_unresolved": 0,
+  "analyzer_notes": "Blueprint synthesized from: (1) faster-whisper small transcript (170 segments), (2) PySceneDetect scene detection (292 scenes), (3) VLM vision reads on 6 strategic frames, (4) VLM analysis of waveform + spectrogram. Audio analysis confidence is medium — exact music identification and ducking patterns would require audio listening. No inference_risk flags raised — all observed elements could be concretely identified from perception data. The reference video is a standard long-form analytical commentary with fast cutting, B-roll-heavy visual style, and minimal effects. The structure follows a clear 10-segment arc from cold open to conclusion."
+}
