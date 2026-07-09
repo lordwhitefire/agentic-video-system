@@ -1,0 +1,63 @@
+{
+  "_comment": "Voice profile config for the Agentic Video Editing System. The TTS agent reads this file at the start of every TTS run. Edit manually only to change default engine or fallback chain — most fields are managed automatically by the TTS agent.",
+
+  "default_engine": "coqui_xtts_v2",
+
+  "clone_ids": {
+    "coqui_xtts_v2": null,
+    "fish_speech": null,
+    "style_tts_2": null,
+    "piper": null,
+    "elevenlabs": null
+  },
+
+  "fallback_chain": ["coqui_xtts_v2"],
+
+  "voice_switching_policy": "explicit_user_approval_required",
+
+  "voice_sample_path": null,
+
+  "commercial_use": false,
+
+  "language_default": "en-US",
+
+  "loudness_target_lufs": -16,
+
+  "engines": {
+    "coqui_xtts_v2": {
+      "role": "primary_testing",
+      "license": "CPML (non-commercial)",
+      "hardware": "GPU",
+      "voice_cloning": true,
+      "notes": "Battle-tested. Default during testing. Must be replaced before monetization."
+    },
+    "fish_speech": {
+      "role": "license_upgrade_pre_monetization",
+      "license": "MIT-ish",
+      "hardware": "GPU",
+      "voice_cloning": true,
+      "notes": "Cleaner license than Coqui. Switch before monetizing if not ready to pay for ElevenLabs."
+    },
+    "style_tts_2": {
+      "role": "quality_option",
+      "license": "MIT",
+      "hardware": "GPU",
+      "voice_cloning": true,
+      "notes": "Best open-source quality. Harder setup. Voice transfer mechanism differs from Coqui/Fish."
+    },
+    "piper": {
+      "role": "cpu_fallback",
+      "license": "MIT",
+      "hardware": "CPU",
+      "voice_cloning": false,
+      "notes": "NO voice cloning. Switching to Piper changes the voice from your clone to a stock Piper voice. Forbidden silently under Law 1 — must be explicitly authorized by user, and user must accept the voice change."
+    },
+    "elevenlabs": {
+      "role": "monetization_upgrade",
+      "license": "commercial (paid)",
+      "hardware": "API",
+      "voice_cloning": true,
+      "notes": "Best-in-market voice cloning. API-based. Used when monetizing and willing to pay."
+    }
+  }
+}
