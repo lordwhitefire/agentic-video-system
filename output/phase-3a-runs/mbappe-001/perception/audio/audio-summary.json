@@ -1,0 +1,6 @@
+{
+  "audio_path": "output/phase-3a-runs/mbappe-001/perception/audio/full-audio.wav",
+  "waveform_png": "output/phase-3a-runs/mbappe-001/perception/audio/waveform.png",
+  "spectrogram_png": "output/phase-3a-runs/mbappe-001/perception/audio/spectrogram.png",
+  "size_mb": 152.2
+}

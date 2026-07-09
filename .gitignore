@@ -1,0 +1,3 @@
+
+# Phase 3a — raw audio WAVs are too large for GitHub, exclude them
+output/phase-3a-runs/*/perception/audio/full-audio.wav

@@ -1,0 +1,1927 @@
+{
+  "video_path": "/tmp/test-reference-full.mp4",
+  "total_frames": 320,
+  "extraction_strategy": "shot_boundaries + 30s intervals",
+  "frames": [
+    {
+      "index": 0,
+      "timestamp": 0.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0000_0.00s.jpg",
+      "size_kb": 28.5
+    },
+    {
+      "index": 1,
+      "timestamp": 2.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0001_2.04s.jpg",
+      "size_kb": 74.8
+    },
+    {
+      "index": 2,
+      "timestamp": 3.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0002_3.28s.jpg",
+      "size_kb": 94.5
+    },
+    {
+      "index": 3,
+      "timestamp": 4.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0003_4.04s.jpg",
+      "size_kb": 39.7
+    },
+    {
+      "index": 4,
+      "timestamp": 5.48,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0004_5.48s.jpg",
+      "size_kb": 26.9
+    },
+    {
+      "index": 5,
+      "timestamp": 7.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0005_7.64s.jpg",
+      "size_kb": 59.1
+    },
+    {
+      "index": 6,
+      "timestamp": 12.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0006_12.28s.jpg",
+      "size_kb": 67.7
+    },
+    {
+      "index": 7,
+      "timestamp": 15.52,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0007_15.52s.jpg",
+      "size_kb": 45.5
+    },
+    {
+      "index": 8,
+      "timestamp": 25.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0008_25.04s.jpg",
+      "size_kb": 46.0
+    },
+    {
+      "index": 9,
+      "timestamp": 25.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0009_25.64s.jpg",
+      "size_kb": 39.5
+    },
+    {
+      "index": 10,
+      "timestamp": 28.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0010_28.80s.jpg",
+      "size_kb": 89.4
+    },
+    {
+      "index": 11,
+      "timestamp": 30.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0011_30.00s.jpg",
+      "size_kb": 82.4
+    },
+    {
+      "index": 12,
+      "timestamp": 32.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0012_32.96s.jpg",
+      "size_kb": 15.2
+    },
+    {
+      "index": 13,
+      "timestamp": 34.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0013_34.32s.jpg",
+      "size_kb": 22.4
+    },
+    {
+      "index": 14,
+      "timestamp": 39.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0014_39.40s.jpg",
+      "size_kb": 59.9
+    },
+    {
+      "index": 15,
+      "timestamp": 41.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0015_41.04s.jpg",
+      "size_kb": 35.9
+    },
+    {
+      "index": 16,
+      "timestamp": 43.52,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0016_43.52s.jpg",
+      "size_kb": 38.8
+    },
+    {
+      "index": 17,
+      "timestamp": 45.56,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0017_45.56s.jpg",
+      "size_kb": 33.3
+    },
+    {
+      "index": 18,
+      "timestamp": 48.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0018_48.24s.jpg",
+      "size_kb": 29.2
+    },
+    {
+      "index": 19,
+      "timestamp": 49.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0019_49.00s.jpg",
+      "size_kb": 25.4
+    },
+    {
+      "index": 20,
+      "timestamp": 50.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0020_50.72s.jpg",
+      "size_kb": 24.7
+    },
+    {
+      "index": 21,
+      "timestamp": 52.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0021_52.44s.jpg",
+      "size_kb": 24.4
+    },
+    {
+      "index": 22,
+      "timestamp": 54.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0022_54.40s.jpg",
+      "size_kb": 34.3
+    },
+    {
+      "index": 23,
+      "timestamp": 56.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0023_56.12s.jpg",
+      "size_kb": 11.9
+    },
+    {
+      "index": 24,
+      "timestamp": 59.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0024_59.80s.jpg",
+      "size_kb": 62.0
+    },
+    {
+      "index": 25,
+      "timestamp": 60.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0025_60.00s.jpg",
+      "size_kb": 60.9
+    },
+    {
+      "index": 26,
+      "timestamp": 62.52,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0026_62.52s.jpg",
+      "size_kb": 24.4
+    },
+    {
+      "index": 27,
+      "timestamp": 70.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0027_70.80s.jpg",
+      "size_kb": 49.4
+    },
+    {
+      "index": 28,
+      "timestamp": 73.88,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0028_73.88s.jpg",
+      "size_kb": 39.4
+    },
+    {
+      "index": 29,
+      "timestamp": 75.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0029_75.76s.jpg",
+      "size_kb": 34.5
+    },
+    {
+      "index": 30,
+      "timestamp": 78.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0030_78.12s.jpg",
+      "size_kb": 26.7
+    },
+    {
+      "index": 31,
+      "timestamp": 80.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0031_80.12s.jpg",
+      "size_kb": 115.1
+    },
+    {
+      "index": 32,
+      "timestamp": 82.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0032_82.12s.jpg",
+      "size_kb": 10.7
+    },
+    {
+      "index": 33,
+      "timestamp": 83.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0033_83.28s.jpg",
+      "size_kb": 52.7
+    },
+    {
+      "index": 34,
+      "timestamp": 89.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0034_89.12s.jpg",
+      "size_kb": 31.9
+    },
+    {
+      "index": 35,
+      "timestamp": 90.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0035_90.00s.jpg",
+      "size_kb": 37.6
+    },
+    {
+      "index": 36,
+      "timestamp": 90.2,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0036_90.20s.jpg",
+      "size_kb": 36.1
+    },
+    {
+      "index": 37,
+      "timestamp": 90.88,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0037_90.88s.jpg",
+      "size_kb": 25.9
+    },
+    {
+      "index": 38,
+      "timestamp": 93.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0038_93.32s.jpg",
+      "size_kb": 25.5
+    },
+    {
+      "index": 39,
+      "timestamp": 97.2,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0039_97.20s.jpg",
+      "size_kb": 24.2
+    },
+    {
+      "index": 40,
+      "timestamp": 99.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0040_99.12s.jpg",
+      "size_kb": 25.7
+    },
+    {
+      "index": 41,
+      "timestamp": 103.2,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0041_103.20s.jpg",
+      "size_kb": 20.3
+    },
+    {
+      "index": 42,
+      "timestamp": 105.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0042_105.92s.jpg",
+      "size_kb": 26.1
+    },
+    {
+      "index": 43,
+      "timestamp": 109.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0043_109.92s.jpg",
+      "size_kb": 23.2
+    },
+    {
+      "index": 44,
+      "timestamp": 112.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0044_112.00s.jpg",
+      "size_kb": 54.3
+    },
+    {
+      "index": 45,
+      "timestamp": 112.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0045_112.76s.jpg",
+      "size_kb": 21.2
+    },
+    {
+      "index": 46,
+      "timestamp": 115.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0046_115.32s.jpg",
+      "size_kb": 29.6
+    },
+    {
+      "index": 47,
+      "timestamp": 117.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0047_117.28s.jpg",
+      "size_kb": 37.3
+    },
+    {
+      "index": 48,
+      "timestamp": 118.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0048_118.96s.jpg",
+      "size_kb": 41.9
+    },
+    {
+      "index": 49,
+      "timestamp": 120.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0049_120.00s.jpg",
+      "size_kb": 29.7
+    },
+    {
+      "index": 50,
+      "timestamp": 120.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0050_120.12s.jpg",
+      "size_kb": 50.8
+    },
+    {
+      "index": 51,
+      "timestamp": 120.88,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0051_120.88s.jpg",
+      "size_kb": 54.1
+    },
+    {
+      "index": 52,
+      "timestamp": 123.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0052_123.00s.jpg",
+      "size_kb": 13.6
+    },
+    {
+      "index": 53,
+      "timestamp": 129.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0053_129.72s.jpg",
+      "size_kb": 11.8
+    },
+    {
+      "index": 54,
+      "timestamp": 131.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0054_131.04s.jpg",
+      "size_kb": 27.3
+    },
+    {
+      "index": 55,
+      "timestamp": 150.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0055_150.00s.jpg",
+      "size_kb": 23.6
+    },
+    {
+      "index": 56,
+      "timestamp": 161.88,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0056_161.88s.jpg",
+      "size_kb": 22.4
+    },
+    {
+      "index": 57,
+      "timestamp": 163.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0057_163.80s.jpg",
+      "size_kb": 49.6
+    },
+    {
+      "index": 58,
+      "timestamp": 168.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0058_168.60s.jpg",
+      "size_kb": 30.4
+    },
+    {
+      "index": 59,
+      "timestamp": 170.52,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0059_170.52s.jpg",
+      "size_kb": 32.9
+    },
+    {
+      "index": 60,
+      "timestamp": 171.56,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0060_171.56s.jpg",
+      "size_kb": 26.5
+    },
+    {
+      "index": 61,
+      "timestamp": 173.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0061_173.24s.jpg",
+      "size_kb": 34.2
+    },
+    {
+      "index": 62,
+      "timestamp": 175.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0062_175.04s.jpg",
+      "size_kb": 79.0
+    },
+    {
+      "index": 63,
+      "timestamp": 176.56,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0063_176.56s.jpg",
+      "size_kb": 52.3
+    },
+    {
+      "index": 64,
+      "timestamp": 178.2,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0064_178.20s.jpg",
+      "size_kb": 48.4
+    },
+    {
+      "index": 65,
+      "timestamp": 179.88,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0065_179.88s.jpg",
+      "size_kb": 16.7
+    },
+    {
+      "index": 66,
+      "timestamp": 180.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0066_180.00s.jpg",
+      "size_kb": 26.3
+    },
+    {
+      "index": 67,
+      "timestamp": 187.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0067_187.00s.jpg",
+      "size_kb": 35.3
+    },
+    {
+      "index": 68,
+      "timestamp": 189.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0068_189.28s.jpg",
+      "size_kb": 100.4
+    },
+    {
+      "index": 69,
+      "timestamp": 197.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0069_197.16s.jpg",
+      "size_kb": 55.2
+    },
+    {
+      "index": 70,
+      "timestamp": 200.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0070_200.12s.jpg",
+      "size_kb": 12.6
+    },
+    {
+      "index": 71,
+      "timestamp": 205.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0071_205.16s.jpg",
+      "size_kb": 75.9
+    },
+    {
+      "index": 72,
+      "timestamp": 207.2,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0072_207.20s.jpg",
+      "size_kb": 56.0
+    },
+    {
+      "index": 73,
+      "timestamp": 208.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0073_208.60s.jpg",
+      "size_kb": 28.6
+    },
+    {
+      "index": 74,
+      "timestamp": 210.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0074_210.00s.jpg",
+      "size_kb": 22.7
+    },
+    {
+      "index": 75,
+      "timestamp": 212.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0075_212.24s.jpg",
+      "size_kb": 22.8
+    },
+    {
+      "index": 76,
+      "timestamp": 214.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0076_214.60s.jpg",
+      "size_kb": 49.7
+    },
+    {
+      "index": 77,
+      "timestamp": 219.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0077_219.24s.jpg",
+      "size_kb": 52.2
+    },
+    {
+      "index": 78,
+      "timestamp": 221.88,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0078_221.88s.jpg",
+      "size_kb": 24.2
+    },
+    {
+      "index": 79,
+      "timestamp": 224.84,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0079_224.84s.jpg",
+      "size_kb": 26.9
+    },
+    {
+      "index": 80,
+      "timestamp": 227.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0080_227.60s.jpg",
+      "size_kb": 31.7
+    },
+    {
+      "index": 81,
+      "timestamp": 229.36,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0081_229.36s.jpg",
+      "size_kb": 40.3
+    },
+    {
+      "index": 82,
+      "timestamp": 231.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0082_231.12s.jpg",
+      "size_kb": 29.6
+    },
+    {
+      "index": 83,
+      "timestamp": 232.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0083_232.80s.jpg",
+      "size_kb": 54.2
+    },
+    {
+      "index": 84,
+      "timestamp": 236.68,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0084_236.68s.jpg",
+      "size_kb": 36.7
+    },
+    {
+      "index": 85,
+      "timestamp": 239.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0085_239.00s.jpg",
+      "size_kb": 30.0
+    },
+    {
+      "index": 86,
+      "timestamp": 240.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0086_240.00s.jpg",
+      "size_kb": 77.1
+    },
+    {
+      "index": 87,
+      "timestamp": 241.84,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0087_241.84s.jpg",
+      "size_kb": 59.3
+    },
+    {
+      "index": 88,
+      "timestamp": 242.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0088_242.96s.jpg",
+      "size_kb": 43.4
+    },
+    {
+      "index": 89,
+      "timestamp": 245.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0089_245.44s.jpg",
+      "size_kb": 62.1
+    },
+    {
+      "index": 90,
+      "timestamp": 246.36,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0090_246.36s.jpg",
+      "size_kb": 73.7
+    },
+    {
+      "index": 91,
+      "timestamp": 248.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0091_248.60s.jpg",
+      "size_kb": 46.8
+    },
+    {
+      "index": 92,
+      "timestamp": 251.08,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0092_251.08s.jpg",
+      "size_kb": 49.0
+    },
+    {
+      "index": 93,
+      "timestamp": 253.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0093_253.76s.jpg",
+      "size_kb": 62.7
+    },
+    {
+      "index": 94,
+      "timestamp": 254.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0094_254.44s.jpg",
+      "size_kb": 59.4
+    },
+    {
+      "index": 95,
+      "timestamp": 255.48,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0095_255.48s.jpg",
+      "size_kb": 47.0
+    },
+    {
+      "index": 96,
+      "timestamp": 256.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0096_256.28s.jpg",
+      "size_kb": 57.6
+    },
+    {
+      "index": 97,
+      "timestamp": 257.48,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0097_257.48s.jpg",
+      "size_kb": 42.8
+    },
+    {
+      "index": 98,
+      "timestamp": 260.36,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0098_260.36s.jpg",
+      "size_kb": 20.6
+    },
+    {
+      "index": 99,
+      "timestamp": 262.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0099_262.72s.jpg",
+      "size_kb": 44.2
+    },
+    {
+      "index": 100,
+      "timestamp": 264.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0100_264.80s.jpg",
+      "size_kb": 46.2
+    },
+    {
+      "index": 101,
+      "timestamp": 270.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0101_270.00s.jpg",
+      "size_kb": 69.9
+    },
+    {
+      "index": 102,
+      "timestamp": 272.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0102_272.44s.jpg",
+      "size_kb": 39.9
+    },
+    {
+      "index": 103,
+      "timestamp": 274.36,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0103_274.36s.jpg",
+      "size_kb": 57.7
+    },
+    {
+      "index": 104,
+      "timestamp": 276.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0104_276.04s.jpg",
+      "size_kb": 57.6
+    },
+    {
+      "index": 105,
+      "timestamp": 278.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0105_278.80s.jpg",
+      "size_kb": 42.2
+    },
+    {
+      "index": 106,
+      "timestamp": 281.68,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0106_281.68s.jpg",
+      "size_kb": 20.5
+    },
+    {
+      "index": 107,
+      "timestamp": 283.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0107_283.32s.jpg",
+      "size_kb": 4.9
+    },
+    {
+      "index": 108,
+      "timestamp": 287.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0108_287.12s.jpg",
+      "size_kb": 35.4
+    },
+    {
+      "index": 109,
+      "timestamp": 288.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0109_288.16s.jpg",
+      "size_kb": 43.9
+    },
+    {
+      "index": 110,
+      "timestamp": 289.56,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0110_289.56s.jpg",
+      "size_kb": 61.2
+    },
+    {
+      "index": 111,
+      "timestamp": 292.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0111_292.80s.jpg",
+      "size_kb": 94.4
+    },
+    {
+      "index": 112,
+      "timestamp": 300.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0112_300.00s.jpg",
+      "size_kb": 89.4
+    },
+    {
+      "index": 113,
+      "timestamp": 302.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0113_302.28s.jpg",
+      "size_kb": 70.1
+    },
+    {
+      "index": 114,
+      "timestamp": 304.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0114_304.72s.jpg",
+      "size_kb": 20.1
+    },
+    {
+      "index": 115,
+      "timestamp": 306.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0115_306.16s.jpg",
+      "size_kb": 40.0
+    },
+    {
+      "index": 116,
+      "timestamp": 307.48,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0116_307.48s.jpg",
+      "size_kb": 35.7
+    },
+    {
+      "index": 117,
+      "timestamp": 311.56,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0117_311.56s.jpg",
+      "size_kb": 30.2
+    },
+    {
+      "index": 118,
+      "timestamp": 313.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0118_313.04s.jpg",
+      "size_kb": 56.2
+    },
+    {
+      "index": 119,
+      "timestamp": 314.08,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0119_314.08s.jpg",
+      "size_kb": 84.1
+    },
+    {
+      "index": 120,
+      "timestamp": 316.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0120_316.24s.jpg",
+      "size_kb": 48.5
+    },
+    {
+      "index": 121,
+      "timestamp": 318.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0121_318.72s.jpg",
+      "size_kb": 28.4
+    },
+    {
+      "index": 122,
+      "timestamp": 321.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0122_321.60s.jpg",
+      "size_kb": 29.0
+    },
+    {
+      "index": 123,
+      "timestamp": 322.56,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0123_322.56s.jpg",
+      "size_kb": 26.2
+    },
+    {
+      "index": 124,
+      "timestamp": 323.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0124_323.96s.jpg",
+      "size_kb": 24.4
+    },
+    {
+      "index": 125,
+      "timestamp": 325.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0125_325.32s.jpg",
+      "size_kb": 24.4
+    },
+    {
+      "index": 126,
+      "timestamp": 327.48,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0126_327.48s.jpg",
+      "size_kb": 57.0
+    },
+    {
+      "index": 127,
+      "timestamp": 329.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0127_329.44s.jpg",
+      "size_kb": 61.9
+    },
+    {
+      "index": 128,
+      "timestamp": 330.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0128_330.00s.jpg",
+      "size_kb": 57.8
+    },
+    {
+      "index": 129,
+      "timestamp": 332.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0129_332.44s.jpg",
+      "size_kb": 56.4
+    },
+    {
+      "index": 130,
+      "timestamp": 335.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0130_335.80s.jpg",
+      "size_kb": 3.8
+    },
+    {
+      "index": 131,
+      "timestamp": 337.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0131_337.32s.jpg",
+      "size_kb": 26.9
+    },
+    {
+      "index": 132,
+      "timestamp": 338.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0132_338.96s.jpg",
+      "size_kb": 56.5
+    },
+    {
+      "index": 133,
+      "timestamp": 340.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0133_340.60s.jpg",
+      "size_kb": 52.3
+    },
+    {
+      "index": 134,
+      "timestamp": 341.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0134_341.28s.jpg",
+      "size_kb": 38.0
+    },
+    {
+      "index": 135,
+      "timestamp": 343.88,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0135_343.88s.jpg",
+      "size_kb": 38.0
+    },
+    {
+      "index": 136,
+      "timestamp": 345.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0136_345.32s.jpg",
+      "size_kb": 41.5
+    },
+    {
+      "index": 137,
+      "timestamp": 360.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0137_360.00s.jpg",
+      "size_kb": 42.6
+    },
+    {
+      "index": 138,
+      "timestamp": 373.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0138_373.44s.jpg",
+      "size_kb": 41.7
+    },
+    {
+      "index": 139,
+      "timestamp": 375.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0139_375.96s.jpg",
+      "size_kb": 26.5
+    },
+    {
+      "index": 140,
+      "timestamp": 381.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0140_381.28s.jpg",
+      "size_kb": 68.7
+    },
+    {
+      "index": 141,
+      "timestamp": 384.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0141_384.04s.jpg",
+      "size_kb": 26.2
+    },
+    {
+      "index": 142,
+      "timestamp": 386.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0142_386.92s.jpg",
+      "size_kb": 23.6
+    },
+    {
+      "index": 143,
+      "timestamp": 390.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0143_390.00s.jpg",
+      "size_kb": 37.8
+    },
+    {
+      "index": 144,
+      "timestamp": 392.2,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0144_392.20s.jpg",
+      "size_kb": 36.1
+    },
+    {
+      "index": 145,
+      "timestamp": 399.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0145_399.28s.jpg",
+      "size_kb": 47.6
+    },
+    {
+      "index": 146,
+      "timestamp": 406.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0146_406.04s.jpg",
+      "size_kb": 17.7
+    },
+    {
+      "index": 147,
+      "timestamp": 410.52,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0147_410.52s.jpg",
+      "size_kb": 48.8
+    },
+    {
+      "index": 148,
+      "timestamp": 411.52,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0148_411.52s.jpg",
+      "size_kb": 60.9
+    },
+    {
+      "index": 149,
+      "timestamp": 414.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0149_414.64s.jpg",
+      "size_kb": 11.3
+    },
+    {
+      "index": 150,
+      "timestamp": 417.2,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0150_417.20s.jpg",
+      "size_kb": 25.3
+    },
+    {
+      "index": 151,
+      "timestamp": 418.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0151_418.24s.jpg",
+      "size_kb": 100.2
+    },
+    {
+      "index": 152,
+      "timestamp": 419.56,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0152_419.56s.jpg",
+      "size_kb": 48.6
+    },
+    {
+      "index": 153,
+      "timestamp": 420.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0153_420.00s.jpg",
+      "size_kb": 44.4
+    },
+    {
+      "index": 154,
+      "timestamp": 420.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0154_420.92s.jpg",
+      "size_kb": 61.2
+    },
+    {
+      "index": 155,
+      "timestamp": 421.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0155_421.76s.jpg",
+      "size_kb": 25.6
+    },
+    {
+      "index": 156,
+      "timestamp": 424.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0156_424.96s.jpg",
+      "size_kb": 48.5
+    },
+    {
+      "index": 157,
+      "timestamp": 428.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0157_428.64s.jpg",
+      "size_kb": 53.6
+    },
+    {
+      "index": 158,
+      "timestamp": 430.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0158_430.32s.jpg",
+      "size_kb": 42.8
+    },
+    {
+      "index": 159,
+      "timestamp": 431.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0159_431.04s.jpg",
+      "size_kb": 42.7
+    },
+    {
+      "index": 160,
+      "timestamp": 432.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0160_432.76s.jpg",
+      "size_kb": 48.7
+    },
+    {
+      "index": 161,
+      "timestamp": 435.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0161_435.12s.jpg",
+      "size_kb": 49.2
+    },
+    {
+      "index": 162,
+      "timestamp": 437.68,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0162_437.68s.jpg",
+      "size_kb": 40.4
+    },
+    {
+      "index": 163,
+      "timestamp": 439.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0163_439.44s.jpg",
+      "size_kb": 36.2
+    },
+    {
+      "index": 164,
+      "timestamp": 441.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0164_441.96s.jpg",
+      "size_kb": 69.9
+    },
+    {
+      "index": 165,
+      "timestamp": 443.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0165_443.32s.jpg",
+      "size_kb": 24.2
+    },
+    {
+      "index": 166,
+      "timestamp": 445.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0166_445.28s.jpg",
+      "size_kb": 25.3
+    },
+    {
+      "index": 167,
+      "timestamp": 446.68,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0167_446.68s.jpg",
+      "size_kb": 35.1
+    },
+    {
+      "index": 168,
+      "timestamp": 448.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0168_448.24s.jpg",
+      "size_kb": 52.9
+    },
+    {
+      "index": 169,
+      "timestamp": 450.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0169_450.00s.jpg",
+      "size_kb": 52.5
+    },
+    {
+      "index": 170,
+      "timestamp": 467.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0170_467.12s.jpg",
+      "size_kb": 55.2
+    },
+    {
+      "index": 171,
+      "timestamp": 469.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0171_469.44s.jpg",
+      "size_kb": 31.1
+    },
+    {
+      "index": 172,
+      "timestamp": 471.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0172_471.32s.jpg",
+      "size_kb": 63.4
+    },
+    {
+      "index": 173,
+      "timestamp": 473.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0173_473.04s.jpg",
+      "size_kb": 42.2
+    },
+    {
+      "index": 174,
+      "timestamp": 474.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0174_474.16s.jpg",
+      "size_kb": 67.5
+    },
+    {
+      "index": 175,
+      "timestamp": 476.48,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0175_476.48s.jpg",
+      "size_kb": 45.8
+    },
+    {
+      "index": 176,
+      "timestamp": 478.84,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0176_478.84s.jpg",
+      "size_kb": 57.5
+    },
+    {
+      "index": 177,
+      "timestamp": 479.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0177_479.92s.jpg",
+      "size_kb": 54.6
+    },
+    {
+      "index": 178,
+      "timestamp": 480.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0178_480.00s.jpg",
+      "size_kb": 56.4
+    },
+    {
+      "index": 179,
+      "timestamp": 482.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0179_482.04s.jpg",
+      "size_kb": 49.4
+    },
+    {
+      "index": 180,
+      "timestamp": 484.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0180_484.16s.jpg",
+      "size_kb": 35.9
+    },
+    {
+      "index": 181,
+      "timestamp": 485.84,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0181_485.84s.jpg",
+      "size_kb": 19.6
+    },
+    {
+      "index": 182,
+      "timestamp": 487.2,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0182_487.20s.jpg",
+      "size_kb": 4.0
+    },
+    {
+      "index": 183,
+      "timestamp": 488.84,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0183_488.84s.jpg",
+      "size_kb": 29.1
+    },
+    {
+      "index": 184,
+      "timestamp": 506.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0184_506.60s.jpg",
+      "size_kb": 24.5
+    },
+    {
+      "index": 185,
+      "timestamp": 508.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0185_508.64s.jpg",
+      "size_kb": 26.9
+    },
+    {
+      "index": 186,
+      "timestamp": 510.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0186_510.00s.jpg",
+      "size_kb": 34.9
+    },
+    {
+      "index": 187,
+      "timestamp": 510.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0187_510.92s.jpg",
+      "size_kb": 43.5
+    },
+    {
+      "index": 188,
+      "timestamp": 512.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0188_512.76s.jpg",
+      "size_kb": 89.6
+    },
+    {
+      "index": 189,
+      "timestamp": 515.52,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0189_515.52s.jpg",
+      "size_kb": 30.3
+    },
+    {
+      "index": 190,
+      "timestamp": 519.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0190_519.60s.jpg",
+      "size_kb": 21.8
+    },
+    {
+      "index": 191,
+      "timestamp": 521.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0191_521.64s.jpg",
+      "size_kb": 43.0
+    },
+    {
+      "index": 192,
+      "timestamp": 523.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0192_523.92s.jpg",
+      "size_kb": 22.8
+    },
+    {
+      "index": 193,
+      "timestamp": 524.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0193_524.72s.jpg",
+      "size_kb": 18.0
+    },
+    {
+      "index": 194,
+      "timestamp": 526.48,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0194_526.48s.jpg",
+      "size_kb": 19.5
+    },
+    {
+      "index": 195,
+      "timestamp": 530.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0195_530.12s.jpg",
+      "size_kb": 57.1
+    },
+    {
+      "index": 196,
+      "timestamp": 532.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0196_532.80s.jpg",
+      "size_kb": 72.0
+    },
+    {
+      "index": 197,
+      "timestamp": 535.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0197_535.80s.jpg",
+      "size_kb": 42.8
+    },
+    {
+      "index": 198,
+      "timestamp": 537.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0198_537.92s.jpg",
+      "size_kb": 22.5
+    },
+    {
+      "index": 199,
+      "timestamp": 539.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0199_539.76s.jpg",
+      "size_kb": 70.1
+    },
+    {
+      "index": 200,
+      "timestamp": 540.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0200_540.00s.jpg",
+      "size_kb": 70.3
+    },
+    {
+      "index": 201,
+      "timestamp": 541.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0201_541.28s.jpg",
+      "size_kb": 57.4
+    },
+    {
+      "index": 202,
+      "timestamp": 543.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0202_543.76s.jpg",
+      "size_kb": 74.0
+    },
+    {
+      "index": 203,
+      "timestamp": 545.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0203_545.40s.jpg",
+      "size_kb": 89.2
+    },
+    {
+      "index": 204,
+      "timestamp": 547.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0204_547.00s.jpg",
+      "size_kb": 26.1
+    },
+    {
+      "index": 205,
+      "timestamp": 549.88,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0205_549.88s.jpg",
+      "size_kb": 28.1
+    },
+    {
+      "index": 206,
+      "timestamp": 552.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0206_552.80s.jpg",
+      "size_kb": 35.4
+    },
+    {
+      "index": 207,
+      "timestamp": 553.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0207_553.92s.jpg",
+      "size_kb": 57.7
+    },
+    {
+      "index": 208,
+      "timestamp": 556.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0208_556.96s.jpg",
+      "size_kb": 46.5
+    },
+    {
+      "index": 209,
+      "timestamp": 559.36,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0209_559.36s.jpg",
+      "size_kb": 43.6
+    },
+    {
+      "index": 210,
+      "timestamp": 560.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0210_560.76s.jpg",
+      "size_kb": 31.6
+    },
+    {
+      "index": 211,
+      "timestamp": 562.2,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0211_562.20s.jpg",
+      "size_kb": 24.4
+    },
+    {
+      "index": 212,
+      "timestamp": 564.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0212_564.80s.jpg",
+      "size_kb": 67.9
+    },
+    {
+      "index": 213,
+      "timestamp": 570.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0213_570.00s.jpg",
+      "size_kb": 61.9
+    },
+    {
+      "index": 214,
+      "timestamp": 578.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0214_578.72s.jpg",
+      "size_kb": 51.4
+    },
+    {
+      "index": 215,
+      "timestamp": 581.36,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0215_581.36s.jpg",
+      "size_kb": 67.1
+    },
+    {
+      "index": 216,
+      "timestamp": 583.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0216_583.16s.jpg",
+      "size_kb": 34.1
+    },
+    {
+      "index": 217,
+      "timestamp": 584.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0217_584.40s.jpg",
+      "size_kb": 5.1
+    },
+    {
+      "index": 218,
+      "timestamp": 587.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0218_587.12s.jpg",
+      "size_kb": 31.1
+    },
+    {
+      "index": 219,
+      "timestamp": 589.48,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0219_589.48s.jpg",
+      "size_kb": 52.1
+    },
+    {
+      "index": 220,
+      "timestamp": 591.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0220_591.96s.jpg",
+      "size_kb": 49.9
+    },
+    {
+      "index": 221,
+      "timestamp": 595.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0221_595.44s.jpg",
+      "size_kb": 19.1
+    },
+    {
+      "index": 222,
+      "timestamp": 599.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0222_599.16s.jpg",
+      "size_kb": 24.5
+    },
+    {
+      "index": 223,
+      "timestamp": 600.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0223_600.00s.jpg",
+      "size_kb": 27.3
+    },
+    {
+      "index": 224,
+      "timestamp": 602.56,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0224_602.56s.jpg",
+      "size_kb": 24.6
+    },
+    {
+      "index": 225,
+      "timestamp": 607.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0225_607.72s.jpg",
+      "size_kb": 47.9
+    },
+    {
+      "index": 226,
+      "timestamp": 608.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0226_608.40s.jpg",
+      "size_kb": 107.1
+    },
+    {
+      "index": 227,
+      "timestamp": 617.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0227_617.32s.jpg",
+      "size_kb": 54.2
+    },
+    {
+      "index": 228,
+      "timestamp": 620.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0228_620.28s.jpg",
+      "size_kb": 53.6
+    },
+    {
+      "index": 229,
+      "timestamp": 624.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0229_624.40s.jpg",
+      "size_kb": 46.1
+    },
+    {
+      "index": 230,
+      "timestamp": 626.52,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0230_626.52s.jpg",
+      "size_kb": 32.7
+    },
+    {
+      "index": 231,
+      "timestamp": 628.68,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0231_628.68s.jpg",
+      "size_kb": 66.9
+    },
+    {
+      "index": 232,
+      "timestamp": 630.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0232_630.00s.jpg",
+      "size_kb": 66.3
+    },
+    {
+      "index": 233,
+      "timestamp": 630.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0233_630.72s.jpg",
+      "size_kb": 50.8
+    },
+    {
+      "index": 234,
+      "timestamp": 632.84,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0234_632.84s.jpg",
+      "size_kb": 11.7
+    },
+    {
+      "index": 235,
+      "timestamp": 634.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0235_634.96s.jpg",
+      "size_kb": 50.2
+    },
+    {
+      "index": 236,
+      "timestamp": 637.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0236_637.12s.jpg",
+      "size_kb": 59.3
+    },
+    {
+      "index": 237,
+      "timestamp": 639.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0237_639.72s.jpg",
+      "size_kb": 24.3
+    },
+    {
+      "index": 238,
+      "timestamp": 642.84,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0238_642.84s.jpg",
+      "size_kb": 26.5
+    },
+    {
+      "index": 239,
+      "timestamp": 645.36,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0239_645.36s.jpg",
+      "size_kb": 34.7
+    },
+    {
+      "index": 240,
+      "timestamp": 647.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0240_647.00s.jpg",
+      "size_kb": 21.4
+    },
+    {
+      "index": 241,
+      "timestamp": 649.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0241_649.32s.jpg",
+      "size_kb": 28.3
+    },
+    {
+      "index": 242,
+      "timestamp": 651.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0242_651.64s.jpg",
+      "size_kb": 35.7
+    },
+    {
+      "index": 243,
+      "timestamp": 653.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0243_653.00s.jpg",
+      "size_kb": 34.8
+    },
+    {
+      "index": 244,
+      "timestamp": 653.68,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0244_653.68s.jpg",
+      "size_kb": 40.1
+    },
+    {
+      "index": 245,
+      "timestamp": 654.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0245_654.80s.jpg",
+      "size_kb": 58.6
+    },
+    {
+      "index": 246,
+      "timestamp": 656.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0246_656.40s.jpg",
+      "size_kb": 43.0
+    },
+    {
+      "index": 247,
+      "timestamp": 659.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0247_659.76s.jpg",
+      "size_kb": 35.3
+    },
+    {
+      "index": 248,
+      "timestamp": 660.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0248_660.00s.jpg",
+      "size_kb": 39.3
+    },
+    {
+      "index": 249,
+      "timestamp": 665.88,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0249_665.88s.jpg",
+      "size_kb": 61.2
+    },
+    {
+      "index": 250,
+      "timestamp": 667.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0250_667.28s.jpg",
+      "size_kb": 56.4
+    },
+    {
+      "index": 251,
+      "timestamp": 669.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0251_669.44s.jpg",
+      "size_kb": 58.3
+    },
+    {
+      "index": 252,
+      "timestamp": 673.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0252_673.28s.jpg",
+      "size_kb": 34.5
+    },
+    {
+      "index": 253,
+      "timestamp": 675.52,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0253_675.52s.jpg",
+      "size_kb": 50.8
+    },
+    {
+      "index": 254,
+      "timestamp": 678.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0254_678.28s.jpg",
+      "size_kb": 38.8
+    },
+    {
+      "index": 255,
+      "timestamp": 687.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0255_687.40s.jpg",
+      "size_kb": 57.3
+    },
+    {
+      "index": 256,
+      "timestamp": 689.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0256_689.00s.jpg",
+      "size_kb": 48.4
+    },
+    {
+      "index": 257,
+      "timestamp": 690.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0257_690.00s.jpg",
+      "size_kb": 26.8
+    },
+    {
+      "index": 258,
+      "timestamp": 690.48,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0258_690.48s.jpg",
+      "size_kb": 63.8
+    },
+    {
+      "index": 259,
+      "timestamp": 692.68,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0259_692.68s.jpg",
+      "size_kb": 25.1
+    },
+    {
+      "index": 260,
+      "timestamp": 693.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0260_693.96s.jpg",
+      "size_kb": 25.9
+    },
+    {
+      "index": 261,
+      "timestamp": 700.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0261_700.16s.jpg",
+      "size_kb": 32.8
+    },
+    {
+      "index": 262,
+      "timestamp": 702.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0262_702.80s.jpg",
+      "size_kb": 13.3
+    },
+    {
+      "index": 263,
+      "timestamp": 706.44,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0263_706.44s.jpg",
+      "size_kb": 30.8
+    },
+    {
+      "index": 264,
+      "timestamp": 710.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0264_710.12s.jpg",
+      "size_kb": 33.2
+    },
+    {
+      "index": 265,
+      "timestamp": 711.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0265_711.32s.jpg",
+      "size_kb": 33.2
+    },
+    {
+      "index": 266,
+      "timestamp": 712.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0266_712.72s.jpg",
+      "size_kb": 86.6
+    },
+    {
+      "index": 267,
+      "timestamp": 718.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0267_718.60s.jpg",
+      "size_kb": 58.1
+    },
+    {
+      "index": 268,
+      "timestamp": 719.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0268_719.92s.jpg",
+      "size_kb": 49.3
+    },
+    {
+      "index": 269,
+      "timestamp": 720.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0269_720.00s.jpg",
+      "size_kb": 49.9
+    },
+    {
+      "index": 270,
+      "timestamp": 720.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0270_720.72s.jpg",
+      "size_kb": 47.6
+    },
+    {
+      "index": 271,
+      "timestamp": 723.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0271_723.04s.jpg",
+      "size_kb": 33.0
+    },
+    {
+      "index": 272,
+      "timestamp": 725.68,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0272_725.68s.jpg",
+      "size_kb": 41.1
+    },
+    {
+      "index": 273,
+      "timestamp": 750.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0273_750.00s.jpg",
+      "size_kb": 116.5
+    },
+    {
+      "index": 274,
+      "timestamp": 757.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0274_757.16s.jpg",
+      "size_kb": 85.4
+    },
+    {
+      "index": 275,
+      "timestamp": 759.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0275_759.92s.jpg",
+      "size_kb": 25.9
+    },
+    {
+      "index": 276,
+      "timestamp": 761.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0276_761.96s.jpg",
+      "size_kb": 27.8
+    },
+    {
+      "index": 277,
+      "timestamp": 762.6,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0277_762.60s.jpg",
+      "size_kb": 61.8
+    },
+    {
+      "index": 278,
+      "timestamp": 763.84,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0278_763.84s.jpg",
+      "size_kb": 29.4
+    },
+    {
+      "index": 279,
+      "timestamp": 765.88,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0279_765.88s.jpg",
+      "size_kb": 77.5
+    },
+    {
+      "index": 280,
+      "timestamp": 767.2,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0280_767.20s.jpg",
+      "size_kb": 82.1
+    },
+    {
+      "index": 281,
+      "timestamp": 768.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0281_768.16s.jpg",
+      "size_kb": 42.0
+    },
+    {
+      "index": 282,
+      "timestamp": 769.48,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0282_769.48s.jpg",
+      "size_kb": 17.6
+    },
+    {
+      "index": 283,
+      "timestamp": 770.52,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0283_770.52s.jpg",
+      "size_kb": 63.8
+    },
+    {
+      "index": 284,
+      "timestamp": 773.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0284_773.00s.jpg",
+      "size_kb": 96.0
+    },
+    {
+      "index": 285,
+      "timestamp": 775.08,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0285_775.08s.jpg",
+      "size_kb": 42.6
+    },
+    {
+      "index": 286,
+      "timestamp": 776.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0286_776.92s.jpg",
+      "size_kb": 48.5
+    },
+    {
+      "index": 287,
+      "timestamp": 778.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0287_778.24s.jpg",
+      "size_kb": 53.9
+    },
+    {
+      "index": 288,
+      "timestamp": 778.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0288_778.96s.jpg",
+      "size_kb": 44.9
+    },
+    {
+      "index": 289,
+      "timestamp": 779.92,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0289_779.92s.jpg",
+      "size_kb": 32.9
+    },
+    {
+      "index": 290,
+      "timestamp": 780.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0290_780.00s.jpg",
+      "size_kb": 13.5
+    },
+    {
+      "index": 291,
+      "timestamp": 782.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0291_782.00s.jpg",
+      "size_kb": 24.0
+    },
+    {
+      "index": 292,
+      "timestamp": 784.32,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0292_784.32s.jpg",
+      "size_kb": 44.8
+    },
+    {
+      "index": 293,
+      "timestamp": 786.76,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0293_786.76s.jpg",
+      "size_kb": 47.9
+    },
+    {
+      "index": 294,
+      "timestamp": 803.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0294_803.40s.jpg",
+      "size_kb": 59.8
+    },
+    {
+      "index": 295,
+      "timestamp": 805.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0295_805.40s.jpg",
+      "size_kb": 35.2
+    },
+    {
+      "index": 296,
+      "timestamp": 806.08,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0296_806.08s.jpg",
+      "size_kb": 54.8
+    },
+    {
+      "index": 297,
+      "timestamp": 807.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0297_807.64s.jpg",
+      "size_kb": 82.6
+    },
+    {
+      "index": 298,
+      "timestamp": 808.72,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0298_808.72s.jpg",
+      "size_kb": 41.8
+    },
+    {
+      "index": 299,
+      "timestamp": 810.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0299_810.00s.jpg",
+      "size_kb": 41.2
+    },
+    {
+      "index": 300,
+      "timestamp": 811.36,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0300_811.36s.jpg",
+      "size_kb": 69.2
+    },
+    {
+      "index": 301,
+      "timestamp": 815.16,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0301_815.16s.jpg",
+      "size_kb": 40.7
+    },
+    {
+      "index": 302,
+      "timestamp": 825.28,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0302_825.28s.jpg",
+      "size_kb": 67.5
+    },
+    {
+      "index": 303,
+      "timestamp": 830.08,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0303_830.08s.jpg",
+      "size_kb": 55.8
+    },
+    {
+      "index": 304,
+      "timestamp": 832.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0304_832.24s.jpg",
+      "size_kb": 44.3
+    },
+    {
+      "index": 305,
+      "timestamp": 834.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0305_834.00s.jpg",
+      "size_kb": 62.4
+    },
+    {
+      "index": 306,
+      "timestamp": 835.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0306_835.64s.jpg",
+      "size_kb": 72.6
+    },
+    {
+      "index": 307,
+      "timestamp": 838.36,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0307_838.36s.jpg",
+      "size_kb": 67.3
+    },
+    {
+      "index": 308,
+      "timestamp": 840.0,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0308_840.00s.jpg",
+      "size_kb": 45.9
+    },
+    {
+      "index": 309,
+      "timestamp": 840.96,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0309_840.96s.jpg",
+      "size_kb": 58.1
+    },
+    {
+      "index": 310,
+      "timestamp": 842.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0310_842.80s.jpg",
+      "size_kb": 65.2
+    },
+    {
+      "index": 311,
+      "timestamp": 844.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0311_844.24s.jpg",
+      "size_kb": 47.6
+    },
+    {
+      "index": 312,
+      "timestamp": 845.8,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0312_845.80s.jpg",
+      "size_kb": 2.7
+    },
+    {
+      "index": 313,
+      "timestamp": 847.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0313_847.64s.jpg",
+      "size_kb": 45.2
+    },
+    {
+      "index": 314,
+      "timestamp": 848.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0314_848.40s.jpg",
+      "size_kb": 78.6
+    },
+    {
+      "index": 315,
+      "timestamp": 849.64,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0315_849.64s.jpg",
+      "size_kb": 87.3
+    },
+    {
+      "index": 316,
+      "timestamp": 850.24,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0316_850.24s.jpg",
+      "size_kb": 87.0
+    },
+    {
+      "index": 317,
+      "timestamp": 853.12,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0317_853.12s.jpg",
+      "size_kb": 73.2
+    },
+    {
+      "index": 318,
+      "timestamp": 856.4,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0318_856.40s.jpg",
+      "size_kb": 58.6
+    },
+    {
+      "index": 319,
+      "timestamp": 859.04,
+      "path": "output/phase-3a-runs/mbappe-001/perception/frames/frame_0319_859.04s.jpg",
+      "size_kb": 43.8
+    }
+  ]
+}
