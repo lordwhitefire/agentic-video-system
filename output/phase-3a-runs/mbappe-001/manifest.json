@@ -1,0 +1,479 @@
+{
+  "manifest_metadata": {
+    "run_name": "mbappe-001",
+    "script_ref": "output/phase-3a-runs/mbappe-001/script.md",
+    "blueprint_ref": "output/phase-3a-runs/mbappe-001/blueprint.json",
+    "created_by": "Planner agent",
+    "created_at": "2026-07-09",
+    "total_assets": 24,
+    "assets_to_source": 23,
+    "assets_agent_generated": 1
+  },
+  "fact_check_requests": [
+    {
+      "claim_id": "fc-001",
+      "claim": "Mbappé scored a hat-trick in the 2022 World Cup final — the first player to do that since 1966",
+      "segment": "seg_02_hook",
+      "needs_verification": "Is this stat accurate? Who was the last player to score a hat-trick in a World Cup final before Mbappé?",
+      "search_hints": [
+        "World Cup final hat-trick history",
+        "Geoff Hurst 1966 World Cup final",
+        "Mbappé 2022 World Cup final hat-trick"
+      ],
+      "status": "pending"
+    },
+    {
+      "claim_id": "fc-002",
+      "claim": "France tactical setup under Deschamps — Giroud as target man, Griezmann as creator, Mbappé stays high and left",
+      "segment": "seg_04_act_1",
+      "needs_verification": "Is this accurate for 2018 and 2022 World Cups? What was France's actual tactical shape?",
+      "search_hints": [
+        "France 2018 World Cup tactics Deschamps",
+        "France 2022 World Cup formation",
+        "Giroud role France national team",
+        "Griezmann position France"
+      ],
+      "status": "pending"
+    },
+    {
+      "claim_id": "fc-003",
+      "claim": "PSG dynamics — Neymar and Messi had to accommodate Mbappé",
+      "segment": "seg_05_act_2",
+      "needs_verification": "What was the actual dynamic? Did Neymar/Messi explicitly accommodate Mbappé?",
+      "search_hints": [
+        "PSG Mbappé Neymar Messi dynamics",
+        "PSG MNM trio tactical issues",
+        "Neymar Mbappé relationship PSG"
+      ],
+      "status": "pending"
+    },
+    {
+      "claim_id": "fc-004",
+      "claim": "Madrid dynamics — Vinícius Jr. had to share the left wing with Mbappé, Bellingham dropped deeper",
+      "segment": "seg_05_act_2",
+      "needs_verification": "Did Vinícius and Mbappé actually overlap on the left? Did Bellingham's role change?",
+      "search_hints": [
+        "Real Madrid Mbappé Vinícius left wing",
+        "Bellingham role change Mbappé arrival",
+        "Madrid 2024-25 tactical issues"
+      ],
+      "status": "pending"
+    },
+    {
+      "claim_id": "fc-005",
+      "claim": "When Mbappé was absent, Real Madrid's win percentage climbed to 80%",
+      "segment": "seg_06_act_3",
+      "needs_verification": "What was the actual win percentage with and without Mbappé? Is the 80% figure accurate?",
+      "search_hints": [
+        "Real Madrid win percentage without Mbappé",
+        "Madrid 2024-25 stats Mbappé absent",
+        "Madrid La Liga results Mbappé injured"
+      ],
+      "status": "pending"
+    },
+    {
+      "claim_id": "fc-006",
+      "claim": "Deschamps has been France manager since 2012",
+      "segment": "seg_07_act_4",
+      "needs_verification": "When did Deschamps actually start as France manager?",
+      "search_hints": [
+        "Didier Deschamps France manager start date",
+        "Deschamps appointed France 2012"
+      ],
+      "status": "pending"
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "clip-001",
+      "type": "clip",
+      "description": "Mbappé celebrating a World Cup goal for France (2018 or 2022)",
+      "needed_for_segment": "seg_01_cold_open",
+      "duration_needed": 4.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Mbappé World Cup 2018 celebration goal",
+        "Mbappé 2022 World Cup celebration",
+        "France Mbappé goal celebration"
+      ],
+      "timestamp_hint": "any goal celebration moment",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-002",
+      "type": "clip",
+      "description": "Mbappé looking frustrated or head down at club level (PSG or Madrid)",
+      "needed_for_segment": "seg_01_cold_open",
+      "duration_needed": 4.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Mbappé frustrated PSG",
+        "Mbappé head down Real Madrid",
+        "Mbappé disappointed club"
+      ],
+      "timestamp_hint": "any frustrated moment",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-003",
+      "type": "clip",
+      "description": "Mbappé 2018 World Cup goal (any goal from 2018 tournament)",
+      "needed_for_segment": "seg_02_hook",
+      "duration_needed": 3.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Mbappé 2018 World Cup goal",
+        "Mbappé vs Argentina 2018",
+        "Mbappé 2018 final goal"
+      ],
+      "timestamp_hint": "goal moment",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-004",
+      "type": "clip",
+      "description": "Mbappé 2022 World Cup final hat-trick goal(s)",
+      "needed_for_segment": "seg_02_hook",
+      "duration_needed": 3.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Mbappé 2022 World Cup final hat-trick",
+        "Mbappé vs Argentina 2022 final goals"
+      ],
+      "timestamp_hint": "any of the three goals",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-005",
+      "type": "clip",
+      "description": "PSG Champions League failure footage (Mbappé era)",
+      "needed_for_segment": "seg_02_hook",
+      "duration_needed": 3.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "PSG Champions League elimination Mbappé",
+        "PSG UCL exit"
+      ],
+      "timestamp_hint": "elimination moment",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-006",
+      "type": "clip",
+      "description": "Real Madrid Mbappé era — frustrated moment or tactical issue",
+      "needed_for_segment": "seg_02_hook",
+      "duration_needed": 3.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Real Madrid Mbappé 2024 struggle",
+        "Madrid Mbappé tactical issues"
+      ],
+      "timestamp_hint": "any",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-007",
+      "type": "clip",
+      "description": "France national team — Mbappé with teammates (Griezmann, Giroud, Kanté)",
+      "needed_for_segment": "seg_04_act_1",
+      "duration_needed": 5.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "France national team Mbappé Griezmann Giroud",
+        "France team huddle World Cup",
+        "Deschamps France sideline"
+      ],
+      "timestamp_hint": "team chemistry moment",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-008",
+      "type": "clip",
+      "description": "Didier Deschamps on the sideline / giving tactical instructions",
+      "needed_for_segment": "seg_04_act_1",
+      "duration_needed": 3.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Deschamps sideline France",
+        "Deschamps tactical instructions World Cup"
+      ],
+      "timestamp_hint": "any",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-009",
+      "type": "clip",
+      "description": "PSG footage — Mbappé with Neymar and/or Messi",
+      "needed_for_segment": "seg_05_act_2",
+      "duration_needed": 5.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "PSG Mbappé Neymar Messi",
+        "PSG MNM trio",
+        "Mbappé Neymar PSG"
+      ],
+      "timestamp_hint": "any",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-010",
+      "type": "clip",
+      "description": "Real Madrid footage — Mbappé with Vinícius Jr. (left wing overlap)",
+      "needed_for_segment": "seg_05_act_2",
+      "duration_needed": 5.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Real Madrid Mbappé Vinícius left wing",
+        "Mbappé Vinícius Jr overlap Madrid"
+      ],
+      "timestamp_hint": "any moment showing both on left",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-011",
+      "type": "clip",
+      "description": "Bellingham footage — dropping deep or covering defensively",
+      "needed_for_segment": "seg_05_act_2",
+      "duration_needed": 3.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Bellingham defensive work Real Madrid",
+        "Bellingham dropping deep"
+      ],
+      "timestamp_hint": "any",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-012",
+      "type": "clip",
+      "description": "Mbappé not pressing / walking during defensive phase",
+      "needed_for_segment": "seg_06_act_3",
+      "duration_needed": 3.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Mbappé not pressing",
+        "Mbappé walking defending",
+        "Mbappé defensive effort criticism"
+      ],
+      "timestamp_hint": "any",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-013",
+      "type": "clip",
+      "description": "PSG manager footage — Tuchel, Pochettino, Galtier, or Enrique",
+      "needed_for_segment": "seg_07_act_4",
+      "duration_needed": 4.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Tuchel PSG sideline",
+        "Pochettino PSG",
+        "Galtier PSG",
+        "Luis Enrique PSG"
+      ],
+      "timestamp_hint": "any",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-014",
+      "type": "clip",
+      "description": "Real Madrid manager footage — Ancelotti or Alonso",
+      "needed_for_segment": "seg_07_act_4",
+      "duration_needed": 4.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Ancelotti Real Madrid sideline",
+        "Xabi Alonso Real Madrid"
+      ],
+      "timestamp_hint": "any",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-015",
+      "type": "clip",
+      "description": "France team huddle / celebration showing unity",
+      "needed_for_segment": "seg_08_act_5",
+      "duration_needed": 4.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "France team huddle World Cup",
+        "France celebration unity",
+        "Mbappé celebrating with teammates France"
+      ],
+      "timestamp_hint": "any",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-016",
+      "type": "clip",
+      "description": "Mbappé in France kit, determined look / focused",
+      "needed_for_segment": "seg_09_act_6",
+      "duration_needed": 4.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "Mbappé France kit determined",
+        "Mbappé focused World Cup",
+        "Mbappé France national team portrait"
+      ],
+      "timestamp_hint": "any",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "clip-017",
+      "type": "clip",
+      "description": "World Cup trophy footage",
+      "needed_for_segment": "seg_09_act_6",
+      "duration_needed": 2.0,
+      "suggested_source": "youtube",
+      "search_hints": [
+        "World Cup trophy",
+        "FIFA World Cup trophy lift"
+      ],
+      "timestamp_hint": "any",
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "img-001",
+      "type": "image",
+      "description": "Mbappé World Cup celebration (still image for cold open split screen)",
+      "needed_for_segment": "seg_01_cold_open",
+      "suggested_source": "image_search",
+      "search_hints": [
+        "Mbappé World Cup celebration",
+        "Mbappé France goal celebration"
+      ],
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "img-002",
+      "type": "image",
+      "description": "Mbappé club frustration (still image for cold open split screen)",
+      "needed_for_segment": "seg_01_cold_open",
+      "suggested_source": "image_search",
+      "search_hints": [
+        "Mbappé frustrated PSG",
+        "Mbappé disappointed Real Madrid"
+      ],
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "img-003",
+      "type": "image",
+      "description": "France tactical formation graphic (4-2-3-1 or similar)",
+      "needed_for_segment": "seg_04_act_1",
+      "suggested_source": "image_search",
+      "search_hints": [
+        "France 2018 formation tactical",
+        "France 2022 World Cup tactics graphic",
+        "Deschamps formation France"
+      ],
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "img-004",
+      "type": "image",
+      "description": "Real Madrid tactical formation showing Mbappé and Vinícius overlap",
+      "needed_for_segment": "seg_05_act_2",
+      "suggested_source": "image_search",
+      "search_hints": [
+        "Real Madrid formation Mbappé Vinícius",
+        "Madrid 2024 tactical formation"
+      ],
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "img-005",
+      "type": "image",
+      "description": "Pressing heat map or defensive stats graphic",
+      "needed_for_segment": "seg_06_act_3",
+      "suggested_source": "image_search",
+      "search_hints": [
+        "football pressing heat map",
+        "defensive stats graphic football",
+        "pressing efficiency stats"
+      ],
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    },
+    {
+      "asset_id": "img-006",
+      "type": "image",
+      "description": "PSG manager timeline graphic (Tuchel → Pochettino → Galtier → Enrique)",
+      "needed_for_segment": "seg_07_act_4",
+      "suggested_source": "agent_generated",
+      "description_for_generation": "Timeline graphic showing PSG managers: Tuchel (2018-2020), Pochettino (2021-2022), Galtier (2022-2023), Enrique (2023-2024). Bold white text on dark background. Matches reference's graphic template style.",
+      "licensing_flag": "agent_generated",
+      "status": "pending"
+    },
+    {
+      "asset_id": "audio-001",
+      "type": "audio",
+      "description": "Background music bed — analytical/tension mood, no vocals, ~14 minutes loopable",
+      "needed_for_segment": "all",
+      "duration_needed": 840.0,
+      "suggested_source": "image_search_or_stock",
+      "search_hints": [
+        "analytical background music no vocals",
+        "tension background music instrumental",
+        "commentary video background music"
+      ],
+      "licensing_flag": "user_must_verify",
+      "status": "pending"
+    }
+  ],
+  "graphics_agent_will_generate": [
+    {
+      "type": "title_card",
+      "description": "WORLD CUP HERO. CLUB FLOP. — bold white on black, hard cut",
+      "needed_for_segment": "seg_01_cold_open"
+    },
+    {
+      "type": "title_card",
+      "description": "WHY? — bold white on dark background",
+      "needed_for_segment": "seg_02_hook"
+    },
+    {
+      "type": "title_card",
+      "description": "IT'S NOT ABILITY. IT'S CONTEXT.",
+      "needed_for_segment": "seg_03_thesis"
+    },
+    {
+      "type": "comparison_graphic",
+      "description": "FRANCE: WEAPON IN A SYSTEM. CLUBS: SYSTEM AROUND A WEAPON.",
+      "needed_for_segment": "seg_08_act_5"
+    },
+    {
+      "type": "title_card",
+      "description": "THE SYSTEM IS BIGGER THAN THE STAR.",
+      "needed_for_segment": "seg_10_conclusion"
+    },
+    {
+      "type": "timeline_graphic",
+      "description": "PSG manager timeline (Tuchel → Pochettino → Galtier → Enrique)",
+      "needed_for_segment": "seg_07_act_4",
+      "asset_ref": "img-006"
+    }
+  ],
+  "notes": "All assets have licensing_flag: user_must_verify because video clips from YouTube and images from web search may have copyright restrictions. The Researcher sources candidates; the user verifies licensing before the Editor uses them. Law 1: the Researcher does NOT substitute close-enough assets. If an exact match cannot be found, it is flagged."
+}
