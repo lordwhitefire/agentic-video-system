@@ -2,9 +2,11 @@
 
 ## Purpose
 
-A reference-driven video editing system. The user supplies a reference video and a topic. The system analyzes the reference to extract its structure, tells the user what resources to source, the user sources them, the system assembles the final cut, reviews it for fidelity to the reference structure, and delivers it for the user's final corrections.
+A **template-driven** video editing system. The user supplies a reference video and a topic. The system analyzes the reference to extract its STRUCTURAL TEMPLATE (segment structure, pacing curve, cutting rhythm, visual vocabulary, audio structure) — NOT its content. The reference's content is discarded. Only the structural shell is preserved. The system then creates a NEW video on the user's topic, following the reference's template structure.
 
-The system does not source resources itself. The user has eyes, can judge copyright, can judge taste, can judge relevance. The system has judgment for structure, pacing, assembly, and execution — not for procurement.
+**The reference video is a style template, not content to reproduce.** The new video has completely different content — only the structural shell (segment count, pacing, visual style, cutting rhythm) is carried over.
+
+The Researcher agent SOURCES the clips, images, and audio needed for the new video — the user does NOT source. The user only helps if the Researcher cannot find something, and verifies licensing. The user has eyes, can judge copyright, can judge taste, can judge relevance — but the Researcher does the actual searching and downloading.
 
 ## The Flow
 

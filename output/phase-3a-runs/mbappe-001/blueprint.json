@@ -1,4 +1,24 @@
 {
+  "template_framing": {
+    "is_template": true,
+    "what_this_is": "A STRUCTURAL TEMPLATE extracted from the reference video. Captures HOW the reference was made — segment structure, pacing, visual vocabulary, audio structure, cutting rhythm. Does NOT capture WHAT the reference said.",
+    "what_to_preserve": [
+      "10-segment structure (cold_open → hook → thesis → 6 acts → conclusion)",
+      "Cutting rhythm (avg 2.95s/shot, 292 shots over 14:23)",
+      "Pacing curve (fastest at conclusion, slowest at extended B-roll analysis)",
+      "Visual vocabulary (B-roll + studio + graphic overlays, bold white sans-serif text)",
+      "Audio structure (voice commentary + background music bed, 2 layers)",
+      "Form (long-form, ~14 min) and genre (analytical commentary)"
+    ],
+    "what_to_discard": [
+      "The reference's topic (Mbappé at PSG/Real Madrid)",
+      "The reference's opinions, facts, statistics, quotes",
+      "The reference's specific narrative",
+      "The reference's specific B-roll clips",
+      "The reference's specific on-screen text content"
+    ],
+    "how_downstream_agents_use_this": "Map the structural template onto the user's topic. Same segment count, same pacing, same visual style — completely different content."
+  },
   "reference_metadata": {
     "duration": 862.83,
     "duration_formatted": "14:23",
