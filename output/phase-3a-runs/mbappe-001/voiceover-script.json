@@ -1,0 +1,70 @@
+{
+  "run_name": "mbappe-001",
+  "engine": "coqui_xtts_v2",
+  "language": "en",
+  "total_segments": 10,
+  "total_words": 1044,
+  "estimated_total_duration_seconds": 417.6,
+  "segments": [
+    {
+      "segment_id": "SEGMENT 1",
+      "text": "\"Kylian Mbappé has won a World Cup, scored a hat-trick in a World Cup final, and is arguably the deadliest finisher of his generation. He's also never won a Champions League. Same player. Two completely different realities.\"",
+      "estimated_duration_seconds": 14.8,
+      "word_count": 37
+    },
+    {
+      "segment_id": "SEGMENT 2",
+      "text": "\"In 2018, at nineteen, he won the World Cup. In 2022, he scored a hat-trick in the final — the second player ever to do so — after Geoff Hurst in 1966. For France, he's untouchable. But at club level? PSG spent seven years building around him. They never won the Champions League. The season he left, they won it without him. Real Madrid signed him. Same result. Trophies stopped coming.\" \"In this video, we're breaking down exactly why Mbappé performs at World Cups but flops at clubs — and whether he can carry France to another World Cup title.\"",
+      "estimated_duration_seconds": 40.0,
+      "word_count": 100
+    },
+    {
+      "segment_id": "SEGMENT 3",
+      "text": "\"The answer isn't about ability. Mbappé is elite everywhere. It's about context — what the World Cup gives him that club football can't.\"",
+      "estimated_duration_seconds": 9.2,
+      "word_count": 23
+    },
+    {
+      "segment_id": "SEGMENT 4",
+      "text": "\"With France, Mbappé doesn't have to be the system. He's a weapon inside one. Deschamps built a team that doesn't need Mbappé to press, to hold the ball, to pin defenders. They have Giroud for that. They have Griezmann to create. They have a midfield that controls tempo without asking Mbappé to drop deep.\" \"Mbappé's job is simple: stay high, stay left, run behind, finish. That's it. Every other responsibility is handled by players who understand their role and accept it.\" \"At a World Cup, you don't have time for ego. You have seven games. You either fit into the system or you go home. France chose to build a system that fits Mbappé — not the other way around.\"",
+      "estimated_duration_seconds": 48.0,
+      "word_count": 120
+    },
+    {
+      "segment_id": "SEGMENT 5",
+      "text": "\"At club level, the dynamic flips. Clubs sign Mbappé for record money, and suddenly the system has to revolve around him — not because he demands it, but because the investment demands it. The board, the fans, the sponsors all expect the team to be built around the star.\" \"At PSG, that meant a complex power struggle with Neymar and Messi — not simple accommodation, but competing egos and tactical disagreements. At Madrid, it meant Vinícius Jr. — who had spent three years making the left wing the most dangerous corridor in world football — had to form a fluid partnership rather than own the space.\" \"The result was the same at both clubs: two left-side attackers chasing the same five yards of grass. No partnership. No link play. Just two players running parallel careers on the same team.\" \"And the player who paid the biggest price wasn't either of them. It was the midfielder — Bellingham at Madrid, Verratti at PSG — who had to drop deeper, cover wider, fill the structural holes that Mbappé's presence created.\"",
+      "estimated_duration_seconds": 71.2,
+      "word_count": 178
+    },
+    {
+      "segment_id": "SEGMENT 6",
+      "text": "\"The numbers tell the story. When the striker at the top of the press doesn't press, the line behind him doesn't hold. Pressing efficiency drops. Defensive recoveries drop. The team starts defending from a position of constant emergency.\" \"At Madrid, when Mbappé was absent, the win percentage climbed to around 83% — compared to 71% with him in the squad. The shape came back. Vinícius found his territory again. The team remembered it had a function as a unit. When Mbappé returned, the problems returned with him.\" \"This isn't a criticism of Mbappé's ability. He's one of the most lethal finishers the game has produced. But elite finishing and elite teamwork aren't the same thing. And when the system has to bend around one player, the structure breaks.\" \"At a World Cup, there's no time for this to happen. Seven games. The system is fixed. The roles are clear. Nobody has time to bend.\"",
+      "estimated_duration_seconds": 61.6,
+      "word_count": 154
+    },
+    {
+      "segment_id": "SEGMENT 7",
+      "text": "\"The pattern is unmistakable. At PSG: Tuchel built a structured side, took them to a Champions League final, was forced to apologize to Mbappé for holding him accountable. He left. Pochettino stopped coaching, started managing personalities. Galtier lasted a year. Enrique won everything the season Mbappé left.\" \"At Madrid: Ancelotti's dressing room harmony never recovered. Alonso was fired mid-season because the locker room fractured — and the fracture ran through Mbappé.\" \"But with France? Deschamps has been there since 2012. Thirteen years. He's never been forced out. He's never had to apologize. Why? Because with France, Mbappé accepts the system. He doesn't have a choice. The World Cup is every four years. You don't get to reshape a national team around your preferences — you fit in, or you watch from home.\"",
+      "estimated_duration_seconds": 52.8,
+      "word_count": 132
+    },
+    {
+      "segment_id": "SEGMENT 8",
+      "text": "\"The reason France gets the best version of Mbappé is simple: they don't ask him to be the system. They ask him to be a weapon inside one. The system is bigger than any player. The badge is bigger than the brand.\" \"At clubs, that equation flips. The investment, the wage, the marketing — it all demands the team revolve around the star. And once that message lands, no tactical setup in the world fixes it.\"",
+      "estimated_duration_seconds": 30.4,
+      "word_count": 76
+    },
+    {
+      "segment_id": "SEGMENT 9",
+      "text": "\"So can Mbappé carry France to another World Cup? The answer is: he doesn't have to carry them. That's the point. France doesn't need Mbappé to carry them. They need him to finish. To stay high. To run behind. To do the one thing he does better than anyone alive.\" \"The question isn't whether Mbappé will show up at the World Cup. He always shows up at World Cups. The question is whether France can keep giving him the context that lets him thrive — the fixed system, the clear roles, the team that doesn't ask him to be something he's not.\" \"If they can, he'll score goals. If they can't — if the national team starts to bend around him the way clubs do — then the same pattern that broke PSG and Madrid will break France too.\"",
+      "estimated_duration_seconds": 55.6,
+      "word_count": 139
+    },
+    {
+      "segment_id": "SEGMENT 10",
+      "text": "\"Mbappé isn't broken. He's the same player everywhere — elite, lethal, decisive. What changes is the context. World Cups give him a system he can't break. Clubs give him a system that breaks around him.\" \"The data doesn't lie. At World Cups, he's a champion. At clubs, he's a symptom. The question for the next World Cup isn't about Mbappé. It's about whether France can resist the urge to do what every club has done — and let the system stay bigger than the star.\"",
+      "estimated_duration_seconds": 34.0,
+      "word_count": 85
+    }
+  ]
+}
