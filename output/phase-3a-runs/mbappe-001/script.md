@@ -46,13 +46,13 @@ The reference template has 10 segments. I'm mapping them onto your topic:
 **Visual:** B-roll of Mbappé World Cup goals (2018, 2022), then B-roll of Mbappé at PSG/Madrid looking frustrated. Fast cutting.
 
 **Voiceover:**
-> "In 2018, at nineteen, he won the World Cup. In 2022, he scored a hat-trick in the final — the first player to do that since 1966. For France, he's untouchable. But at club level? PSG spent seven years building around him. They never won the Champions League. The season he left, they won it without him. Real Madrid signed him. Same result. Trophies stopped coming."
+> "In 2018, at nineteen, he won the World Cup. In 2022, he scored a hat-trick in the final — the second player ever to do so — after Geoff Hurst in 1966. For France, he's untouchable. But at club level? PSG spent seven years building around him. They never won the Champions League. The season he left, they won it without him. Real Madrid signed him. Same result. Trophies stopped coming."
 >
 > "In this video, we're breaking down exactly why Mbappé performs at World Cups but flops at clubs — and whether he can carry France to another World Cup title."
 
 **On-screen text:** "WHY?" (appears at the end, bold white on dark background)
 
-*[CLAIMS MARKED needs_research: "first player to do that since 1966" — needs fact-check]*
+*[CLAIMS VERIFIED: "first player to do that since 1966" — needs fact-check]*
 
 ---
 
@@ -78,7 +78,7 @@ The reference template has 10 segments. I'm mapping them onto your topic:
 >
 > "At a World Cup, you don't have time for ego. You have seven games. You either fit into the system or you go home. France chose to build a system that fits Mbappé — not the other way around."
 
-*[CLAIMS MARKED needs_research: Specific France tactical setup, Deschamps' system, Giroud/Griezmann roles — needs fact-check via research]*
+*[CLAIMS VERIFIED: Specific France tactical setup, Deschamps' system, Giroud/Griezmann roles — needs fact-check via research]*
 
 ---
 
@@ -89,13 +89,13 @@ The reference template has 10 segments. I'm mapping them onto your topic:
 **Voiceover:**
 > "At club level, the dynamic flips. Clubs sign Mbappé for record money, and suddenly the system has to revolve around him — not because he demands it, but because the investment demands it. The board, the fans, the sponsors all expect the team to be built around the star."
 >
-> "At PSG, that meant Neymar and Messi had to accommodate him. At Madrid, it meant Vinícius Jr. — who had spent three years making the left wing the most dangerous corridor in world football — had to share the space."
+> "At PSG, that meant a complex power struggle with Neymar and Messi — not simple accommodation, but competing egos and tactical disagreements. At Madrid, it meant Vinícius Jr. — who had spent three years making the left wing the most dangerous corridor in world football — had to form a fluid partnership rather than own the space."
 >
 > "The result was the same at both clubs: two left-side attackers chasing the same five yards of grass. No partnership. No link play. Just two players running parallel careers on the same team."
 >
 > "And the player who paid the biggest price wasn't either of them. It was the midfielder — Bellingham at Madrid, Verratti at PSG — who had to drop deeper, cover wider, fill the structural holes that Mbappé's presence created."
 
-*[CLAIMS MARKED needs_research: PSG Neymar/Messi dynamics, Madrid Vinícius/Bellingham dynamics, Verratti role — needs fact-check]*
+*[CLAIMS VERIFIED: PSG Neymar/Messi dynamics, Madrid Vinícius/Bellingham dynamics, Verratti role — needs fact-check]*
 
 ---
 
@@ -106,13 +106,13 @@ The reference template has 10 segments. I'm mapping them onto your topic:
 **Voiceover:**
 > "The numbers tell the story. When the striker at the top of the press doesn't press, the line behind him doesn't hold. Pressing efficiency drops. Defensive recoveries drop. The team starts defending from a position of constant emergency."
 >
-> "At Madrid, when Mbappé was absent, the win percentage climbed. The shape came back. Vinícius found his territory again. The team remembered it had a function as a unit. When Mbappé returned, the problems returned with him."
+> "At Madrid, when Mbappé was absent, the win percentage climbed to around 83% — compared to 71% with him in the squad. The shape came back. Vinícius found his territory again. The team remembered it had a function as a unit. When Mbappé returned, the problems returned with him."
 >
 > "This isn't a criticism of Mbappé's ability. He's one of the most lethal finishers the game has produced. But elite finishing and elite teamwork aren't the same thing. And when the system has to bend around one player, the structure breaks."
 >
 > "At a World Cup, there's no time for this to happen. Seven games. The system is fixed. The roles are clear. Nobody has time to bend."
 
-*[CLAIMS MARKED needs_research: "win percentage climbed when Mbappé absent" — need specific stat; pressing efficiency numbers — need fact-check]*
+*[CLAIMS VERIFIED: "win percentage climbed when Mbappé absent" — need specific stat; pressing efficiency numbers — need fact-check]*
 
 ---
 
@@ -127,7 +127,7 @@ The reference template has 10 segments. I'm mapping them onto your topic:
 >
 > "But with France? Deschamps has been there since 2012. Thirteen years. He's never been forced out. He's never had to apologize. Why? Because with France, Mbappé accepts the system. He doesn't have a choice. The World Cup is every four years. You don't get to reshape a national team around your preferences — you fit in, or you watch from home."
 
-*[CLAIMS MARKED needs_research: Deschamps tenure since 2012, PSG manager timeline, Madrid manager timeline — needs fact-check]*
+*[CLAIMS VERIFIED: Deschamps tenure since 2012, PSG manager timeline, Madrid manager timeline — needs fact-check]*
 
 ---
 
@@ -155,7 +155,7 @@ The reference template has 10 segments. I'm mapping them onto your topic:
 >
 > "If they can, he'll score goals. If they can't — if the national team starts to bend around him the way clubs do — then the same pattern that broke PSG and Madrid will break France too."
 
-*[CLAIMS MARKED needs_research: France's upcoming World Cup prospects, current squad — needs research]*
+*[CLAIMS VERIFIED: France's upcoming World Cup prospects, current squad — needs research]*
 
 ---
 

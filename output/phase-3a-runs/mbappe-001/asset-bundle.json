@@ -1,0 +1,128 @@
+{
+  "bundle_metadata": {
+    "run_name": "mbappe-001",
+    "compiled_by": "Researcher agent",
+    "compiled_at": "2026-07-09",
+    "manifest_ref": "output/phase-3a-runs/mbappe-001/manifest.json"
+  },
+  "fact_checks": {
+    "total_claims": 6,
+    "confirmed": 1,
+    "partially_accurate": 5,
+    "results_path": "output/phase-3a-runs/mbappe-001/assets/fact-checks/results.json",
+    "script_corrections_applied": true,
+    "script_path": "output/phase-3a-runs/mbappe-001/script.md"
+  },
+  "images": {
+    "total_requested": 6,
+    "sourced": 5,
+    "verified": 4,
+    "needs_user_verification": 1,
+    "items": [
+      {
+        "asset_id": "img-001",
+        "status": "sourced",
+        "query": "Mbappé World Cup celebration France goal",
+        "local_path": "assets/images/mbappe-world-cup-celebration.jpg",
+        "source_url": "https://sfile.chatglm.cn/images-ppt/83644461b811.jpg",
+        "source_site": "Alamy",
+        "size_kb": 168.4,
+        "licensing_flag": "user_must_verify",
+        "content_verified": true,
+        "verification_note": "VLM verified: Mbappé in France jersey celebrating on field."
+      },
+      {
+        "asset_id": "img-002",
+        "status": "sourced",
+        "query": "Mbappé frustrated disappointed PSG Real Madrid",
+        "local_path": "assets/images/mbappe-club-frustration.jpg",
+        "source_url": "https://sfile.chatglm.cn/images-ppt/4e36904d91ff.jpg",
+        "source_site": "Yahoo Sports UK",
+        "size_kb": 202.2,
+        "licensing_flag": "user_must_verify",
+        "content_verified": true,
+        "verification_note": "VLM verified: Mbappé in Real Madrid jersey, looking down, frustrated expression."
+      },
+      {
+        "asset_id": "img-003",
+        "status": "sourced",
+        "query": "France national team formation tactical 4-2-3-1 World Cup",
+        "local_path": "assets/images/france-tactical-formation.png",
+        "source_url": "https://sfile.chatglm.cn/images-ppt/02d955bf80cb.png",
+        "source_site": "ny times",
+        "size_kb": 31.7,
+        "licensing_flag": "user_must_verify",
+        "content_verified": true,
+        "verification_note": "VLM verified: France predicted starting XI 4-2-3-1 formation graphic."
+      },
+      {
+        "asset_id": "img-004",
+        "status": "sourced",
+        "query": "Real Madrid formation tactical Mbappé Vinícius left wing",
+        "local_path": "assets/images/madrid-formation-mbappe-vinicius.png",
+        "source_url": "https://sfile.chatglm.cn/images-ppt/9f3afd63299e.png",
+        "source_site": "Reddit",
+        "size_kb": 139.7,
+        "licensing_flag": "user_must_verify",
+        "content_verified": true,
+        "verification_note": "VLM verified: Heat map comparing Mbappé and Vinícius Jr's season activity. Actually BETTER than a formation graphic — directly shows the left-wing overlap/collision issue.",
+        "updated_description": "Heat map comparing Mbappé and Vinícius Jr's activity — shows left-wing overlap"
+      },
+      {
+        "asset_id": "img-005",
+        "status": "sourced",
+        "query": "football pressing heat map tactical graphic",
+        "local_path": "assets/images/pressing-stats-graphic.png",
+        "source_url": "https://sfile.chatglm.cn/images-ppt/c2522603fae7.png",
+        "source_site": "ny times",
+        "size_kb": 452.6,
+        "licensing_flag": "user_must_verify",
+        "content_verified": false,
+        "verification_note": "Re-sourced with better query. Needs VLM verification."
+      }
+    ]
+  },
+  "clips": {
+    "total_requested": 17,
+    "sourced": 0,
+    "status": "FLAGGED — video clips cannot be sourced by image search. These require YouTube download or stock footage search. The Researcher flags this as a gap — the user must source video clips manually, or we use AI video generation tools as an alternative.",
+    "law_1_note": "The Researcher does NOT substitute close-enough clips. Video clips from YouTube require yt-dlp and cannot be verified content without watching. Per Law 1, the Researcher flags this rather than guessing.",
+    "recommended_action": "User sources video clips from YouTube using the search_hints in the Manifest. Alternatively, use AI video generation (z-ai video) for B-roll — but this requires a different aesthetic approach."
+  },
+  "audio": {
+    "total_requested": 1,
+    "sourced": 0,
+    "status": "FLAGGED — background music bed requires a royalty-free music source. The Researcher cannot source copyrighted music. Options: (1) user provides royalty-free track, (2) use AI music generation, (3) use silence with voice-only (simpler for first test).",
+    "recommended_action": "For first test run, use voice-only (no music bed). The template's music bed is a refinement — the structure works without it. Add music in a later iteration."
+  },
+  "graphics_agent_will_generate": [
+    "Title cards: 'WORLD CUP HERO. CLUB FLOP.', 'WHY?', 'IT'S NOT ABILITY. IT'S CONTEXT.', 'THE SYSTEM IS BIGGER THAN THE STAR.'",
+    "Comparison graphic: 'FRANCE: WEAPON IN A SYSTEM. CLUBS: SYSTEM AROUND A WEAPON.'",
+    "PSG manager timeline (Tuchel → Pochettino → Galtier → Enrique)"
+  ],
+  "open_flags": [
+    {
+      "flag_id": "research-001",
+      "category": "clips_not_sourced",
+      "description": "17 video clips could not be sourced by the Researcher. Video clips require YouTube download (yt-dlp) or stock footage search, which are not available as image-search tools.",
+      "options": [
+        "User sources clips manually using Manifest search_hints",
+        "Use AI video generation (z-ai video) for B-roll — different aesthetic",
+        "Use the sourced still images as Ken Burns effect (zoom/pan on stills) instead of video clips",
+        "Skip B-roll for first test — voice + title cards only"
+      ],
+      "request": "user_decision"
+    },
+    {
+      "flag_id": "research-002",
+      "category": "audio_not_sourced",
+      "description": "Background music bed could not be sourced. Royalty-free music requires a specific source.",
+      "options": [
+        "User provides royalty-free track",
+        "Use AI music generation",
+        "Skip music for first test — voice only"
+      ],
+      "request": "user_decision"
+    }
+  ]
+}

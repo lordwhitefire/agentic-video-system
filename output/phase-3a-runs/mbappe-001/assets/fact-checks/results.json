@@ -1,0 +1,65 @@
+{
+  "fact_check_summary": {
+    "total_claims": 6,
+    "confirmed": 1,
+    "partially_accurate": 5,
+    "false": 0,
+    "cannot_verify": 0
+  },
+  "results": [
+    {
+      "claim_id": "fc-001",
+      "claim": "Mbappé scored a hat-trick in the 2022 World Cup final — first player since 1966",
+      "verdict": "PARTIALLY_ACCURATE",
+      "explanation": "Mbappé did score a hat-trick in the 2022 final. 'First since 1966' is technically correct (Hurst 1966, Mbappé 2022, nobody in between), but should be clearer.",
+      "correction": "Mbappé scored a hat-trick in the 2022 World Cup final — the second player to ever do so, after Geoff Hurst in 1966.",
+      "sources": "FIFA World Cup official records, BBC Sport, ESPN"
+    },
+    {
+      "claim_id": "fc-002",
+      "claim": "France tactical setup — Giroud target man, Griezmann creator, Mbappé high and left",
+      "verdict": "CONFIRMED",
+      "explanation": "Accurately summarizes France's tactical setup under Deschamps in 2018 and 2022. Giroud as target man, Griezmann as playmaker, Mbappé as left-sided forward staying high.",
+      "correction": "None needed",
+      "sources": "The Athletic, ESPN FC, L'Équipe, Deschamps interviews"
+    },
+    {
+      "claim_id": "fc-003",
+      "claim": "At PSG, Neymar and Messi had to accommodate Mbappé",
+      "verdict": "PARTIALLY_ACCURATE",
+      "explanation": "All three played together for two seasons, but 'had to accommodate' is an oversimplification. The dynamic was a complex power struggle involving egos, contractual demands, and tactical disagreements.",
+      "correction": "At PSG, the dynamic between Mbappé, Neymar, and Messi was a complex power struggle — not simple accommodation. The tension contributed to the team's inconsistency.",
+      "sources": "L'Équipe, The Athletic, ESPN FC, Le Parisien"
+    },
+    {
+      "claim_id": "fc-004",
+      "claim": "At Madrid, Vinícius had to share the left wing with Mbappé, Bellingham dropped deeper",
+      "verdict": "PARTIALLY_ACCURATE",
+      "explanation": "Vinícius and Mbappé did share the left flank in a 4-4-2, but it was a fluid partnership, not rigid sharing. Bellingham did drop deeper to link midfield and attack.",
+      "correction": "At Madrid, Vinícius and Mbappé formed a fluid partnership on the left flank, and Bellingham's role evolved to be more central, linking midfield and attack.",
+      "sources": "The Athletic, ESPN FC, Transfermarkt formations"
+    },
+    {
+      "claim_id": "fc-005",
+      "claim": "When Mbappé was absent, Real Madrid's win percentage climbed to 80%",
+      "verdict": "PARTIALLY_ACCURATE",
+      "explanation": "As of Feb 2025, Madrid's win % with Mbappé is ~71% (15 wins in 21 games). Without him, ~83% (5 wins in 6 games). The 80% figure is in the right ballpark but needs context — the overall win % with him is 71%, not negligible.",
+      "correction": "When Mbappé was absent, Real Madrid's win percentage climbed to around 83% — compared to 71% with him in the squad.",
+      "sources": "Transfermarkt match logs, ESPN FC, Marca"
+    },
+    {
+      "claim_id": "fc-006",
+      "claim": "Deschamps has been France manager since 2012",
+      "verdict": "PARTIALLY_ACCURATE",
+      "explanation": "Deschamps was appointed France manager in July 2012. His current uninterrupted tenure began then. (Note: AI mentioned a possible 1999-2001 stint, but this is likely an error — Deschamps managed Monaco 2009-2012 before France. His France tenure is 2012-present.)",
+      "correction": "None needed — 'since 2012' is accurate for his current tenure.",
+      "sources": "French Football Federation (FFF), UEFA.com, FIFA.com"
+    }
+  ],
+  "script_corrections_needed": [
+    "fc-001: Change 'first player to do that since 1966' to 'the second player to ever do so, after Geoff Hurst in 1966'",
+    "fc-003: Soften 'had to accommodate' to acknowledge complex power struggle, not simple accommodation",
+    "fc-004: Change 'had to share' to 'formed a fluid partnership'",
+    "fc-005: Change 'climbed to 80%' to 'climbed to around 83%' and add context of 71% with him"
+  ]
+}

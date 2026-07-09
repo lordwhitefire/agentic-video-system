@@ -1,0 +1,63 @@
+[
+  {
+    "asset_id": "img-001",
+    "status": "sourced",
+    "query": "Mbapp\u00e9 World Cup celebration France goal",
+    "local_path": "assets/images/mbappe-world-cup-celebration.jpg",
+    "source_url": "https://sfile.chatglm.cn/images-ppt/83644461b811.jpg",
+    "source_site": "Alamy",
+    "size_kb": 168.4,
+    "licensing_flag": "user_must_verify",
+    "content_verified": true,
+    "verification_note": "VLM verified: Mbapp\u00e9 in France jersey celebrating on field."
+  },
+  {
+    "asset_id": "img-002",
+    "status": "sourced",
+    "query": "Mbapp\u00e9 frustrated disappointed PSG Real Madrid",
+    "local_path": "assets/images/mbappe-club-frustration.jpg",
+    "source_url": "https://sfile.chatglm.cn/images-ppt/4e36904d91ff.jpg",
+    "source_site": "Yahoo Sports UK",
+    "size_kb": 202.2,
+    "licensing_flag": "user_must_verify",
+    "content_verified": true,
+    "verification_note": "VLM verified: Mbapp\u00e9 in Real Madrid jersey, looking down, frustrated expression."
+  },
+  {
+    "asset_id": "img-003",
+    "status": "sourced",
+    "query": "France national team formation tactical 4-2-3-1 World Cup",
+    "local_path": "assets/images/france-tactical-formation.png",
+    "source_url": "https://sfile.chatglm.cn/images-ppt/02d955bf80cb.png",
+    "source_site": "ny times",
+    "size_kb": 31.7,
+    "licensing_flag": "user_must_verify",
+    "content_verified": true,
+    "verification_note": "VLM verified: France predicted starting XI 4-2-3-1 formation graphic."
+  },
+  {
+    "asset_id": "img-004",
+    "status": "sourced",
+    "query": "Real Madrid formation tactical Mbapp\u00e9 Vin\u00edcius left wing",
+    "local_path": "assets/images/madrid-formation-mbappe-vinicius.png",
+    "source_url": "https://sfile.chatglm.cn/images-ppt/9f3afd63299e.png",
+    "source_site": "Reddit",
+    "size_kb": 139.7,
+    "licensing_flag": "user_must_verify",
+    "content_verified": true,
+    "verification_note": "VLM verified: Heat map comparing Mbapp\u00e9 and Vin\u00edcius Jr's season activity. Actually BETTER than a formation graphic \u2014 directly shows the left-wing overlap/collision issue.",
+    "updated_description": "Heat map comparing Mbapp\u00e9 and Vin\u00edcius Jr's activity \u2014 shows left-wing overlap"
+  },
+  {
+    "asset_id": "img-005",
+    "status": "sourced",
+    "query": "football pressing heat map tactical graphic",
+    "local_path": "assets/images/pressing-stats-graphic.png",
+    "source_url": "https://sfile.chatglm.cn/images-ppt/c2522603fae7.png",
+    "source_site": "ny times",
+    "size_kb": 452.6,
+    "licensing_flag": "user_must_verify",
+    "content_verified": false,
+    "verification_note": "Re-sourced with better query. Needs VLM verification."
+  }
+]
