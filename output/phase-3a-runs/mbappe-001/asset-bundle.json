@@ -84,16 +84,91 @@
   },
   "clips": {
     "total_requested": 17,
-    "sourced": 0,
-    "status": "FLAGGED — video clips cannot be sourced by image search. These require YouTube download or stock footage search. The Researcher flags this as a gap — the user must source video clips manually, or we use AI video generation tools as an alternative.",
-    "law_1_note": "The Researcher does NOT substitute close-enough clips. Video clips from YouTube require yt-dlp and cannot be verified content without watching. Per Law 1, the Researcher flags this rather than guessing.",
-    "recommended_action": "User sources video clips from YouTube using the search_hints in the Manifest. Alternatively, use AI video generation (z-ai video) for B-roll — but this requires a different aesthetic approach."
+    "sourced": 17,
+    "verified_by_vlm": 10,
+    "partial_match": 2,
+    "first_frame_mismatch": 5,
+    "status": "ALL CLIPS SOURCED. VLM verified first frames. Some clips' first frames don't match intended purpose — Editor should scrub through later frames to find the right moment, or use clips as context if the specific moment isn't found.",
+    "law_1_note": "VLM only checked first frame. The Editor (next agent) will scrub through each clip to find the best moment. If a clip genuinely doesn't contain the needed content, the Editor will flag it.",
+    "verification_details": {
+      "clip-001": {
+        "match": "YES",
+        "note": "Mbappé in France jersey #10 on field with crowd. Correct."
+      },
+      "clip-002": {
+        "match": "YES",
+        "note": "Mbappé in white PSG jersey #7, focused expression. Correct."
+      },
+      "clip-003": {
+        "match": "YES",
+        "note": "Wide shot of 2018 World Cup Final pitch with players in action. Correct."
+      },
+      "clip-004": {
+        "match": "YES",
+        "note": "Mbappé in France jersey with captain's armband, serious expression. Correct."
+      },
+      "clip-005": {
+        "match": "NO",
+        "note": "First frame shows blurred player in yellow jersey. May not be PSG UCL failure. FLAG: Editor should check later frames or this clip may be mislabeled. Duration only 10s — shortest of all clips."
+      },
+      "clip-006": {
+        "match": "YES",
+        "note": "Mbappé in white Real Madrid jersey on ground near ball, Liverpool player nearby. Correct — shows struggle."
+      },
+      "clip-007": {
+        "match": "YES",
+        "note": "Wide shot of France match with players including #10. Correct — shows team context."
+      },
+      "clip-008": {
+        "match": "NO",
+        "note": "First frame shows match with score 'FRA 1-0 SWE' and players celebrating. This is a France match but doesn't clearly show Deschamps. FLAG: Editor should look for Deschamps in later frames, or this may be match footage not sideline footage."
+      },
+      "clip-009": {
+        "match": "NO",
+        "note": "First frame shows player in gray PSG training kit running near goal. Doesn't clearly show the MNM trio together. FLAG: Editor should check later frames for Neymar/Messi, or use as PSG training context."
+      },
+      "clip-010": {
+        "match": "NO",
+        "note": "First frame shows Mbappé in Real Madrid match with 'MBAPPE' text. Doesn't clearly show Vinícius overlap. FLAG: Editor should check later frames for the tactical overlap moment."
+      },
+      "clip-011": {
+        "match": "PARTIAL",
+        "note": "Real Madrid player (likely Bellingham) in a match. Partially matches — need to verify it's Bellingham and shows him dropping deep."
+      },
+      "clip-012": {
+        "match": "PARTIAL",
+        "note": "Real Madrid players in defensive phase. Partially matches — need to verify Mbappé is visible and not pressing. Note: low resolution (668x480)."
+      },
+      "clip-013": {
+        "match": "YES",
+        "note": "PSG manager Tuchel on the bench. Correct."
+      },
+      "clip-014": {
+        "match": "YES",
+        "note": "Real Madrid manager Ancelotti at tactical board. Correct."
+      },
+      "clip-015": {
+        "match": "YES",
+        "note": "France team huddle with flags. Correct — shows unity."
+      },
+      "clip-016": {
+        "match": "NO",
+        "note": "First frame shows Mbappé in France kit holding a ball. Doesn't show 'determined' expression clearly. FLAG: Editor should check later frames for a more determined/portrait moment, or use as France context."
+      },
+      "clip-017": {
+        "match": "YES",
+        "note": "World Cup trophy close-up. Correct."
+      }
+    }
   },
   "audio": {
     "total_requested": 1,
-    "sourced": 0,
-    "status": "FLAGGED — background music bed requires a royalty-free music source. The Researcher cannot source copyrighted music. Options: (1) user provides royalty-free track, (2) use AI music generation, (3) use silence with voice-only (simpler for first test).",
-    "recommended_action": "For first test run, use voice-only (no music bed). The template's music bed is a refinement — the structure works without it. Add music in a later iteration."
+    "sourced": 1,
+    "status": "SOURCED. Background music track (2:40 / 144s). Note: video is ~12-14 min, music is 2:40 — Editor will need to loop the track or extend it.",
+    "file": "output/phase-3a-runs/mbappe-001/assets/audio/audio-001-background-music.mp3",
+    "duration_seconds": 144.1,
+    "looping_required": true,
+    "looping_note": "Music track is 2:40, video will be ~12-14 min. Editor should loop the track 5-6 times, or use it for key segments only and leave silence elsewhere."
   },
   "graphics_agent_will_generate": [
     "Title cards: 'WORLD CUP HERO. CLUB FLOP.', 'WHY?', 'IT'S NOT ABILITY. IT'S CONTEXT.', 'THE SYSTEM IS BIGGER THAN THE STAR.'",
@@ -102,27 +177,34 @@
   ],
   "open_flags": [
     {
-      "flag_id": "research-001",
-      "category": "clips_not_sourced",
-      "description": "17 video clips could not be sourced by the Researcher. Video clips require YouTube download (yt-dlp) or stock footage search, which are not available as image-search tools.",
-      "options": [
-        "User sources clips manually using Manifest search_hints",
-        "Use AI video generation (z-ai video) for B-roll — different aesthetic",
-        "Use the sourced still images as Ken Burns effect (zoom/pan on stills) instead of video clips",
-        "Skip B-roll for first test — voice + title cards only"
+      "flag_id": "research-003",
+      "category": "clip_first_frame_mismatch",
+      "description": "5 clips' first frames don't clearly match the intended purpose. Editor should scrub through each clip to find the right moment.",
+      "clips_flagged": [
+        "clip-005",
+        "clip-008",
+        "clip-009",
+        "clip-010",
+        "clip-016"
       ],
-      "request": "user_decision"
+      "request": "editor_review"
     },
     {
-      "flag_id": "research-002",
-      "category": "audio_not_sourced",
-      "description": "Background music bed could not be sourced. Royalty-free music requires a specific source.",
-      "options": [
-        "User provides royalty-free track",
-        "Use AI music generation",
-        "Skip music for first test — voice only"
-      ],
-      "request": "user_decision"
+      "flag_id": "research-004",
+      "category": "audio_looping_needed",
+      "description": "Music track is 2:40 but video is ~12-14 min. Editor must loop or extend.",
+      "request": "editor_handling"
     }
-  ]
+  ],
+  "researcher_summary": {
+    "status": "COMPLETE",
+    "fact_checks": "6/6 done, all corrections applied to script",
+    "images_sourced": "5/6 (VLM verified)",
+    "clips_sourced": "17/17 (user-sourced, VLM first-frame verified)",
+    "audio_sourced": "1/1 (user-sourced, looping needed)",
+    "graphics_to_generate": "6 (Editor will generate)",
+    "open_flags": 2,
+    "ready_for_editor": true,
+    "handoff_note": "All assets sourced. Editor agent should now: (1) scrub through flagged clips to find best moments, (2) generate title cards and graphics, (3) cut the video following the Blueprint template, (4) generate TTS voice track, (5) composite everything."
+  }
 }
