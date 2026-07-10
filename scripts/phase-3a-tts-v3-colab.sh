@@ -58,6 +58,50 @@ print(f"Loaded {len(chunks)} chunks, {data['total_words']} words total")
 print(f"Max tokens per chunk: {max(c['estimated_tokens'] for c in chunks)}")
 print()
 
+# Re-chunk: split any chunk over 200 characters into sub-chunks at sentence boundaries
+import re
+new_chunks = []
+for c in chunks:
+    text = c["text"]
+    if text.startswith('"') and text.endswith('"'):
+        text = text[1:-1]
+    if len(text) <= 200:
+        new_chunks.append(c)
+        continue
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    sub_id = 1
+    buffer = ""
+    for s in sentences:
+        s = s.strip()
+        if not s:
+            continue
+        test = (buffer + " " + s).strip()
+        if len(test) > 200 and buffer:
+            words = len(buffer.split())
+            new_chunks.append({
+                "segment_id": c["segment_id"],
+                "chunk_id": f"{c['chunk_id']}.{sub_id}",
+                "text": f'"{buffer}"',
+                "word_count": words,
+                "estimated_tokens": round(words * 1.3)
+            })
+            sub_id += 1
+            buffer = s
+        else:
+            buffer = test
+    if buffer:
+        words = len(buffer.split())
+        new_chunks.append({
+            "segment_id": c["segment_id"],
+            "chunk_id": f"{c['chunk_id']}.{sub_id}",
+            "text": f'"{buffer}"',
+            "word_count": words,
+            "estimated_tokens": round(words * 1.3)
+        })
+chunks = new_chunks
+print(f"After re-chunking: {len(chunks)} chunks (all <=200 chars)")
+print()
+
 # Group chunks by segment
 from collections import defaultdict
 seg_chunks = defaultdict(list)

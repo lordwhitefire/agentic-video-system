@@ -1,0 +1,74 @@
+{
+  "run_name": "mbappe-001",
+  "version": "v3-chunked",
+  "engine": "coqui_xtts_v2",
+  "device": "cuda",
+  "voice_sample": "voice-samples/my-voice-v1.wav",
+  "total_segments": 10,
+  "total_duration_seconds": 657.88,
+  "total_chunks": 65,
+  "max_tokens_per_chunk": 52,
+  "segments": [
+    {
+      "index": 1,
+      "segment_id": "SEGMENT 1",
+      "file": "/content/drive/MyDrive/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/tts/segment_01.wav",
+      "duration": 8.032667
+    },
+    {
+      "index": 2,
+      "segment_id": "SEGMENT 10",
+      "file": "/content/drive/MyDrive/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/tts/segment_02.wav",
+      "duration": 32.354
+    },
+    {
+      "index": 3,
+      "segment_id": "SEGMENT 2",
+      "file": "/content/drive/MyDrive/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/tts/segment_03.wav",
+      "duration": 43.672
+    },
+    {
+      "index": 4,
+      "segment_id": "SEGMENT 3",
+      "file": "/content/drive/MyDrive/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/tts/segment_04.wav",
+      "duration": 12.256667
+    },
+    {
+      "index": 5,
+      "segment_id": "SEGMENT 4",
+      "file": "/content/drive/MyDrive/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/tts/segment_05.wav",
+      "duration": 76.336
+    },
+    {
+      "index": 6,
+      "segment_id": "SEGMENT 5",
+      "file": "/content/drive/MyDrive/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/tts/segment_06.wav",
+      "duration": 127.635333
+    },
+    {
+      "index": 7,
+      "segment_id": "SEGMENT 6",
+      "file": "/content/drive/MyDrive/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/tts/segment_07.wav",
+      "duration": 110.876667
+    },
+    {
+      "index": 8,
+      "segment_id": "SEGMENT 7",
+      "file": "/content/drive/MyDrive/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/tts/segment_08.wav",
+      "duration": 130.728667
+    },
+    {
+      "index": 9,
+      "segment_id": "SEGMENT 8",
+      "file": "/content/drive/MyDrive/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/tts/segment_09.wav",
+      "duration": 46.595333
+    },
+    {
+      "index": 10,
+      "segment_id": "SEGMENT 9",
+      "file": "/content/drive/MyDrive/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/tts/segment_10.wav",
+      "duration": 69.390667
+    }
+  ],
+  "full_track_file": "output/phase-3a-runs/mbappe-001/assets/tts/voice-track-full-v3.wav"
+}
