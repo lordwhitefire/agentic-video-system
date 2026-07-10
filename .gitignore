@@ -1,3 +1,4 @@
 
 # Phase 3a — raw audio WAVs are too large for GitHub, exclude them
 output/phase-3a-runs/*/perception/audio/full-audio.wav
+output/phase-3a-runs/*/output/*.mp4
