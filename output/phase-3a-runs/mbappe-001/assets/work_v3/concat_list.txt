@@ -1,0 +1,2 @@
+file '/home/z/my-project/repos/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/work_v3/seg04_sub00.mp4'
+file '/home/z/my-project/repos/agentic-video-system/output/phase-3a-runs/mbappe-001/assets/work_v3/seg04_sub01.mp4'
