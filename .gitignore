@@ -1,5 +1,16 @@
-
-# Phase 3a — raw audio WAVs are too large for GitHub, exclude them
-output/phase-3a-runs/*/perception/audio/full-audio.wav
-output/phase-3a-runs/*/assets/work_v3/
+# Phase 3a — video/audio files are too large for GitHub, exclude them
+output/phase-3a-runs/*/assets/clips/
+output/phase-3a-runs/*/assets/authoritative-clips/
 output/phase-3a-runs/*/assets/work/
+output/phase-3a-runs/*/assets/work_v3/
+output/phase-3a-runs/*/assets/tts/*.wav
+output/phase-3a-runs/*/assets/tts/*v3*.wav
+output/phase-3a-runs/*/assets/audio/
+output/phase-3a-runs/*/output/*.mp4
+
+# Reference video files
+test-reference*.mp4
+
+# OS files
+.DS_Store
+Thumbs.db
