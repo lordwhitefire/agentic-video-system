@@ -4,78 +4,77 @@
   "device": "cuda",
   "voice_sample": "voice-samples/my-voice-v1.wav",
   "total_segments": 10,
-  "total_duration_seconds": 442.34,
-  "total_duration_formatted": "7:22",
+  "total_duration_seconds": 748.66,
   "segments": [
     {
       "index": 1,
       "segment_id": "SEGMENT 1",
       "file": "output/phase-3a-runs/mbappe-001/assets/tts/segment_01_segment_1.wav",
-      "duration": 13.6,
-      "word_count": 37
+      "duration": 8.35,
+      "word_count": 14
     },
     {
       "index": 2,
       "segment_id": "SEGMENT 2",
       "file": "output/phase-3a-runs/mbappe-001/assets/tts/segment_02_segment_2.wav",
-      "duration": 45.33,
-      "word_count": 100
+      "duration": 52.97,
+      "word_count": 118
     },
     {
       "index": 3,
       "segment_id": "SEGMENT 3",
       "file": "output/phase-3a-runs/mbappe-001/assets/tts/segment_03_segment_3.wav",
-      "duration": 9.14,
-      "word_count": 23
+      "duration": 11.37,
+      "word_count": 28
     },
     {
       "index": 4,
       "segment_id": "SEGMENT 4",
       "file": "output/phase-3a-runs/mbappe-001/assets/tts/segment_04_segment_4.wav",
-      "duration": 48.81,
-      "word_count": 120
+      "duration": 92.45,
+      "word_count": 211
     },
     {
       "index": 5,
       "segment_id": "SEGMENT 5",
       "file": "output/phase-3a-runs/mbappe-001/assets/tts/segment_05_segment_5.wav",
-      "duration": 74.5,
-      "word_count": 178
+      "duration": 126.71,
+      "word_count": 308
     },
     {
       "index": 6,
       "segment_id": "SEGMENT 6",
       "file": "output/phase-3a-runs/mbappe-001/assets/tts/segment_06_segment_6.wav",
-      "duration": 67.52,
-      "word_count": 154
+      "duration": 128.19,
+      "word_count": 283
     },
     {
       "index": 7,
       "segment_id": "SEGMENT 7",
       "file": "output/phase-3a-runs/mbappe-001/assets/tts/segment_07_segment_7.wav",
-      "duration": 66.39,
-      "word_count": 132
+      "duration": 144.17,
+      "word_count": 333
     },
     {
       "index": 8,
       "segment_id": "SEGMENT 8",
       "file": "output/phase-3a-runs/mbappe-001/assets/tts/segment_08_segment_8.wav",
-      "duration": 32.8,
-      "word_count": 76
+      "duration": 63.73,
+      "word_count": 135
     },
     {
       "index": 9,
       "segment_id": "SEGMENT 9",
       "file": "output/phase-3a-runs/mbappe-001/assets/tts/segment_09_segment_9.wav",
-      "duration": 46.62,
-      "word_count": 139
+      "duration": 79.68,
+      "word_count": 205
     },
     {
       "index": 10,
       "segment_id": "SEGMENT 10",
       "file": "output/phase-3a-runs/mbappe-001/assets/tts/segment_10_segment_10.wav",
-      "duration": 37.61,
-      "word_count": 85
+      "duration": 41.03,
+      "word_count": 92
     }
   ],
   "full_track_file": "output/phase-3a-runs/mbappe-001/assets/tts/voice-track-full.wav"
