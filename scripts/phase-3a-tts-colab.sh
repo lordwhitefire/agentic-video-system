@@ -29,7 +29,7 @@ set +e
 # -----------------------------------------------------------------------------
 REPO_DIR="/content/drive/MyDrive/agentic-video-system"
 RUN_NAME="mbappe-001"
-VOICEOVER_JSON="$REPO_DIR/output/phase-3a-runs/$RUN_NAME/voiceover-script.json"
+VOICEOVER_JSON="$REPO_DIR/output/phase-3a-runs/$RUN_NAME/voiceover-script-v2.json"
 OUTPUT_DIR="$REPO_DIR/output/phase-3a-runs/$RUN_NAME/assets/tts"
 VOICE_SAMPLE="$REPO_DIR/voice-samples/my-voice-v1.wav"
 
@@ -52,7 +52,7 @@ echo "[1/6] Verifying prerequisites..."
 
 if [ ! -f "$VOICEOVER_JSON" ]; then
     echo "ERROR: $VOICEOVER_JSON not found."
-    echo "Make sure the repo is on Drive and voiceover-script.json exists."
+    echo "Make sure the repo is on Drive and voiceover-script-v2.json exists."
     exit 1
 fi
 
@@ -93,7 +93,7 @@ echo ""
 # Step 3: Generate voice track (Python script via venv)
 # -----------------------------------------------------------------------------
 echo "[3/6] Generating voice track with Coqui XTTS-v2..."
-echo "  (Reading voiceover-script.json, generating per-segment, concatenating)"
+echo "  (Reading voiceover-script-v2.json, generating per-segment, concatenating)"
 echo ""
 
 cat > /tmp/generate_voice_track.py << 'PYEOF'
@@ -109,7 +109,7 @@ from TTS.api import TTS
 # Paths (from environment)
 REPO_DIR = Path("/content/drive/MyDrive/agentic-video-system")
 RUN_NAME = "mbappe-001"
-VOICEOVER_JSON = REPO_DIR / "output" / "phase-3a-runs" / RUN_NAME / "voiceover-script.json"
+VOICEOVER_JSON = REPO_DIR / "output" / "phase-3a-runs" / RUN_NAME / "voiceover-script-v2.json"
 OUTPUT_DIR = REPO_DIR / "output" / "phase-3a-runs" / RUN_NAME / "assets" / "tts"
 VOICE_SAMPLE = REPO_DIR / "voice-samples" / "my-voice-v1.wav"
 
