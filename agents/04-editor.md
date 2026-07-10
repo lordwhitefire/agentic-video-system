@@ -48,6 +48,16 @@ When invoked:
 - **OpenMontage decision matrix** — when a brief could route to either HyperFrames or Remotion, defer to OpenMontage's `skills/core/hyperframes.md` decision rule. Do not silently swap runtimes.
 - **LottieFiles motion-design-skill** — the taste layer. Apply Disney's 12 principles adapted for UI to whatever runtime fires. Prevents default-eased animation.
 
+
+### Graphic Generation Rules (CRITICAL — v3 update)
+- Graphics are ALWAYS designed compositions that CONTAIN images as elements.
+- NEVER blank background + text alone. NEVER gradient/grid + text alone without an image.
+- The image is an ELEMENT within the composition — not the background.
+- Multiple images can be composed together.
+- Think of it as: [designed background] + [image element(s)] + [text element(s)] + [shapes] = graphic.
+- A graphic WITHOUT an image element is WRONG. Every graphic must include at least one image.
+
+
 ### Video Effects
 - mcp-video effects category — vignette, glow, noise, scanlines, chromatic aberration, luma key, mask, shape mask.
 - FFmpeg Color & Chromakey skill — chroma key, LUT application (.cube/.3dl), curves/levels, white balance, color space conversion (BT.709, BT.2020, HDR), teal-and-orange, vintage looks.
