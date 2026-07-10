@@ -55,7 +55,24 @@ When invoked:
 - The image is an ELEMENT within the composition — not the background.
 - Multiple images can be composed together.
 - Think of it as: [designed background] + [image element(s)] + [text element(s)] + [shapes] = graphic.
-- A graphic WITHOUT an image element is WRONG. Every graphic must include at least one image.
+- A graphic WITHOUT an image element is WRONG.
+
+### Post-Generation Watermark Check (CRITICAL — Error #021)
+After generating ANY graphic or video that contains an image:
+1. Extract a frame from the MIDDLE of the graphic/video (not the first frame — text may not be visible yet)
+2. Run VLM check on the frame: "Are there any visible watermarks, logos, or copyright text on the IMAGE ELEMENT within this graphic?"
+3. If watermarks are found: replace the source image and regenerate the graphic BEFORE committing
+4. NEVER commit a graphic with a watermarked image
+
+This check must happen on the RENDERED OUTPUT, not just the source image. The source image might be clean but a stale version could be used during generation.
+
+### Image No-Reusing Policy (CRITICAL — Error #020)
+- Each graphic must use a DIFFERENT image. Images CANNOT be reused across graphics.
+- Track which images have been used in which graphics.
+- If an image has already been used in a previous graphic, do NOT use it again — find a different image or flag for more to be sourced.
+- Reusing images makes the video feel repetitive and cheap.
+
+ Every graphic must include at least one image.
 
 
 ### Video Effects

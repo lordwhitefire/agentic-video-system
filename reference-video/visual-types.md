@@ -41,6 +41,9 @@ A graphic (same definition as Type 3 — a designed composition with images, ico
 
 1. **Every spoken sentence has a visual.** Nothing is said without something showing on screen.
 2. **No blank background + text alone.** Every graphic is a designed composition, never a solid color or empty frame with text slapped on.
-3. **Graphics can be static or animated.** Static graphic = designed but no motion. Animated graphic = designed and all elements move.
-4. **Animations** explain concepts that footage cannot show (tactical shifts, cause-and-effect chains).
-5. **Video clips** match exactly what the narrator is saying at that moment.
+3. **Every graphic (static AND animated) MUST include at least one image as an element.** The image is NOT the background — it is an element within the composition. Multiple images can be used. A graphic without an image is WRONG.
+4. **No reusing images across graphics.** Each graphic must use a DIFFERENT image. If 15 graphics are needed, source at least 15 distinct images.
+5. **No watermarked images.** After generating any graphic, extract a frame and VLM-check for watermarks on the image element. If found, replace and regenerate BEFORE committing.
+6. **Graphics can be static or animated.** Static graphic = designed but no motion. Animated graphic = designed and all elements move.
+7. **Animations** explain concepts that footage cannot show (tactical shifts, cause-and-effect chains).
+8. **Video clips** match exactly what the narrator is saying at that moment.
