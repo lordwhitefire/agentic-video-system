@@ -1,25 +1,45 @@
-# Final Video Output
+# Final Video Output — mbappe-001
 
-**File:** `mbappe-001-final.mp4`
-**Size:** ~188 MB (exceeds GitHub's 100MB limit — not committed)
-**Duration:** ~7:18 (430.9 seconds)
-**Resolution:** 1920x1080 @ 30fps
-**Audio:** Voice (Coqui XTTS-v2, user's cloned voice) + background music (ducked to 15%)
+## "What's Wrong with Mbappé?"
 
-## Local path (on GLM's environment)
+The final video is split into 2 parts (each under GitHub's 100MB limit):
+
+| File | Duration | Size |
+|------|----------|------|
+| `mbappe-001-part1.mp4` | 3:35 (215s) | 98 MB |
+| `mbappe-001-part2.mp4` | 3:36 (216s) | 83 MB |
+| **Total** | **7:10 (431s)** | **181 MB** |
+
+## How to watch
+
+**Option 1 — Watch parts separately:**
+- Part 1: segments 1-5 (cold open through Act 2)
+- Part 2: segments 6-10 (Act 3 through conclusion)
+
+**Option 2 — Concatenate into one file:**
+```bash
+# Create concat list
+echo "file 'mbappe-001-part1.mp4'" > concat.txt
+echo "file 'mbappe-001-part2.mp4'" >> concat.txt
+
+# Concatenate
+ffmpeg -f concat -safe 0 -i concat.txt -c copy mbappe-001-full.mp4
 ```
-/home/z/my-project/repos/agentic-video-system/output/phase-3a-runs/mbappe-001/output/mbappe-001-final.mp4
-```
+
+## Video specs
+- Resolution: 1920x1080 @ 30fps
+- Video codec: H.264
+- Audio: AAC (voice + background music at 15% volume)
+- Voice: Coqui XTTS-v2 with user's cloned voice
 
 ## Contents
-- 10 segments matching the voice track
-- Title card graphics (bold white sans-serif on colored backgrounds)
-- B-roll from user-sourced video clips + Researcher-sourced images
-- Voice track generated with Coqui XTTS-v2 using user's cloned voice
-- Background music (looped, ducked under voice at 15% volume)
-
-## How to download
-The video is too large for GitHub. To get it:
-1. GLM can upload it to a file-sharing service
-2. Or GLM can split it into parts under 100MB each
-3. Or use Git LFS (not currently set up)
+1. Cold open — Mbappé paradox (World Cup hero, club flop)
+2. Hook — The pattern
+3. Thesis — "It's not ability, it's context"
+4. Act 1 — What the World Cup gives him
+5. Act 2 — Why clubs break around him
+6. Act 3 — The tactical cost
+7. Act 4 — The pattern across clubs and country
+8. Act 5 — Why France doesn't have this problem
+9. Act 6 — The verdict: can he carry this World Cup?
+10. Conclusion — "The system is bigger than the star"
