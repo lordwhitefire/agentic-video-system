@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "disable_built_in_agents": true,
+  "agent": {
+    "directory": "./agents",
+    "disable_built_in": true
+  },
+  "agents": {
+    "built_in": false,
+    "directory": "./agents"
+  },
+  "permissions": {
+    "edit": "allow",
+    "bash": "allow",
+    "webfetch": "allow"
+  }
+}

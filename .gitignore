@@ -8,6 +8,9 @@
 *.mkv
 *.avi
 *.flv
+*.m4a
+*.aac
+*.ogg
 
 # Exceptions — small graphics and animations ARE tracked
 !assets/graphics/*.mp4
@@ -22,6 +25,8 @@ credentials.json
 token.json
 *.env
 .env
+*.key
+*.pem
 
 # Work directories
 work/
@@ -29,13 +34,34 @@ work_v3/
 work_v4/
 output/
 runs/
+scripts/*/output/
+scripts/*/clips/
+scripts/*/images/
+scripts/*/graphics/
+scripts/*/animations/
+scripts/*/animated-graphics/
+scripts/*/effects/
+
+# Project runtime files (regenerated per project, not tracked)
+worklog.md
+*/worklog.md
 
 # Python
 __pycache__/
 *.pyc
 .venv/
+venv/
 *.egg-info/
 
 # Node
 node_modules/
 package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# AgenticSign local config (user-specific, not tracked)
+.agentic-sign.local.json
