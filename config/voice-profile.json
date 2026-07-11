@@ -1,5 +1,5 @@
 {
-  "_comment": "Voice profile config for the Agentic Video Editing System. The TTS agent reads this file at the start of every TTS run. Edit manually only to change default engine or fallback chain — most fields are managed automatically by the TTS agent.",
+  "_comment": "Voice profile config. TTS agent reads this at start of every run. Edit manually to change default engine or fallback chain.",
 
   "default_engine": "coqui_xtts_v2",
 
@@ -29,35 +29,37 @@
       "license": "CPML (non-commercial)",
       "hardware": "GPU",
       "voice_cloning": true,
-      "notes": "Battle-tested. Default during testing. Must be replaced before monetization."
+      "install": "pip install TTS==0.22.0 (Python 3.11 venv via uv)",
+      "notes": "Pin transformers>=4.33,<4.41. Set COQUI_TOS_AGREED=1 and MPLBACKEND=Agg."
     },
     "fish_speech": {
       "role": "license_upgrade_pre_monetization",
       "license": "MIT-ish",
       "hardware": "GPU",
       "voice_cloning": true,
-      "notes": "Cleaner license than Coqui. Switch before monetizing if not ready to pay for ElevenLabs."
+      "install": "github.com/fishaudio/fish-speech"
     },
     "style_tts_2": {
       "role": "quality_option",
       "license": "MIT",
       "hardware": "GPU",
       "voice_cloning": true,
-      "notes": "Best open-source quality. Harder setup. Voice transfer mechanism differs from Coqui/Fish."
+      "install": "github.com/yl4579/StyleTTS2"
     },
     "piper": {
       "role": "cpu_fallback",
       "license": "MIT",
       "hardware": "CPU",
       "voice_cloning": false,
-      "notes": "NO voice cloning. Switching to Piper changes the voice from your clone to a stock Piper voice. Forbidden silently under Law 1 — must be explicitly authorized by user, and user must accept the voice change."
+      "install": "pip install piper-tts",
+      "notes": "NO voice cloning. Switching to Piper changes the voice — Law 7 requires explicit user approval."
     },
     "elevenlabs": {
       "role": "monetization_upgrade",
       "license": "commercial (paid)",
       "hardware": "API",
       "voice_cloning": true,
-      "notes": "Best-in-market voice cloning. API-based. Used when monetizing and willing to pay."
+      "install": "pip install elevenlabs"
     }
   }
 }

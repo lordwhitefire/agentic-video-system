@@ -1,16 +1,41 @@
-# Phase 3a — video/audio files are too large for GitHub, exclude them
-output/phase-3a-runs/*/assets/clips/
-output/phase-3a-runs/*/assets/authoritative-clips/
-output/phase-3a-runs/*/assets/work/
-output/phase-3a-runs/*/assets/work_v3/
-output/phase-3a-runs/*/assets/tts/*.wav
-output/phase-3a-runs/*/assets/tts/*v3*.wav
-output/phase-3a-runs/*/assets/audio/
-output/phase-3a-runs/*/output/*.mp4
+# .gitignore
 
-# Reference video files
-test-reference*.mp4
+# Video/audio files — too large for GitHub, stored on Google Drive
+*.mp4
+*.wav
+*.mp3
+*.mov
+*.mkv
+*.avi
+*.flv
+
+# Exceptions — small graphics and animations ARE tracked
+!assets/graphics/*.mp4
+!assets/animations/*.mp4
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Credentials — NEVER commit
+credentials.json
+token.json
+*.env
+.env
+
+# Work directories
+work/
+work_v3/
+work_v4/
+output/
+runs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Node
+node_modules/
+package-lock.json

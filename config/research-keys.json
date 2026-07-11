@@ -1,0 +1,32 @@
+{
+  "_comment": "API keys for research and TTS tools. Fill in your actual keys. Do NOT commit real keys to git.",
+
+  "openai": {
+    "api_key": null,
+    "purpose": "gpt-researcher LLM-based research, OpenAI TTS (optional)",
+    "get_key_from": "https://platform.openai.com/api-keys"
+  },
+
+  "firecrawl": {
+    "api_key": null,
+    "purpose": "Firecrawl MCP — web scraping and search",
+    "get_key_from": "https://firecrawl.dev/"
+  },
+
+  "elevenlabs": {
+    "api_key": null,
+    "purpose": "ElevenLabs TTS — monetization upgrade path, voice cloning",
+    "get_key_from": "https://elevenlabs.io/",
+    "note": "Only needed when commercial_use becomes true in voice-profile.json"
+  },
+
+  "google_drive": {
+    "client_id": null,
+    "client_secret": null,
+    "refresh_token": null,
+    "purpose": "Google Drive API — upload/download assets directly",
+    "note": "Use a dedicated Google account for security"
+  },
+
+  "_instructions": "Replace null with your key string in quotes. Example: \"sk-abc123...\""
+}
