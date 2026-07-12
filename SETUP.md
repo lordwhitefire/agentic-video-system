@@ -2,19 +2,31 @@
 
 ## Prerequisites
 
-- AgenticSign binary installed (your OpenCode fork)
+- Agenticine binary installed (your OpenCode fork)
 - Git
 - Python 3.11+ (for TTS and some tools)
 - FFmpeg installed
 
 ## Your Config Path
 
-Your AgenticSign global config lives at:
+Your Agenticine global config lives at:
 ```
-/home/lordwhitefire/.config-agenticine
+/home/lordwhitefire/.config-agenticine/opencode
 ```
 
-This is for global installs. The recommended approach (below) uses project-level config — no need to touch the global path.
+This follows the WebForge pattern: `~/.config-<name>/opencode/`. The `opencode/` subfolder is where OpenCode looks for `opencode.json`, `agent/`, `tool/`, and `plugin/`.
+
+To use it globally, set `XDG_CONFIG_HOME`:
+```bash
+export XDG_CONFIG_HOME=/home/lordwhitefire/.config-agenticine
+```
+Or create an alias (recommended):
+```bash
+echo 'alias agenticine="XDG_CONFIG_HOME=/home/lordwhitefire/.config-agenticine opencode"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Then `agenticine` launches OpenCode with your config.
 
 ## Step 1: Clone The Repo
 
@@ -24,16 +36,20 @@ git clone https://github.com/lordwhitefire/agentic-video-system.git
 cd agentic-video-system
 ```
 
-## Step 2: Launch AgenticSign
+## Step 2: Launch Agenticine
 
-Run AgenticSign from inside the repo directory:
+You have two options.
+
+### Option A: Project-level (recommended for testing)
+
+Run OpenCode from inside the repo directory. It picks up `opencode.json` from the repo root automatically:
 
 ```bash
 cd ~/agentic-video-system
-agentic-sign
+opencode
 ```
 
-AgenticSign will:
+OpenCode will:
 - Read `opencode.json` from the repo root (standard OpenCode config filename)
 - Set `editor` as the default agent
 - Disable OpenCode's built-in `build` and `plan` agents
@@ -42,31 +58,29 @@ AgenticSign will:
 
 No extra setup needed. The `opencode.json` at the repo root is all OpenCode needs.
 
-### Option B: Global install (alternative)
+### Option B: Global install (recommended for daily use)
 
-If you want the agents available everywhere, not just in this repo:
+Install everything into `~/.config-agenticine/opencode/` and use the alias:
 
 ```bash
-mkdir -p /home/lordwhitefire/.config-agenticine/agent
-mkdir -p /home/lordwhitefire/.config-agenticine/skills/custom
-mkdir -p /home/lordwhitefire/.config-agenticine/skills/tools
+# Clone the repo INTO the config directory (like WebForge does)
+git clone https://github.com/lordwhitefire/agentic-video-system.git /home/lordwhitefire/.config-agenticine/opencode
 
-cp agent/*.md /home/lordwhitefire/.config-agenticine/agent/
-cp opencode.json /home/lordwhitefire/.config-agenticine/opencode.json
-cp skills/custom/*.md /home/lordwhitefire/.config-agenticine/skills/custom/
-cp skills/tools/*.md /home/lordwhitefire/.config-agenticine/skills/tools/
+# Create the alias
+echo 'alias agenticine="XDG_CONFIG_HOME=/home/lordwhitefire/.config-agenticine opencode"' >> ~/.bashrc
+source ~/.bashrc
+
+# Now you can launch from anywhere
+agenticine
 ```
 
-Then launch AgenticSign from anywhere:
-```bash
-agentic-sign
-```
+This makes the agents available globally. When you `git pull` in `~/.config-agenticine/opencode/`, you get updates.
 
 ## Step 3: Verify The Setup
 
-Launch AgenticSign:
+Launch Agenticine (or `opencode` if using project-level):
 ```bash
-agentic-sign
+agenticine
 ```
 
 You should see ONLY these 15 agents:
@@ -123,7 +137,7 @@ The `opencode.json` disables `build` and `plan`:
 }
 ```
 
-If they still appear, your AgenticSign build may use a different config key. Try adding to `opencode.json`:
+If they still appear, your Agenticine build may use a different config key. Try adding to `opencode.json`:
 ```json
 "agents": {
   "build": { "disable": true },
@@ -133,13 +147,13 @@ If they still appear, your AgenticSign build may use a different config key. Try
 
 Or set an environment variable before launching:
 ```bash
-OPENCODE_DISABLE_BUILT_IN=1 agentic-sign
+OPENCODE_DISABLE_BUILT_IN=1 agenticine
 ```
 
 ### Agents don't appear at all
 
 Check that:
-- You're running `agentic-sign` from inside the repo directory (so OpenCode finds `opencode.json`)
+- You're running `opencode` from inside the repo directory (so OpenCode finds `opencode.json`), OR you've set up the `agenticine` alias with `XDG_CONFIG_HOME`
 - The `agent/` folder exists at the repo root (singular, not `agents/`)
 - Each agent file starts with `---` on line 1 (YAML frontmatter)
 - Each agent file has valid YAML frontmatter with at minimum `name` and `description`
@@ -153,12 +167,14 @@ Skills are loaded by the agent at runtime via the `skill` tool. Make sure:
 
 ### Config not found
 
-OpenCode looks for `opencode.json` in:
-1. The current working directory (project-level — recommended)
-2. `~/.config/opencode/opencode.json` (global)
-3. `~/.config-agenticine/opencode.json` (your custom global path)
+OpenCode looks for `opencode.json` in these locations (in order):
+1. The current working directory (project-level — when you `cd` into the repo and run `opencode`)
+2. `$XDG_CONFIG_HOME/opencode/opencode.json` (global — when you use the `agenticine` alias, this resolves to `~/.config-agenticine/opencode/opencode.json`)
+3. `~/.config/opencode/opencode.json` (default global — only if XDG_CONFIG_HOME is not set)
 
-Make sure `opencode.json` is at the repo root, not in a subfolder. It must be named exactly `opencode.json` — not `agentic-sign.json` or `config.json`.
+Make sure `opencode.json` is at the repo root, not in a subfolder. It must be named exactly `opencode.json` — not `agentic-sign.json`, `agenticine.json`, or `config.json`.
+
+For the global install (Option B in Step 2), the repo IS the config directory — cloning into `~/.config-agenticine/opencode/` puts `opencode.json` exactly where OpenCode expects it.
 
 ## Repo Structure (After Setup)
 

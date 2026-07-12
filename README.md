@@ -1,6 +1,6 @@
 # Agentic Video System
 
-A reference-driven, script-driven, audio-as-master video editing system built for AgenticSign (OpenCode fork). 15 agents across 5 departments, 12 laws, WebForge-style agent template, custom skills, human-in-the-loop sourcing.
+A reference-driven, script-driven, audio-as-master video editing system built for Agenticine (OpenCode fork). 15 agents across 5 departments, 12 laws, WebForge-style agent template, custom skills, human-in-the-loop sourcing.
 
 ## Quick Start
 
@@ -10,13 +10,13 @@ cd ~
 git clone https://github.com/lordwhitefire/agentic-video-system.git
 cd agentic-video-system
 
-# 2. Launch AgenticSign from this directory
-agentic-sign
+# 2. Launch OpenCode from this directory
+opencode
 ```
 
-When AgenticSign launches, you will see ONLY the 15 agents from this repo. OpenCode's built-in `build` and `plan` agents are disabled in `opencode.json` (repo root).
+When OpenCode launches, you will see ONLY the 15 agents from this repo. OpenCode's built-in `build` and `plan` agents are disabled in `opencode.json` (repo root).
 
-For detailed setup (including global config at `/home/lordwhitefire/.config-agenticine`), see `SETUP.md`.
+For global setup using `~/.config-agenticine/opencode/` and the `agenticine` alias, see `SETUP.md`.
 
 ## Architecture
 
