@@ -4,19 +4,28 @@ A reference-driven, script-driven, audio-as-master video editing system built fo
 
 ## Quick Start
 
-```bash
-# 1. Clone this repo
-cd ~
-git clone https://github.com/lordwhitefire/agentic-video-system.git
-cd agentic-video-system
+### Option A — Isolated install (recommended)
 
-# 2. Launch OpenCode from this directory
+```bash
+# Clone into a dedicated config directory
+git clone https://github.com/lordwhitefire/agentic-video-system.git ~/.config-agenticine/opencode
+
+# Create an alias
+echo 'alias agenticine="XDG_CONFIG_HOME=~/.config-agenticine opencode"' >> ~/.bashrc
+source ~/.bashrc
+
+# Run it
+agenticine
+```
+
+### Option B — Replace stock OpenCode
+
+```bash
+git clone https://github.com/lordwhitefire/agentic-video-system.git ~/.config/opencode
 opencode
 ```
 
-When OpenCode launches, you will see ONLY the 15 agents from this repo. OpenCode's built-in `build` and `plan` agents are disabled in `opencode.json` (repo root).
-
-For global setup using `~/.config-agenticine/opencode/` and the `agenticine` alias, see `SETUP.md`.
+See `SETUP.md` for troubleshooting and details.
 
 ## Architecture
 

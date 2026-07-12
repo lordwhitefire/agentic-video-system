@@ -2,93 +2,47 @@
 
 ## Prerequisites
 
-- Agenticine binary installed (your OpenCode fork)
+- OpenCode installed — `curl -fsSL https://opencode.ai/install | bash`
 - Git
 - Python 3.11+ (for TTS and some tools)
 - FFmpeg installed
 
-## Your Config Path
+## Setup
 
-Your Agenticine global config lives at:
-```
-/home/lordwhitefire/.config-agenticine/opencode
-```
+### Option A — Isolated install (recommended)
 
-This follows the WebForge pattern: `~/.config-<name>/opencode/`. The `opencode/` subfolder is where OpenCode looks for `opencode.json`, `agent/`, `tool/`, and `plugin/`.
+Use this if you want Agenticine separate from your stock OpenCode:
 
-To use it globally, set `XDG_CONFIG_HOME`:
 ```bash
-export XDG_CONFIG_HOME=/home/lordwhitefire/.config-agenticine
-```
-Or create an alias (recommended):
-```bash
-echo 'alias agenticine="XDG_CONFIG_HOME=/home/lordwhitefire/.config-agenticine opencode"' >> ~/.bashrc
+# Clone this repo into a dedicated config directory
+git clone https://github.com/lordwhitefire/agentic-video-system.git ~/.config-agenticine/opencode
+
+# Create an alias that points OpenCode at the isolated config
+echo 'alias agenticine="XDG_CONFIG_HOME=~/.config-agenticine opencode"' >> ~/.bashrc
 source ~/.bashrc
+
+# Run it
+agenticine
 ```
 
-Then `agenticine` launches OpenCode with your config.
+### Option B — Replace stock OpenCode
 
-## Step 1: Clone The Repo
-
-```bash
-cd ~
-git clone https://github.com/lordwhitefire/agentic-video-system.git
-cd agentic-video-system
-```
-
-## Step 2: Launch Agenticine
-
-You have two options.
-
-### Option A: Project-level (recommended for testing)
-
-Run OpenCode from inside the repo directory. It picks up `opencode.json` from the repo root automatically:
+Use this if you want Agenticine as your only OpenCode:
 
 ```bash
-cd ~/agentic-video-system
+git clone https://github.com/lordwhitefire/agentic-video-system.git ~/.config/opencode
 opencode
 ```
 
-OpenCode will:
-- Read `opencode.json` from the repo root (standard OpenCode config filename)
-- Set `editor` as the default agent
-- Disable OpenCode's built-in `build` and `plan` agents
-- Auto-discover all 15 agents from the `agent/` folder
-- Load the 3 MCP servers configured (Context7, GitHub, Playwright)
+## Verify The Setup
 
-No extra setup needed. The `opencode.json` at the repo root is all OpenCode needs.
+After running `agenticine` (or `opencode` for Option B), you should see ONLY these 15 agents:
 
-### Option B: Global install (recommended for daily use)
-
-Install everything into `~/.config-agenticine/opencode/` and use the alias:
-
-```bash
-# Clone the repo INTO the config directory (like WebForge does)
-git clone https://github.com/lordwhitefire/agentic-video-system.git /home/lordwhitefire/.config-agenticine/opencode
-
-# Create the alias
-echo 'alias agenticine="XDG_CONFIG_HOME=/home/lordwhitefire/.config-agenticine opencode"' >> ~/.bashrc
-source ~/.bashrc
-
-# Now you can launch from anywhere
-agenticine
-```
-
-This makes the agents available globally. When you `git pull` in `~/.config-agenticine/opencode/`, you get updates.
-
-## Step 3: Verify The Setup
-
-Launch Agenticine (or `opencode` if using project-level):
-```bash
-agenticine
-```
-
-You should see ONLY these 15 agents:
 1. Analyzer
 2. Planner
 3. Researcher
 4. TTS
-5. Editor (default — this is what loads first)
+5. Editor (default — loads first)
 6. Graphics
 7. Animation
 8. Animated Graphics
@@ -100,9 +54,16 @@ You should see ONLY these 15 agents:
 14. Investigator
 15. Recruiter
 
-If you see OpenCode's built-in `build` or `plan` agents, the config did not disable them. See Troubleshooting below.
+If you see OpenCode's built-in `build` or `plan` agents, the config did not disable them. Check `opencode.json` at the repo root — it should have:
 
-## Step 4: Install Skills
+```json
+"agent": {
+  "build": { "disable": true },
+  "plan": { "disable": true }
+}
+```
+
+## Install Skills
 
 ### Custom Skills (behavioral)
 Already in `skills/custom/`. 3 are complete:
@@ -113,7 +74,7 @@ Already in `skills/custom/`. 3 are complete:
 12 more are marked TO BUILD in `skills/README.md`. Build them one at a time through the research → test → refine loop described in `TESTING.md`.
 
 ### Tool Skills (execution)
-The tool skills registry is at `skills/tools/skills-registry.md`. It catalogs skill repositories (OpenMontage 1039 skills + others). To install actual tool skills:
+The tool skills registry is at `skills/tools/skills-registry.md`. To install actual tool skills:
 
 ```bash
 # Example: OpenMontage
@@ -121,23 +82,16 @@ git clone <openmontage-repo-url> /tmp/openmontage
 cp /tmp/openmontage/skills/*.md skills/tools/
 ```
 
-## Step 5: Test An Agent
+## Test An Agent
 
-See `TESTING.md` for detailed instructions on testing individual agents with the research → test → refine loop.
+See `TESTING.md` for detailed instructions on testing individual agents.
 
 ## Troubleshooting
 
 ### Built-in agents still appear
 
-The `opencode.json` disables `build` and `plan`:
-```json
-"agent": {
-  "build": { "disable": true },
-  "plan": { "disable": true }
-}
-```
+The `opencode.json` disables `build` and `plan`. If they still appear, try adding to `opencode.json`:
 
-If they still appear, your Agenticine build may use a different config key. Try adding to `opencode.json`:
 ```json
 "agents": {
   "build": { "disable": true },
@@ -145,15 +99,10 @@ If they still appear, your Agenticine build may use a different config key. Try 
 }
 ```
 
-Or set an environment variable before launching:
-```bash
-OPENCODE_DISABLE_BUILT_IN=1 agenticine
-```
-
 ### Agents don't appear at all
 
 Check that:
-- You're running `opencode` from inside the repo directory (so OpenCode finds `opencode.json`), OR you've set up the `agenticine` alias with `XDG_CONFIG_HOME`
+- You cloned the repo into the right place (`~/.config-agenticine/opencode/` for Option A, `~/.config/opencode/` for Option B)
 - The `agent/` folder exists at the repo root (singular, not `agents/`)
 - Each agent file starts with `---` on line 1 (YAML frontmatter)
 - Each agent file has valid YAML frontmatter with at minimum `name` and `description`
@@ -167,16 +116,12 @@ Skills are loaded by the agent at runtime via the `skill` tool. Make sure:
 
 ### Config not found
 
-OpenCode looks for `opencode.json` in these locations (in order):
-1. The current working directory (project-level — when you `cd` into the repo and run `opencode`)
-2. `$XDG_CONFIG_HOME/opencode/opencode.json` (global — when you use the `agenticine` alias, this resolves to `~/.config-agenticine/opencode/opencode.json`)
-3. `~/.config/opencode/opencode.json` (default global — only if XDG_CONFIG_HOME is not set)
+OpenCode looks for `opencode.json` at `$XDG_CONFIG_HOME/opencode/opencode.json`. Make sure:
+- The repo is cloned into the right directory (not a subfolder of it)
+- The file is named exactly `opencode.json` (not `agenticine.json`, `config.json`, etc.)
+- The file is at the repo root, not nested inside a `config/` folder
 
-Make sure `opencode.json` is at the repo root, not in a subfolder. It must be named exactly `opencode.json` — not `agentic-sign.json`, `agenticine.json`, or `config.json`.
-
-For the global install (Option B in Step 2), the repo IS the config directory — cloning into `~/.config-agenticine/opencode/` puts `opencode.json` exactly where OpenCode expects it.
-
-## Repo Structure (After Setup)
+## Repo Structure
 
 ```
 agentic-video-system/
