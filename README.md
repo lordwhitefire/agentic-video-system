@@ -14,7 +14,7 @@ cd agentic-video-system
 agentic-sign
 ```
 
-When AgenticSign launches, you will see ONLY the 15 agents from this repo. OpenCode's built-in agents are disabled in `config/agentic-sign.json`.
+When AgenticSign launches, you will see ONLY the 15 agents from this repo. OpenCode's built-in `build` and `plan` agents are disabled in `opencode.json` (repo root).
 
 For detailed setup (including global config at `/home/lordwhitefire/.config-agenticine`), see `SETUP.md`.
 
@@ -170,12 +170,13 @@ agentic-video-system/
 ├── SETUP.md               ← detailed setup instructions
 ├── TESTING.md             ← how to test agents individually
 ├── .gitignore
-├── agents/                ← 15 agent files (WebForge template)
+├── opencode.json          ← main config: editor=default, disables build/plan, MCP servers
+├── agent/                 ← 15 agent files (WebForge template, auto-discovered)
 │   ├── 01-analyzer.md
 │   ├── 02-planner.md
 │   ├── 03-researcher.md
 │   ├── 04-tts.md
-│   ├── 05-editor.md       ← HEAD of Production
+│   ├── 05-editor.md       ← HEAD of Production (default agent)
 │   ├── 06-graphics.md
 │   ├── 07-animation.md
 │   ├── 08-animated-graphics.md
@@ -193,7 +194,6 @@ agentic-video-system/
 │       └── skills-registry.md
 ├── laws/                  ← 12 law files (the constitution)
 ├── config/
-│   ├── agentic-sign.json  ← config that disables built-in agents
 │   ├── voice-profile.json ← TTS engine config
 │   └── research-keys.json ← API keys template
 ├── guidelines/            ← human reference documents

@@ -9,12 +9,12 @@
 
 ## Your Config Path
 
-Your AgenticSign config lives at:
+Your AgenticSign global config lives at:
 ```
 /home/lordwhitefire/.config-agenticine
 ```
 
-All setup instructions below use this path. Adjust if your installation differs.
+This is for global installs. The recommended approach (below) uses project-level config — no need to touch the global path.
 
 ## Step 1: Clone The Repo
 
@@ -24,13 +24,9 @@ git clone https://github.com/lordwhitefire/agentic-video-system.git
 cd agentic-video-system
 ```
 
-## Step 2: Point AgenticSign At This Repo
+## Step 2: Launch AgenticSign
 
-You have two options.
-
-### Option A: Project-level config (recommended)
-
-When you run AgenticSign from the repo directory, it picks up the config automatically:
+Run AgenticSign from inside the repo directory:
 
 ```bash
 cd ~/agentic-video-system
@@ -38,21 +34,25 @@ agentic-sign
 ```
 
 AgenticSign will:
-- Load the config from `config/agentic-sign.json`
-- Disable all built-in agents (`disable_built_in_agents: true`)
-- Load only the 14 agents from `./agents/`
+- Read `opencode.json` from the repo root (standard OpenCode config filename)
+- Set `editor` as the default agent
+- Disable OpenCode's built-in `build` and `plan` agents
+- Auto-discover all 15 agents from the `agent/` folder
+- Load the 3 MCP servers configured (Context7, GitHub, Playwright)
 
-### Option B: Global config
+No extra setup needed. The `opencode.json` at the repo root is all OpenCode needs.
 
-Copy the agents and config to your global AgenticSign config directory:
+### Option B: Global install (alternative)
+
+If you want the agents available everywhere, not just in this repo:
 
 ```bash
-mkdir -p /home/lordwhitefire/.config-agenticine/agents
+mkdir -p /home/lordwhitefire/.config-agenticine/agent
 mkdir -p /home/lordwhitefire/.config-agenticine/skills/custom
 mkdir -p /home/lordwhitefire/.config-agenticine/skills/tools
 
-cp agents/*.md /home/lordwhitefire/.config-agenticine/agents/
-cp config/agentic-sign.json /home/lordwhitefire/.config-agenticine/config.json
+cp agent/*.md /home/lordwhitefire/.config-agenticine/agent/
+cp opencode.json /home/lordwhitefire/.config-agenticine/opencode.json
 cp skills/custom/*.md /home/lordwhitefire/.config-agenticine/skills/custom/
 cp skills/tools/*.md /home/lordwhitefire/.config-agenticine/skills/tools/
 ```
@@ -69,23 +69,24 @@ Launch AgenticSign:
 agentic-sign
 ```
 
-You should see ONLY these 14 agents:
+You should see ONLY these 15 agents:
 1. Analyzer
 2. Planner
 3. Researcher
 4. TTS
-5. Graphics Creator
-6. Animation Creator
-7. Animated Graphics Creator
-8. Video Effects Creator
-9. Clips Preparer
-10. Images Preparer
-11. Editor
+5. Editor (default — this is what loads first)
+6. Graphics
+7. Animation
+8. Animated Graphics
+9. Video Effects
+10. Clips
+11. Images
 12. Reviewer
 13. Watcher/Blocker
 14. Investigator
+15. Recruiter
 
-If you see OpenCode's built-in agents (engineer, planner, etc.), the config did not disable them. See Troubleshooting below.
+If you see OpenCode's built-in `build` or `plan` agents, the config did not disable them. See Troubleshooting below.
 
 ## Step 4: Install Skills
 
@@ -114,52 +115,50 @@ See `TESTING.md` for detailed instructions on testing individual agents with the
 
 ### Built-in agents still appear
 
-Your AgenticSign build may use a different config key. Check the build's documentation. Common alternatives to try in `config/agentic-sign.json`:
-
+The `opencode.json` disables `build` and `plan`:
 ```json
-// Option 1
-{ "disable_built_in_agents": true }
+"agent": {
+  "build": { "disable": true },
+  "plan": { "disable": true }
+}
+```
 
-// Option 2
-{ "agents": { "built_in": false, "directory": "./agents" } }
-
-// Option 3
-{ "agent": { "disable_built_in": true, "directory": "./agents" } }
+If they still appear, your AgenticSign build may use a different config key. Try adding to `opencode.json`:
+```json
+"agents": {
+  "build": { "disable": true },
+  "plan": { "disable": true }
+}
 ```
 
 Or set an environment variable before launching:
 ```bash
-AGENTIC_SIGN_DISABLE_BUILT_IN=1 agentic-sign
+OPENCODE_DISABLE_BUILT_IN=1 agentic-sign
 ```
-
-Try each until the built-in agents disappear.
 
 ### Agents don't appear at all
 
-Check that the agent files are in the right directory and have valid YAML frontmatter. Each agent file must start with:
-
-```yaml
----
-name: <agent-name>
-display_name: <Display Name>
-layer: <thinking|audio|visual-prep|assembly|enforcement>
-role: <one-line role description>
----
-```
+Check that:
+- You're running `agentic-sign` from inside the repo directory (so OpenCode finds `opencode.json`)
+- The `agent/` folder exists at the repo root (singular, not `agents/`)
+- Each agent file starts with `---` on line 1 (YAML frontmatter)
+- Each agent file has valid YAML frontmatter with at minimum `name` and `description`
 
 ### Skills not loading
 
-Skills are loaded by the agent at runtime. Make sure:
+Skills are loaded by the agent at runtime via the `skill` tool. Make sure:
 - The skill file exists at the path referenced in the agent's "Skills You Use" section
 - The skill file is valid Markdown
-- The agent's system prompt includes the skill (this depends on how AgenticSign injects skills — check your build's docs)
+- The agent has `skill: allow` in its permission block (all our agents do)
 
-### Config path issues
+### Config not found
 
-If AgenticSign doesn't find the config at `/home/lordwhitefire/.config-agenticine`, check:
-- Does the directory exist? (`mkdir -p /home/lordwhitefire/.config-agenticine`)
-- Does the config file exist there? (`config.json`)
-- Is the agent directory path in the config correct? (Should point to your cloned repo's `agents/` folder, or to the copied agents in the config directory)
+OpenCode looks for `opencode.json` in:
+1. The current working directory (project-level — recommended)
+2. `~/.config/opencode/opencode.json` (global)
+3. `~/.config-agenticine/opencode.json` (your custom global path)
+
+Make sure `opencode.json` is at the repo root, not in a subfolder. It must be named exactly `opencode.json` — not `agentic-sign.json` or `config.json`.
 
 ## Repo Structure (After Setup)
 
@@ -169,21 +168,23 @@ agentic-video-system/
 ├── SETUP.md               ← this file
 ├── TESTING.md             ← how to test agents individually
 ├── .gitignore             ← excludes video/audio/credentials
-├── agents/                ← 14 agent files (WHO + WHAT only)
+├── opencode.json          ← main config (default_agent, disables, MCPs)
+├── agent/                 ← 15 agent files (WebForge template, auto-discovered)
 │   ├── 01-analyzer.md
 │   ├── 02-planner.md
 │   ├── 03-researcher.md
 │   ├── 04-tts.md
-│   ├── 05-graphics.md
-│   ├── 06-animation.md
-│   ├── 07-animated-graphics.md
-│   ├── 08-video-effects.md
-│   ├── 09-clips.md
-│   ├── 10-images.md
-│   ├── 11-editor.md
-│   ├── 12-reviewer.md
+│   ├── 05-editor.md       ← HEAD of Production (default agent)
+│   ├── 06-graphics.md
+│   ├── 07-animation.md
+│   ├── 08-animated-graphics.md
+│   ├── 09-video-effects.md
+│   ├── 10-clips.md
+│   ├── 11-images.md
+│   ├── 12-reviewer.md     ← HEAD of Quality
 │   ├── 13-watcher-blocker.md
-│   └── 14-investigator.md
+│   ├── 14-investigator.md
+│   └── 15-recruiter.md    ← HEAD of Personnel
 ├── skills/
 │   ├── README.md          ← skill classification (custom vs tools)
 │   ├── custom/            ← behavioral skills (how to think)
@@ -193,8 +194,7 @@ agentic-video-system/
 │   └── tools/             ← execution skills (how to operate)
 │       └── skills-registry.md
 ├── laws/                  ← 12 law files (the constitution)
-├── config/
-│   ├── agentic-sign.json  ← config that disables built-in agents
+├── config/                ← app-specific configs (NOT OpenCode config)
 │   ├── voice-profile.json ← TTS engine config
 │   └── research-keys.json ← API keys template
 ├── guidelines/            ← human reference documents
