@@ -1,7 +1,7 @@
 /**
  * Agenticine Report Metrics Tool
  * 
- * Called by workers (juniors, seniors) to report their task metrics.
+ * Called by workers to report their task metrics.
  * The metrics are stored in .agenticine/memory/metrics/<task-id>.json
  * Superiors read these metrics before signing off.
  * 
@@ -77,7 +77,7 @@ export default {
     },
     delegation_max: {
       type: "number",
-      description: "Your tier's max delegation budget (junior: 0, senior: 5, lead: 6, director: 4, head: 4)",
+      description: "Your tier's max delegation budget (worker: 0, head: 6)",
     },
     tests_run: {
       type: "number",

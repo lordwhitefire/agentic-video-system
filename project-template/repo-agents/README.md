@@ -1,7 +1,7 @@
 # Repo Agent Library
 
-This directory holds the downloaded agent MD files from the OpenCode community.
-HR (Voss) reads from here when recruiting new agents via the `create_agent` tool.
+This directory holds downloaded agent MD files from the OpenCode community.
+The Recruiter reads from here when creating new agents via the `create_agent` tool.
 
 ## Setup
 
@@ -23,13 +23,13 @@ cd ankitmundada && git pull
 cd ../jbeck018 && git pull
 ```
 
-HR always reads from the latest version. No rebuild needed.
+The Recruiter always reads from the latest version. No rebuild needed.
 
-## How HR Uses These Files
+## How The Recruiter Uses These Files
 
-When Hermes says "I need a frontend developer," Voss:
-1. Searches this directory for `frontend-developer.md`
+When you tell the Recruiter "I need a new agent for X," the Recruiter:
+1. Searches this directory for relevant agent templates
 2. Reads the file content
-3. Optionally combines it with complementary files (e.g., `react-specialist.md`, `typescript-pro.md`)
-4. Calls `create_agent` with `repo_files: ["ankitmundada/categories/01-core-development/frontend-developer.md", ...]`
-5. The tool concatenates the files and writes the new agent to `.opencode/agents/<name>.md`
+3. Optionally combines it with complementary files
+4. Calls `create_agent` with `repo_files: ["ankitmundada/categories/.../agent.md", ...]`
+5. The tool concatenates the files and writes the new agent to `agent/<name>.md`

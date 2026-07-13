@@ -6,7 +6,7 @@
  * 
  * This plugin enforces Laws 5, 7, 9, 10, and 11 in real-time:
  * - Law 5:  Blocks "I assume", "I guess", "probably", "I think" patterns
- * - Law 7:  Warns when heads/directors write code themselves
+ * - Law 7:  Warns when heads write code themselves
  * - Law 9:  Flags "approved/verified" claims without proof
  * - Law 10: Blocks design inference (choosing colors/layouts without citing spec)
  * - Law 11: Blocks "done" reports without all 5 verification items
@@ -164,7 +164,7 @@ export default function guardrailsPlugin(input: any, options?: any) {
       } else {
         // ═══ WARN: Let the tool run, but the violation is logged ═══
         // The agent will see the warning in the guardrails log
-        // and Daedalus can review it
+        // and The Reviewer can review it
       }
     },
 

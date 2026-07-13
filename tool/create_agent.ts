@@ -35,15 +35,15 @@ export default {
     },
     department: {
       type: "string",
-      description: "Department: build, intelligence, quality, documentation, meta, hr, executive",
+      description: "Department: strategy, audio, production, quality, personnel",
     },
     role_tier: {
       type: "string",
-      description: "Role tier: 'director', 'lead', 'senior', 'junior', 'worker'",
+      description: "Role tier: 'head' or 'worker'",
     },
     title: {
       type: "string",
-      description: "Human-readable title (e.g., 'Frontend Developer', 'Intelligence Director')",
+      description: "Human-readable title (e.g., 'Graphics Creator', 'Head of Strategy')",
     },
     reports_to: {
       type: "string",

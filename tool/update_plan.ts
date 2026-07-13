@@ -1,7 +1,7 @@
 /**
  * Agenticine Update Plan — Editor uses this to update the shared plan file.
  *
- * The plan file at .agenticine/plan.md is the shared memory between Ralph Loop
+ * The plan file at .agenticine/plan.md is the shared memory between Automation Loop
  * iterations. Editor reads it at the start of each session and updates it
  * as work progresses. The loop script checks for "PROJECT COMPLETE" to stop.
  *
@@ -9,7 +9,7 @@
  */
 
 export default {
-  description: "Update the Agenticine plan file. Use this to mark tasks as done, in_progress, blocked, or remaining. Say project_complete=true ONLY when every task is verified done. This stops the Ralph Loop.",
+  description: "Update the Agenticine plan file. Use this to mark tasks as done, in_progress, blocked, or remaining. Say project_complete=true ONLY when every task is verified done. This stops the Automation Loop.",
   args: {
     task_id: {
       type: "string",
@@ -25,7 +25,7 @@ export default {
     },
     project_complete: {
       type: "boolean",
-      description: "Set to true ONLY when every task is verified done. This stops the Ralph Loop.",
+      description: "Set to true ONLY when every task is verified done. This stops the Automation Loop.",
     },
   },
   async execute(args, context) {
@@ -58,7 +58,7 @@ export default {
     } else {
       content = `# Agenticine Project Plan
 
-> This file is the shared memory between Ralph Loop iterations.
+> This file is the shared memory between Automation Loop iterations.
 > Editor reads it at the start of each session and updates it as work progresses.
 > The loop script checks for "PROJECT COMPLETE" to stop.
 

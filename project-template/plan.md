@@ -1,7 +1,7 @@
 # Agenticine Project Plan
 
-> This file is the shared memory between Ralph Loop iterations.
-> Hermes reads it at the start of each session and updates it as work progresses.
+> This file is the shared memory between Automation Loop iterations.
+> The active head reads it at the start of each session and updates it as work progresses.
 > The loop script (`agenticine-loop.sh`) checks for `## PROJECT COMPLETE` to stop.
 
 ## Project Goal
@@ -10,7 +10,7 @@
 
 ## Tasks
 
-<!-- Hermes will add tasks here as ### task-001, ### task-002, etc. -->
+<!-- Department heads will add tasks here as ### task-001, ### task-002, etc. -->
 <!-- Each task section gets timestamped status updates via the update_plan tool. -->
 
 ## Status
@@ -19,5 +19,5 @@
 - **Current iteration:** 0
 - **Last updated:** _pending_
 
-<!-- When all tasks are verified done, Hermes calls update_plan with project_complete=true -->
+<!-- When all tasks are verified done, The active head calls update_plan with project_complete=true -->
 <!-- That appends "## PROJECT COMPLETE" below, which stops the loop. -->

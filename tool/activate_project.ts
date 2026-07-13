@@ -1,7 +1,7 @@
 /**
  * Agenticine Activate Project Tool
  *
- * Called by Hermes when entering a project folder for the first time.
+ * Called by department heads when entering a project folder for the first time.
  * Also manages the "active project" — the project Agenticine is currently
  * working on. This survives compaction because it's stored in a file.
  *
@@ -139,7 +139,7 @@ Project initialization — intelligence department scanning codebase
 
 ## What's Done
 - [ ] Project activated
-- [ ] Intelligence scan complete
+- [ ] Analyze reference video complete
 - [ ] Area documentation written
 - [ ] PROJECT.md overview written
 - [ ] First task assigned
@@ -162,7 +162,7 @@ Project initialization — intelligence department scanning codebase
       // Create empty constraints.md, errors-and-fixes.md, preferences.md, PROJECT.md
       fs.writeFileSync(
         path.join(agenticineDir, "constraints.md"),
-        "# Project Constraints\n\n> Real-world constraints discovered during intelligence scan.\n\n",
+        "# Project Constraints\n\n> Real-world constraints discovered during analysis phase.\n\n",
         "utf-8"
       )
       fs.writeFileSync(
@@ -177,14 +177,14 @@ Project initialization — intelligence department scanning codebase
       )
       fs.writeFileSync(
         path.join(agenticineDir, "PROJECT.md"),
-        "# Project Overview\n\n> This file is the entry point. Hermes reads this first. To be filled in by the documentation department after the intelligence scan.\n\n## Project Name\n(To be filled)\n\n## Goal\n(To be filled)\n\n## Tech Stack Summary\n(To be filled)\n\n## Current Status\nProject initialization — awaiting intelligence scan\n",
+        "# Project Overview\n\n> This file is the entry point. The active department head reads this first. To be filled in by the Strategist when a new video project starts.\n\n## Project Name\n(To be filled)\n\n## Goal\n(To be filled)\n\n## Tech Stack Summary\n(To be filled)\n\n## Current Status\nProject initialization — awaiting strategy department\n",
         "utf-8"
       )
 
       // Create empty plan.md
       fs.writeFileSync(
         path.join(agenticineDir, "plan.md"),
-        "# Project Plan\n\n> Updated by Hermes via the update_plan tool. The Ralph Loop checks for '## PROJECT COMPLETE'.\n\n## Tasks\n\n- [ ] Intelligence scan\n- [ ] Documentation\n- [ ] Build\n\n## PROJECT COMPLETE\n\n(Remove this line when complete)\n",
+        "# Project Plan\n\n> Updated by department heads via the update_plan tool. The system checks for '## PROJECT COMPLETE'.\n\n## Tasks\n\n- [ ] Analyze reference video\n- [ ] Plan script\n- [ ] Generate audio\n- [ ] Source clips\n- [ ] Build visuals\n- [ ] Assemble video\n- [ ] Review\n\n## PROJECT COMPLETE\n\n(Remove this line when complete)\n",
         "utf-8"
       )
 
@@ -216,7 +216,7 @@ Project initialization — intelligence department scanning codebase
       // Set as active project
       writeActiveProject(projectPath)
 
-      return `ACTIVATED: Created .agenticine/ structure at ${projectPath}. Active project file updated. Now delegate to Athena (Intelligence) to scan the codebase. Intelligence will write findings to .agenticine/memory/research/. Then Documentation department will write area docs to .agenticine/areas/ and fill in PROJECT.md.`
+      return `ACTIVATED: Created .agenticine/ structure at ${projectPath}. Active project file updated. Now talk to the Strategist to start the pipeline. The Strategist will spawn the Analyzer to extract the template, then the Planner to write the script, then the Researcher to produce the sourcing manifest.`
     }
 
     // ─── MARK_SUBFOLDER: create the marker file ───

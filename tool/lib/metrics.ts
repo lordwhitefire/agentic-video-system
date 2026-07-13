@@ -72,7 +72,7 @@ export interface SignOff {
   taskId: string;
   workerName: string;           // Who did the work
   superiorName: string;         // Who is signing off
-  superiorTier: string;         // senior, lead, director, head
+  superiorTier: string;         // head or worker
   verdict: "approved" | "rejected";
   metricsSnapshot: TaskMetrics; // The metrics at time of sign-off
   feedback: string;             // Why approved or rejected
@@ -192,11 +192,8 @@ export function scoreMetrics(metrics: TaskMetrics): ScoreResult {
 // ═══════════════════════════════════════════════════════════════
 
 export const MINIMUM_SCORES: Record<string, number> = {
-  junior: 70,      // Juniors must score at least 70
-  senior: 75,      // Seniors must score at least 75
-  lead: 80,        // Leads must score at least 80
-  director: 85,    // Directors must score at least 85
-  head: 90,        // Heads must score at least 90
+  worker: 70,      // Workers must score at least 70
+  head: 85,        // Heads must score at least 85
 };
 
 export function meetsTierMinimum(score: number, tier: string): boolean {

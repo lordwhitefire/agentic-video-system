@@ -17,7 +17,7 @@ export default {
     },
     department: {
       type: "string",
-      description: "Department name (for 'department'): build, intelligence, quality, documentation, meta, hr, executive",
+      description: "Department name (for 'department'): strategy, audio, production, quality, personnel",
     },
   },
   async execute(args, context) {

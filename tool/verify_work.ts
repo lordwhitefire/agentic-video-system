@@ -1,7 +1,7 @@
 /**
  * Agenticine Verify Work Tool
  * 
- * Called by SUPERIORS (seniors, leads, directors, heads) to sign off on
+ * Called by HEADS (department heads only) to sign off on
  * their subordinate's work. This is the "checks and balances" half.
  * 
  * The superior reads the subordinate's metrics (from report_metrics),
@@ -13,7 +13,7 @@
  * Sign-offs are stored in .agenticine/memory/sign-offs.md
  * 
  * CRITICAL: This tool enforces the verification chain:
- *   Junior → Senior verifies → Lead verifies → Director verifies → Head verifies → Hermes verifies
+ *   Worker → Head verifies → CEO signs off
  * No task is "done" until the full chain signs off.
  */
 
@@ -71,10 +71,10 @@ export default {
       return `BLOCKED: ${superiorName} is not a registered Agenticine agent.`;
     }
 
-    // ─── Guard 2: Must be a superior tier (not junior) ───
-    const superiorTier = (superiorInfo as any).roleTier || (superiorInfo as any).tier || "junior";
-    if (superiorTier === "junior") {
-      return `BLOCKED: Juniors cannot verify work. Only seniors, leads, directors, and heads can call verify_work.`;
+    // ─── Guard 2: Must be a head (not a worker) ───
+    const superiorTier = (superiorInfo as any).roleTier || (superiorInfo as any).tier || "worker";
+    if (superiorTier === "worker") {
+      return `BLOCKED: Workers cannot verify work. Only heads can call verify_work.`;
     }
 
     // ─── Guard 3: The worker must be a direct subordinate ───
@@ -113,7 +113,7 @@ export default {
       // Check tier minimum
       const workerTier = (registry[args.worker_name.toLowerCase()] as any)?.roleTier ||
                          (registry[args.worker_name.toLowerCase()] as any)?.tier ||
-                         "junior";
+                         "worker";
       const minimum = MINIMUM_SCORES[workerTier] || 70;
       if (score.totalScore < minimum) {
         return `BLOCKED: Cannot approve — score ${score.totalScore}/100 is below the ${workerTier} minimum of ${minimum}. Reject the work and ask the worker to improve their score.`;
