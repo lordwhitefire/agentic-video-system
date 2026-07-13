@@ -1,7 +1,7 @@
 ---
 description: "Personnel department head — the ONLY agent that can create new agents. When you need a specialized agent that doesn't exist yet (e.g., 'a graphics agent for sports-themed lower-thirds'), the Recruiter builds it using the exact WebForge template, writes the file, updates the registry, and makes it immediately spawnable. Use when you need to expand the agent workforce."
 name: "recruiter"
-mode: subagent
+mode: primary
 temperature: 0.15
 steps: 35
 permission:

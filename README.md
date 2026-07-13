@@ -1,6 +1,6 @@
 # Agentic Video System
 
-A reference-driven, script-driven, audio-as-master video editing system built for Agenticine (OpenCode fork). 15 agents across 5 departments, 12 laws, WebForge-style agent template, custom skills, human-in-the-loop sourcing.
+A reference-driven, script-driven, audio-as-master video editing system built for Agenticine (OpenCode fork). 17 agents across 5 departments, 12 laws, WebForge-style agent template, custom skills, human-in-the-loop sourcing.
 
 ## Quick Start
 
@@ -53,66 +53,70 @@ TOOLS (the actual MCP servers, ffmpeg, whisper, etc.)
         ┌───────────┬───┴───┬───────────┬───────────┐
         |           |       |           |           |
     Strategy     Audio  Production    Quality    Personnel
-   (no head)   (no head)  (Editor)   (Reviewer)  (Recruiter)
-        |           |       |           |           |
-   Analyzer       TTS    Graphics   Watcher/     (creates
-   Planner              Animation   Blocker       agents
-   Researcher           Animated   Investigator   on demand)
-                        Graphics
-                        Video Effects
-                        Clips
-                        Images
+  (Strategist) (Audio   (Editor)   (Reviewer)  (Recruiter)
+        |       Lead)       |           |           |
+   Analyzer       |     Graphics   Watcher/     (creates
+   Planner       TTS   Animation   Blocker       agents
+   Researcher         Animated   Investigator   on demand)
+                      Graphics
+                      Video Effects
+                      Clips
+                      Images
 ```
 
 ### Tier 1: CEO (you)
-You make decisions, approve work, talk to department heads and solo agents directly. No coordinator agent — you control the pipeline.
+You make decisions, approve work, talk to the 5 department heads. The picker shows exactly 5 agents — one per department.
 
-### Tier 2: Heads (run a department)
-- **Editor** — head of Production, delegates to 6 visual agents, assembles the final video
-- **Reviewer** — head of Quality, final PASS/REVISE/BRANCH decision, manages Watcher/Blocker and Investigator
-- **Recruiter** — solo head of Personnel, the ONLY agent that can create new agents
+### Tier 2: Heads (run a department, `mode: primary`)
+- **Strategist** — head of Strategy, manages Analyzer, Planner, Researcher
+- **Audio Lead** — head of Audio, manages TTS
+- **Editor** — head of Production, manages 6 visual agents, assembles the final video
+- **Reviewer** — head of Quality, manages Watcher/Blocker and Investigator, final PASS/REVISE/BRANCH decision
+- **Recruiter** — head of Personnel, the ONLY agent that can create new agents
 
-### Tier 3: Workers (do the specialist work)
-Report to their department head. Have `task: deny` (cannot spawn other agents). Have `verify_work: deny` (cannot sign off on others' work).
+### Tier 3: Workers (do the specialist work, `mode: subagent`)
+Report to their department head. Have `task: deny` (cannot spawn other agents). Have `verify_work: deny` (cannot sign off on others' work). Invisible in the picker — spawned by their head.
 
-## The 15 Agents
+## The 17 Agents
 
-### Strategy Department (no head — sequential pipeline)
-| # | Agent | What It Does |
-|---|-------|-------------|
-| 01 | Analyzer | Extracts template from reference video (script-first, 9 visual types, decision rules) |
-| 02 | Planner | Writes tagged script on user's topic (script first, visuals second) |
-| 03 | Researcher | Produces resource.md sourcing manifest (does NOT source — human does) |
+### Strategy Department (head: Strategist)
+| Agent | Mode | What It Does |
+|-------|------|-------------|
+| strategist | primary | **HEAD** — manages Analyzer, Planner, Researcher |
+| analyzer | subagent | Extracts template from reference video |
+| planner | subagent | Writes tagged script on user's topic |
+| researcher | subagent | Produces resource.md sourcing manifest |
 
-### Audio Department (no head — single agent)
-| # | Agent | What It Does |
-|---|-------|-------------|
-| 04 | TTS | Generates ONE continuous master audio track + word-level timestamps |
+### Audio Department (head: Audio Lead)
+| Agent | Mode | What It Does |
+|-------|------|-------------|
+| audio-lead | primary | **HEAD** — manages TTS |
+| tts | subagent | Generates ONE continuous master audio track + timestamps |
 
-### Production Department (Editor is head)
-| # | Agent | What It Does |
-|---|-------|-------------|
-| 05 | Editor | **HEAD** — delegates to 6 visual agents, assembles final video (audio is master) |
-| 06 | Graphics | Creates static graphics (with user approval loop, shows examples first) |
-| 07 | Animation | Creates full motion graphics (with user approval loop) |
-| 08 | Animated Graphics | Creates sequential reveal graphics timed to narration |
-| 09 | Video Effects | Builds video effects as reusable pieces (does NOT apply to clips) |
-| 10 | Clips | Prepares sourced clips (cut, zoom, speed, apply effects TO clips) |
-| 11 | Images | Prepares sourced images (overlay, side-by-side, blur, crop) |
+### Production Department (head: Editor)
+| Agent | Mode | What It Does |
+|-------|------|-------------|
+| editor | primary | **HEAD** — delegates to 6 visual agents, assembles final video |
+| graphics | subagent | Creates static graphics (with approval loop) |
+| animation | subagent | Creates full motion graphics (with approval loop) |
+| animated-graphics | subagent | Creates sequential reveal graphics timed to narration |
+| video-effects | subagent | Builds video effects as reusable pieces |
+| clips | subagent | Prepares sourced clips (cut, zoom, speed) |
+| images | subagent | Prepares sourced images (overlay, side-by-side) |
 
-### Quality Department (Reviewer is head)
-| # | Agent | What It Does |
-|---|-------|-------------|
-| 12 | Reviewer | **HEAD** — quality gate, 7 fidelity checks, PASS/REVISE/BRANCH decision |
-| 13 | Watcher/Blocker | Inference detector — blocks guesses in real-time (Law 1 enforcer) |
-| 14 | Investigator | Root cause analyst — finds WHY something failed (does NOT fix it) |
+### Quality Department (head: Reviewer)
+| Agent | Mode | What It Does |
+|-------|------|-------------|
+| reviewer | primary | **HEAD** — quality gate, PASS/REVISE/BRANCH decision |
+| watcher-blocker | subagent | Inference detector — blocks guesses in real-time |
+| investigator | subagent | Root cause analyst — finds WHY something failed |
 
-### Personnel Department (Recruiter is solo head)
-| # | Agent | What It Does |
-|---|-------|-------------|
-| 15 | Recruiter | **HEAD** — the ONLY agent with `create_agent` tool. Builds new agents on demand. |
+### Personnel Department (head: Recruiter)
+| Agent | Mode | What It Does |
+|-------|------|-------------|
+| recruiter | primary | **HEAD** — the ONLY agent with `create_agent` tool |
 
-## How The Approval Loop Works (For Visual Agents 06-11)
+## How The Approval Loop Works (For Visual Agents)
 
 Every visual agent (Graphics, Animation, Animated Graphics, Video Effects, Clips, Images) follows this pattern:
 
@@ -144,13 +148,10 @@ See `skills/README.md` for the full classification.
 ## Testing Agents Individually
 
 See `TESTING.md` for detailed instructions. The testing loop:
-1. Pick an agent
-2. Research the craft (YouTube, tutorials)
-3. Write or update the custom skill
-4. Give the agent a task + the skill
-5. Evaluate the result
-6. Modify the skill (or agent) based on what you saw
-7. Repeat until satisfied
+1. Pick a head from the picker (e.g., Editor)
+2. Tell the head to test a specific worker (e.g., "Test the Graphics agent with this task")
+3. The head spawns the worker, reports back
+4. Evaluate the result, iterate
 
 ## The 12 Laws
 
@@ -175,59 +176,63 @@ See `laws/` for the full text of each law.
 
 ```
 agentic-video-system/
-├── README.md              ← this file
-├── SETUP.md               ← detailed setup instructions
-├── TESTING.md             ← how to test agents individually
+├── README.md
+├── SETUP.md
+├── TESTING.md
 ├── .gitignore
-├── opencode.json          ← main config: editor=default, disables build/plan, MCP servers
-├── agent/                 ← 15 agent files (WebForge template, auto-discovered)
-│   ├── 01-analyzer.md
-│   ├── 02-planner.md
-│   ├── 03-researcher.md
-│   ├── 04-tts.md
-│   ├── 05-editor.md       ← HEAD of Production (default agent)
-│   ├── 06-graphics.md
-│   ├── 07-animation.md
-│   ├── 08-animated-graphics.md
-│   ├── 09-video-effects.md
-│   ├── 10-clips.md
-│   ├── 11-images.md
-│   ├── 12-reviewer.md     ← HEAD of Quality
-│   ├── 13-watcher-blocker.md
-│   ├── 14-investigator.md
-│   └── 15-recruiter.md    ← HEAD of Personnel
+├── opencode.json          ← main config (default_agent, disables, MCPs)
+├── agent/                 ← 17 agent files (no numbering — name only)
+│   ├── strategist.md      ← HEAD of Strategy (primary)
+│   ├── analyzer.md
+│   ├── planner.md
+│   ├── researcher.md
+│   ├── audio-lead.md      ← HEAD of Audio (primary)
+│   ├── tts.md
+│   ├── editor.md          ← HEAD of Production (primary)
+│   ├── graphics.md
+│   ├── animation.md
+│   ├── animated-graphics.md
+│   ├── video-effects.md
+│   ├── clips.md
+│   ├── images.md
+│   ├── reviewer.md        ← HEAD of Quality (primary)
+│   ├── watcher-blocker.md
+│   ├── investigator.md
+│   └── recruiter.md       ← HEAD of Personnel (primary)
 ├── skills/
-│   ├── README.md          ← skill classification
-│   ├── custom/            ← behavioral skills (how to think)
-│   └── tools/             ← execution skills (how to operate)
+│   ├── README.md
+│   ├── custom/
+│   │   ├── script-driven-template-extraction.md
+│   │   ├── script-driven-visual-assignment.md
+│   │   └── resource-md-generation.md
+│   └── tools/
 │       └── skills-registry.md
-├── laws/                  ← 12 law files (the constitution)
+├── laws/                  ← 12 law files
 ├── config/
-│   ├── voice-profile.json ← TTS engine config
-│   └── research-keys.json ← API keys template
-├── guidelines/            ← human reference documents
+│   ├── voice-profile.json
+│   └── research-keys.json
+├── guidelines/
 │   └── footage-sourcing-guideline.md
-├── system/                ← system documentation
+├── system/
 │   ├── system-overview.md
 │   └── visual-types.md
-├── templates/             ← video editing style templates
+├── templates/
 │   └── README.md
-└── tools/                 ← tools registry
+└── tools/
     └── tools-registry.md
 ```
 
 ## What's Done vs What's Left
 
 ### Done
-- 15 agent files (WebForge template — full YAML frontmatter + 13 body sections)
-- 5 departments, 3 tiers
+- 17 agent files (5 heads + 12 workers, WebForge template)
+- 5 departments, each with a head
 - 12 law files
-- 3 custom skills (thinking layer: Analyzer, Planner, Researcher)
-- Config for AgenticSign (disables built-in agents)
+- 3 custom skills (thinking layer)
+- Config for Agenticine (disables built-in agents, 3 MCP servers)
 - Setup, Testing, and README guides
 - Human sourcing guideline
-- Tools registry, skills registry, system overview, visual types, templates README
-- Recruiter agent (can create new agents on demand)
+- Tools registry, skills registry, system overview, visual types
 
 ### To Build
 - 12 custom skills (TTS, 6 visual agents, Editor, Reviewer, Watcher/Blocker, Investigator, approval-loop-protocol)
