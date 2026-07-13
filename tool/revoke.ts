@@ -1,7 +1,7 @@
 /**
  * Agenticine Revoke — strips tools from a misbehaving Agenticine agent.
  *
- * Used by Daedalus (Meta Engineering Director) when an agent is caught
+ * Used by Reviewer (Meta Engineering Director) when an agent is caught
  * violating Law 5 (No Inference). Removes safe_edit and safe_bash permissions
  * from the agent's config file — the agent can only read until the CEO
  * manually restores permissions.
@@ -17,7 +17,7 @@
  */
 
 export default {
-  description: "Revoke safe_edit and safe_bash permissions from a Agenticine agent that violated laws. Only Daedalus or Hermes should use this. The agent will be unable to modify files or run commands until the CEO manually restores permissions. CANNOT affect OpenCode built-in agents.",
+  description: "Revoke safe_edit and safe_bash permissions from a Agenticine agent that violated laws. Only Reviewer or Editor should use this. The agent will be unable to modify files or run commands until the CEO manually restores permissions. CANNOT affect OpenCode built-in agents.",
   args: {
     agent: {
       type: "string",
@@ -34,9 +34,9 @@ export default {
 
     const callerAgent = context.agent || "Unknown"
 
-    // ─── Guard 1: Only Daedalus or Hermes can revoke ───
-    if (callerAgent.toLowerCase() !== "daedalus" && callerAgent.toLowerCase() !== "hermes") {
-      return `BLOCKED: Only Daedalus or Hermes can revoke permissions. ${callerAgent} is not authorized.`
+    // ─── Guard 1: Only Reviewer or Editor can revoke ───
+    if (callerAgent.toLowerCase() !== "reviewer" && callerAgent.toLowerCase() !== "editor") {
+      return `BLOCKED: Only Reviewer or Editor can revoke permissions. ${callerAgent} is not authorized.`
     }
 
     const targetAgent = args.agent.toLowerCase()
@@ -64,7 +64,7 @@ export default {
     const agentFile = path.join(agentsDir, `${targetAgent}.md`)
 
     if (!fs.existsSync(agentFile)) {
-      return `Agent file not found: ${agentFile}. The agent is in the registry but has no file. This is a corrupted state — report to Hermes.`
+      return `Agent file not found: ${agentFile}. The agent is in the registry but has no file. This is a corrupted state — report to Editor.`
     }
 
     // ─── Read the agent file ───

@@ -1,8 +1,8 @@
 /**
- * Agenticine Update Plan — Hermes uses this to update the shared plan file.
+ * Agenticine Update Plan — Editor uses this to update the shared plan file.
  *
  * The plan file at .agenticine/plan.md is the shared memory between Ralph Loop
- * iterations. Hermes reads it at the start of each session and updates it
+ * iterations. Editor reads it at the start of each session and updates it
  * as work progresses. The loop script checks for "PROJECT COMPLETE" to stop.
  *
  * Place in: .opencode/tools/update_plan.ts
@@ -33,8 +33,9 @@ export default {
     const path = await import("path")
 
     const callerAgent = context.agent || "Unknown"
-    if (callerAgent.toLowerCase() !== "hermes") {
-      return `BLOCKED: Only Hermes can update the plan. ${callerAgent} is not authorized.`
+    const allowedPlanners = ["strategist", "audio-lead", "editor"]
+    if (!allowedPlanners.includes(callerAgent.toLowerCase())) {
+      return `BLOCKED: Only department heads (Strategist, Audio Lead, Editor) can update the plan. ${callerAgent} is not authorized.`
     }
 
     if (!args.task_id || !args.status) {
@@ -58,7 +59,7 @@ export default {
       content = `# Agenticine Project Plan
 
 > This file is the shared memory between Ralph Loop iterations.
-> Hermes reads it at the start of each session and updates it as work progresses.
+> Editor reads it at the start of each session and updates it as work progresses.
 > The loop script checks for "PROJECT COMPLETE" to stop.
 
 ## Tasks

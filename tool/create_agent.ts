@@ -1,5 +1,5 @@
 /**
- * Agenticine Create Agent — HR (Voss) uses this to create new agent files.
+ * Agenticine Create Agent — HR (Recruiter) uses this to create new agent files.
  *
  * Reads repo agent MD files from .agenticine/repo-agents/, concatenates them
  * with a custom identity prompt + YAML frontmatter, and writes the result
@@ -14,7 +14,7 @@
  */
 
 export default {
-  description: "Create a new agent file from repo templates. HR (Voss) uses this to recruit agents. The agent file is written to the GLOBAL agent folder (~/.config-agenticine/opencode/agent/) so it's available in every project. The registry is updated so broadcast/status tools can enforce chain-of-command. The agent is immediately spawnable via the task tool.",
+  description: "Create a new agent file from repo templates. HR (Recruiter) uses this to recruit agents. The agent file is written to the GLOBAL agent folder (~/.config-agenticine/opencode/agent/) so it's available in every project. The registry is updated so broadcast/status tools can enforce chain-of-command. The agent is immediately spawnable via the task tool.",
   args: {
     name: {
       type: "string",
@@ -47,7 +47,7 @@ export default {
     },
     reports_to: {
       type: "string",
-      description: "Name of the agent this one reports to (e.g., 'hermes', 'hephaestus'). Required for chain-of-command enforcement.",
+      description: "Name of the agent this one reports to (e.g., 'strategist', 'editor', 'reviewer'). Required for chain-of-command enforcement.",
     },
   },
   async execute(args, context) {
@@ -56,8 +56,8 @@ export default {
     const { homedir } = await import("os")
 
     const callerAgent = context.agent || "Unknown"
-    if (callerAgent.toLowerCase() !== "voss") {
-      return `BLOCKED: Only Voss (HR) can create agents. ${callerAgent} is not authorized.`
+    if (callerAgent.toLowerCase() !== "recruiter") {
+      return `BLOCKED: Only Recruiter (HR) can create agents. ${callerAgent} is not authorized.`
     }
 
     if (!args.name || !args.identity || !args.reports_to) {
@@ -250,6 +250,6 @@ ${repoContent}
 - Registry: .agenticine/agents.json updated (added ${agentName}, added to ${args.reports_to}'s subordinates)
 - Mailbox: .agenticine/mailbox/${agentName}.json initialized
 - Status: .agenticine/status/${agentName}.json initialized
-- Hermes can now spawn it via task({ subagent_type: "${agentName}" }).`
+- Editor can now spawn it via task({ subagent_type: "${agentName}" }).`
   },
 }

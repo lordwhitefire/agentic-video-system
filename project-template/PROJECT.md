@@ -1,35 +1,35 @@
 # Project Overview
 
-> This file is the entry point. Hermes reads this first. Keep it high-level — link to area docs for detail. Max 300 lines.
+> This file is the entry point. The active department head reads this first. Keep it high-level. Max 300 lines.
 
 ## Project Name
-(To be filled by documentation department)
+(To be filled by the Strategist when a new video project starts)
 
 ## Goal
-(One paragraph: what is this project and what does it do?)
+(One paragraph: what video are we making? What reference video? What topic?)
 
-## Client
-(Who is this for?)
+## Reference Video
+(Path to the reference video for template extraction)
+
+## Topic
+(The subject of the new video)
 
 ## Tech Stack Summary
-- **Framework:** (e.g., Next.js 16)
-- **Language:** (e.g., TypeScript)
-- **Styling:** (e.g., Tailwind CSS 4)
-- **Database:** (e.g., Supabase)
-- **Deployment:** (e.g., Vercel)
+- **Video Processing:** FFmpeg
+- **TTS:** Coqui XTTS-v2 (primary), Piper (fallback)
+- **Transcription:** Whisper (word-level timestamps)
+- **Visual Effects:** mcp-video, Remotion
+- **Storage:** Google Drive (via API)
 
 ## Current Status
-(Not started / In progress / Complete)
+(Not started / Analyzing / Planning / Audio generated / Sourcing / Building visuals / Assembling / Reviewing / Complete)
 
-## Area Documentation Index
-> Link to each area file that applies. Mark N/A for areas that don't apply.
-
-- [01 — Project Setup](areas/01-project-setup.md)
-- [02 — Stack Decisions](areas/02-stack-decisions.md)
-- [03 — Design System](areas/03-design-system.md)
-- [04 — Brand & Identity](areas/04-brand-and-identity.md)
-- [05 — Frontend Architecture](areas/05-frontend-architecture-001.md)
-- ... (see docs/web-development-areas.md for all 80 areas)
+## Pipeline Stages
+1. **Strategy** — Analyzer extracts template, Planner writes script, Researcher produces manifest
+2. **Audio** — TTS generates master audio + timestamps
+3. **Sourcing** — Human sources clips/images from resource.md
+4. **Production** — Editor delegates to 6 visual agents, assembles final video
+5. **Quality** — Reviewer checks, Watcher/Blocker monitors, Investigator diagnoses failures
 
 ## Key Constraints
 See [constraints.md](constraints.md)
