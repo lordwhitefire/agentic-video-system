@@ -172,6 +172,31 @@ See `TESTING.md` for detailed instructions. The testing loop:
 
 See `laws/` for the full text of each law.
 
+## Custom Tools (Ported From WebForge)
+
+The `tool/` directory contains actual TypeScript code — real working tools that OpenCode auto-discovers and executes. These are NOT just documentation; they are the enforcement layer for the 12 laws.
+
+| Tool | What It Does |
+|------|-------------|
+| `safe_edit` | Edits files with 300-line limit, inference scanning, auto-logging |
+| `safe_bash` | Runs commands with dangerous-command blocking, auto-logging |
+| `memory` | Reads/writes to project memory (`.agenticine/memory/`) |
+| `registry` | Looks up agent info and reporting relationships |
+| `status` | Logs agent activity to shared work log |
+| `report_metrics` | Workers report task metrics before sign-off |
+| `verify_work` | Superiors sign off on subordinates' work |
+| `create_agent` | Recruiter creates new agent files (only agent with this tool) |
+| `update_plan` | Heads update the shared project plan |
+| `revoke` | Strips permissions from law-violating agents |
+| `activate_project` | Manages which project is active (survives compaction) |
+| `edit` / `bash` / `write` | Override built-in tools with permission checks |
+
+The `plugin/` directory contains the guardrails plugin — a pre-tool-call hook that intercepts tool calls BEFORE they execute, checks for inference patterns ("I assume", "probably", "I think"), and blocks violations.
+
+The `project-template/` directory contains template files that `activate_project` copies into new projects (plan.md, memory folders, mailbox, status, etc.).
+
+**All paths adapted:** `~/.config/webforge/` → `~/.config-agenticine/`, `.webforge/` → `.agenticine/`, all references renamed from WebForge to Agenticine.
+
 ## Directory Structure
 
 ```
@@ -181,7 +206,7 @@ agentic-video-system/
 ├── TESTING.md
 ├── .gitignore
 ├── opencode.json          ← main config (default_agent, disables, MCPs)
-├── agent/                 ← 17 agent files (no numbering — name only)
+├── agent/                 ← 17 agent files (auto-discovered)
 │   ├── strategist.md      ← HEAD of Strategy (primary)
 │   ├── analyzer.md
 │   ├── planner.md
@@ -199,27 +224,40 @@ agentic-video-system/
 │   ├── watcher-blocker.md
 │   ├── investigator.md
 │   └── recruiter.md       ← HEAD of Personnel (primary)
+├── tool/                  ← 15 TypeScript tool files (auto-discovered)
+│   ├── safe_edit.ts       ← file editing with law enforcement
+│   ├── safe_bash.ts       ← command running with blocking
+│   ├── memory.ts          ← project memory read/write
+│   ├── registry.ts        ← agent lookup
+│   ├── status.ts          ← activity logging
+│   ├── report_metrics.ts  ← worker metrics
+│   ├── verify_work.ts     ← superior sign-off
+│   ├── create_agent.ts    ← agent creation (Recruiter only)
+│   ├── update_plan.ts     ← plan updates (heads only)
+│   ├── revoke.ts          ← permission stripping
+│   ├── activate_project.ts ← project switching
+│   ├── edit.ts, bash.ts, write.ts ← built-in overrides
+│   └── lib/               ← shared helpers (permission-check, metrics, agents-json)
+├── plugin/                ← guardrails plugin (auto-discovered)
+│   ├── guardrails.ts      ← pre-tool-call inference blocker
+│   └── lib/patterns.ts    ← inference pattern database
+├── project-template/      ← templates copied to new projects
+│   ├── plan.md
+│   ├── PROJECT.md
+│   ├── agents.json        ← our 17 agents (org chart)
+│   ├── memory/            ← STATE.md, work-log.md, etc.
+│   ├── mailbox/
+│   └── status/
 ├── skills/
 │   ├── README.md
-│   ├── custom/
-│   │   ├── script-driven-template-extraction.md
-│   │   ├── script-driven-visual-assignment.md
-│   │   └── resource-md-generation.md
-│   └── tools/
-│       └── skills-registry.md
+│   ├── custom/            ← behavioral skills (how to think)
+│   └── tools/             ← execution skills registry
 ├── laws/                  ← 12 law files
-├── config/
-│   ├── voice-profile.json
-│   └── research-keys.json
+├── config/                ← app-specific configs
 ├── guidelines/
-│   └── footage-sourcing-guideline.md
 ├── system/
-│   ├── system-overview.md
-│   └── visual-types.md
 ├── templates/
-│   └── README.md
-└── tools/
-    └── tools-registry.md
+└── tools/                 ← external tools registry (documentation)
 ```
 
 ## What's Done vs What's Left

@@ -1,0 +1,37 @@
+{
+  // Pocket Universe configuration for Agenticine
+  // Docs: https://github.com/spoons-and-mirrors/pocket-universe
+  //
+  // ⚠️ POCKET UNIVERSE REQUIRES UNMERGED OPENCODE PRS:
+  //   - anomalyco/opencode#9272 (async subagents, session resumption, main-thread blocking)
+  //   - anomalyco/opencode#7725 (scoping tools to subagents only)
+  // Without these PRs merged, broadcast auto-wake will NOT work on stock OpenCode.
+  // recall() should work regardless.
+  // Track these PRs and enable the plugin fully once they merge.
+
+  // Isolated git worktrees per agent (.worktrees/<alias>)
+  // Set to false because we use our own worktree plugin (see INSTALL.md)
+  "worktree": false,
+
+  // Debug logs to .logs/pocket-universe.log
+  "logging": false,
+
+  "tools": {
+    // broadcast: inter-agent messaging with auto-wake
+    "broadcast": true,
+
+    // subagent: spawn async sibling agents
+    "subagent": {
+      "enabled": true,
+      "max_depth": 3,
+      "forced_attention": true
+    },
+
+    // recall: agent memory — lets new agents see what previous agents did
+    // DISABLED by default in Pocket Universe — we ENABLE it here
+    "recall": {
+      "enabled": true,
+      "cross_pocket": true
+    }
+  }
+}

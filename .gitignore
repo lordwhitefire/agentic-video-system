@@ -42,6 +42,10 @@ scripts/*/animations/
 scripts/*/animated-graphics/
 scripts/*/effects/
 
+# Agenticine per-project runtime (created by activate_project tool)
+.agenticine/
+.agenticine-subfolder
+
 # Project runtime files (regenerated per project, not tracked)
 worklog.md
 */worklog.md

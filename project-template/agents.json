@@ -1,0 +1,172 @@
+{
+  "strategist": {
+    "name": "strategist",
+    "title": "Head of Strategy",
+    "department": "strategy",
+    "roleTier": "head",
+    "reportsTo": "ceo",
+    "subordinates": ["analyzer", "planner", "researcher"],
+    "permanent": true,
+    "skillFile": "agent/strategist.md"
+  },
+  "audio-lead": {
+    "name": "audio-lead",
+    "title": "Head of Audio",
+    "department": "audio",
+    "roleTier": "head",
+    "reportsTo": "ceo",
+    "subordinates": ["tts"],
+    "permanent": true,
+    "skillFile": "agent/audio-lead.md"
+  },
+  "editor": {
+    "name": "editor",
+    "title": "Head of Production",
+    "department": "production",
+    "roleTier": "head",
+    "reportsTo": "ceo",
+    "subordinates": ["graphics", "animation", "animated-graphics", "video-effects", "clips", "images"],
+    "permanent": true,
+    "skillFile": "agent/editor.md"
+  },
+  "reviewer": {
+    "name": "reviewer",
+    "title": "Head of Quality",
+    "department": "quality",
+    "roleTier": "head",
+    "reportsTo": "ceo",
+    "subordinates": ["watcher-blocker", "investigator"],
+    "permanent": true,
+    "skillFile": "agent/reviewer.md"
+  },
+  "recruiter": {
+    "name": "recruiter",
+    "title": "Head of Personnel",
+    "department": "personnel",
+    "roleTier": "head",
+    "reportsTo": "ceo",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/recruiter.md"
+  },
+  "analyzer": {
+    "name": "analyzer",
+    "title": "Video Analyzer",
+    "department": "strategy",
+    "roleTier": "worker",
+    "reportsTo": "strategist",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/analyzer.md"
+  },
+  "planner": {
+    "name": "planner",
+    "title": "Script Planner",
+    "department": "strategy",
+    "roleTier": "worker",
+    "reportsTo": "strategist",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/planner.md"
+  },
+  "researcher": {
+    "name": "researcher",
+    "title": "Resource Researcher",
+    "department": "strategy",
+    "roleTier": "worker",
+    "reportsTo": "strategist",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/researcher.md"
+  },
+  "tts": {
+    "name": "tts",
+    "title": "Text-to-Speech Engine",
+    "department": "audio",
+    "roleTier": "worker",
+    "reportsTo": "audio-lead",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/tts.md"
+  },
+  "graphics": {
+    "name": "graphics",
+    "title": "Graphics Creator",
+    "department": "production",
+    "roleTier": "worker",
+    "reportsTo": "editor",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/graphics.md"
+  },
+  "animation": {
+    "name": "animation",
+    "title": "Animation Creator",
+    "department": "production",
+    "roleTier": "worker",
+    "reportsTo": "editor",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/animation.md"
+  },
+  "animated-graphics": {
+    "name": "animated-graphics",
+    "title": "Animated Graphics Creator",
+    "department": "production",
+    "roleTier": "worker",
+    "reportsTo": "editor",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/animated-graphics.md"
+  },
+  "video-effects": {
+    "name": "video-effects",
+    "title": "Video Effects Creator",
+    "department": "production",
+    "roleTier": "worker",
+    "reportsTo": "editor",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/video-effects.md"
+  },
+  "clips": {
+    "name": "clips",
+    "title": "Clips Preparer",
+    "department": "production",
+    "roleTier": "worker",
+    "reportsTo": "editor",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/clips.md"
+  },
+  "images": {
+    "name": "images",
+    "title": "Images Preparer",
+    "department": "production",
+    "roleTier": "worker",
+    "reportsTo": "editor",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/images.md"
+  },
+  "watcher-blocker": {
+    "name": "watcher-blocker",
+    "title": "Inference Detector",
+    "department": "quality",
+    "roleTier": "worker",
+    "reportsTo": "reviewer",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/watcher-blocker.md"
+  },
+  "investigator": {
+    "name": "investigator",
+    "title": "Root Cause Analyst",
+    "department": "quality",
+    "roleTier": "worker",
+    "reportsTo": "reviewer",
+    "subordinates": [],
+    "permanent": true,
+    "skillFile": "agent/investigator.md"
+  }
+}
