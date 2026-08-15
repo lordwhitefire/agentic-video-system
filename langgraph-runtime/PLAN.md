@@ -116,6 +116,33 @@ endpoint: `https://open.bigmodel.cn/api/paas/v4`, model `glm-4.5-flash`
 - [x] Fresh-machine acceptance: clone → venv → `pip install -r requirements.txt` →
       `python -m ui.cli --yes` → PASS, all 6 checks green, exit 0; uvicorn boots
 
+## Phase 7 — Agent Studio (presentation build)
+
+> Specs (all in `~/Downloads/`):
+> 1. `agent_dashboard_build_spec.md` — product concept (dashboard + workspace, human-controlled handoffs, no graph)
+> 2. `agent_workspace_stage_two.md` — Stage Two = Agent Workspace (NOT this build)
+> 3. `avis_agent_dashboard_complete_build.md` — **Stage One = Agent Dashboard (THIS build)**, with complete reference UI
+
+**Stage One scope (this build):** dashboard overview only. Routes per spec §29:
+`/` → Agent Dashboard · `/workspace/:agent_id` → workspace (placeholder now, full workspace is Stage Two) · `/graph` → existing technical mermaid graph (kept, NOT linked from dashboard). No navbar, no chat, no graph on the dashboard, no handoff controls on the dashboard (workspace owns those).
+
+### Stage One — checklist
+- [x] **7.1 `avis/studio.py`** (new): canonical `REGISTRY` (17 ids from `agents.AGENTS` + display name/description — single source of truth, tested against `agents.BY_ID`); `build_dashboard_snapshot(run_state, pending_question)` deriving REAL per-agent status from the event bus (result event → completed; invoked-without-result + run running → working; agent before a CEO interrupt → waiting + attention; error/stopped → failed; never invoked → idle), progress (100 completed / pipeline-position for in-flight / 0 idle), current_task = last real event text, last_activity_at from bus; system counters (total/active/idle/waiting/attention/completed_today via `knowledge.list_runs`); recent_activity (last 10 bus events); attention list (pending CEO question + law blocks); production stages (5 departments, derived from agent completions — NOT a graph); heatmap (24 real hourly buckets of bus activity — hidden when no data, never invented); `map_studio_event(ev)` → SSE event types
+- [x] **7.2 `server.py` routes**: `GET /` → dashboard.html; `GET /graph` → old index.html; `GET /workspace/{agent_id}` → placeholder workspace.html (+`GET /api/agents/{agent_id}` for real identity); `GET /api/studio/dashboard` (spec §15 contract); `GET /api/studio/events` (SSE: agent_status_changed, agent_completed, agent_attention_required, agent_failed, agent_handoff_ready, activity_created). All existing endpoints untouched
+- [x] **7.3 `static/dashboard.html`** — adapt the spec's complete reference UI: near-black (#07090f) premium command center, 3-column layout (System Overview / Active Work ring / Recent Activity · agent card grid + Production Overview strip · Activity heatmap + Needs Your Attention), independent cards (name/role/status/task/progress/last activity/attention glow+badge), click → /workspace/<id>, live SSE refresh, loading state, connection-loss state, keyboard access, reduced-motion support. NO fake numbers — all values from the API
+- [x] **7.4 Tests** `tests/test_studio.py`: registry == agents catalog (17, no dupes); idle snapshot (0 active, all idle, empty attention); after a real auto-approve run → completed statuses real, progress 100, completed_today ≥ 1; during a blocked CEO interrupt → waiting + attention_agents ≥ 1 (polling, deterministic); SSE endpoint streams; /, /graph, /workspace pages; unknown agent 404. Update `test_index_and_graph` in test_api.py. All 36 existing tests stay green → **49/49 passed**
+- [x] **7.5 Docs**: runtime README gains Agent Studio section; root README mention; this checklist updated with bugs found
+- [x] **7.6 Acceptance (spec §32)**: opens directly to dashboard; no navbar; all 17 agents dynamic; independent cards, no lines, no mermaid; status/task/progress/activity/attention REAL; attention glows + badge; click opens workspace; live updates; loading + connection-loss states; keyboard + reduced motion; no conversation/tool logs/handoffs on dashboard; real runtime only, no duplicate registry/runtime
+- [x] **7.7 Commit + push**: `ADD: Agent Studio Stage One — dashboard` (repo already public)
+
+**Bugs found & fixed**
+- Full-suite pollution: `test_laws` emits `law_block` events on the shared global bus, leaking into studio attention lists (and `test_api` interrupt events into waiting). Fixed with an autouse fresh-bus fixture per studio test.
+- SSE streaming tests: TestClient `stream()` never completes (SSE hangs in `__enter__`), and httpx ASGITransport buffers the whole body. Tests now drive the endpoint function directly + `anext(aiter(resp.body_iterator))`.
+- Shared `thread_id: run-001` across all runs: a halted run (e.g. missing `reference_analysis` → Law-1 gate halt) could leak the *previous* run's checkpoint data (stale `review_decision: pass`, assignments). Fixed: unique `uuid4` thread id per `g.run()`.
+- Live-verified (uvicorn :8000): idle snapshot → full auto-approve run (15 agents completed, real progress/stages) → interactive run blocks at planner interrupt (dashboard shows Planner **waiting + attention**), answer → blocks at researcher interrupt, answer → completed, waiting/attention 0. No fabricated statuses.
+
+**Stage Two (next build, NOT now):** Agent Workspace per `agent_workspace_stage_two.md` — conversation, work plan, tool calls, artifacts, handoff approve/redirect/continue/stop, `avis/studio.py` gains `NEXT_AGENT_MAP` + `run_agent`.
+
 ---
 
 ## Safety notes (PC hang question)

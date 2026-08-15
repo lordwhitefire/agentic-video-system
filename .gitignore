@@ -42,6 +42,9 @@ scripts/*/animations/
 scripts/*/animated-graphics/
 scripts/*/effects/
 
+# Repomix packing artifact
+repo-pack.txt
+
 # Agenticine per-project runtime (created by activate_project tool)
 .agenticine/
 .agenticine-subfolder

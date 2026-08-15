@@ -27,7 +27,7 @@ def client(tmp_path, monkeypatch):
 
 def test_index_and_graph(client) -> None:
     r = client.get("/")
-    assert r.status_code == 200 and "AGENTIC VIDEO SYSTEM" in r.text
+    assert r.status_code == 200 and "Agents at a Glance" in r.text
     g = client.get("/api/graph").json()
     assert "mermaid" in g and "strategist" in g["mermaid"]
 

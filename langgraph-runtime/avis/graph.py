@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
 from typing import Any, Callable, Optional
 
 from langgraph.checkpoint.memory import InMemorySaver
@@ -163,7 +164,7 @@ def run(graph: Any, state: dict[str, Any], approver: Callable[[dict[str, Any]], 
     """Execute with human-in-the-loop approval. Deterministic control flow;
     the only nondeterminism is the CEO's answers to interrupt() questions.
     Recursively resumes through every interrupt; returns the final state."""
-    config = {"configurable": {"thread_id": "run-001"}}
+    config = {"configurable": {"thread_id": uuid.uuid4().hex}}
     final: dict[str, Any] = {}
     budget = {"steps": 0, "max": 500}
 

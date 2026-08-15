@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AVIS — Agent Workspace</title>
+<style>
+:root{
+  --bg:#07090f; --surface:#0d111a; --surface2:#111722; --surface3:#161d29;
+  --border:rgba(255,255,255,.08); --text:#f4f5f8; --muted:#8f98aa; --muted2:#657083;
+  --purple:#8b5cf6; --purpleSoft:rgba(139,92,246,.16);
+  --green:#35d07f; --greenSoft:rgba(53,208,127,.14);
+  --blue:#4b8cff; --blueSoft:rgba(75,140,255,.14);
+  --orange:#f59e0b; --orangeSoft:rgba(245,158,11,.14);
+  --red:#ef5b6b; --redSoft:rgba(239,91,107,.14);
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+button{font:inherit}
+.page{width:min(1100px,100%);margin:auto;padding:28px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:28px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;
+  background:var(--purpleSoft);border:1px solid rgba(139,92,246,.25);color:var(--purple);
+  font-weight:900;box-shadow:0 0 28px rgba(139,92,246,.12)}
+.brand-title{font-size:18px;font-weight:800}
+.brand-subtitle{color:var(--muted);font-size:12px;margin-top:2px}
+.back{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;
+  border:1px solid var(--border);background:var(--surface);color:var(--text);
+  font-size:12px;font-weight:750;cursor:pointer;text-decoration:none}
+.back:hover{border-color:rgba(139,92,246,.32)}
+.panel{background:linear-gradient(180deg,rgba(255,255,255,.018),rgba(255,255,255,.006)),var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 20px 60px rgba(0,0,0,.28)}
+.agent-hero{padding:22px;display:flex;align-items:center;gap:18px}
+.agent-icon{width:56px;height:56px;display:grid;place-items:center;border-radius:15px;
+  background:var(--purpleSoft);border:1px solid rgba(139,92,246,.25);color:var(--purple);
+  font-size:22px;font-weight:900}
+.agent-name{font-size:20px;font-weight:850;letter-spacing:-.02em}
+.agent-role{color:var(--muted);font-size:12px;margin-top:4px}
+.agent-dept{margin-top:6px;color:var(--muted2);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.status{display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding:7px 11px;
+  border-radius:999px;background:var(--greenSoft);color:var(--green);font-size:10px;font-weight:850}
+.status.waiting{background:var(--orangeSoft);color:var(--orange)}
+.status.idle{background:var(--blueSoft);color:var(--blue)}
+.status.failed{background:var(--redSoft);color:var(--red)}
+.status.completed{background:var(--greenSoft);color:var(--green)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.panel-body{padding:20px}
+.section-title{font-size:12px;font-weight:800;margin-bottom:12px}
+.task-box{padding:14px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);
+  font-size:12px;line-height:1.5;color:var(--muted)}
+.stage-note{margin-top:14px;padding:16px;border-radius:12px;border:1px solid rgba(139,92,246,.25);
+  background:var(--purpleSoft);font-size:12px;line-height:1.6;color:#cfc2ff}
+.stage-note strong{color:#e4daff}
+.events{display:flex;flex-direction:column;gap:8px}
+.event{display:flex;gap:12px;padding:11px 12px;border-radius:10px;background:var(--surface2);
+  border:1px solid var(--border);align-items:flex-start}
+.event-time{flex:0 0 52px;color:var(--muted2);font-size:10px;padding-top:2px}
+.event-kind{flex:0 0 86px;font-size:9px;font-weight:850;letter-spacing:.06em;padding:3px 7px;
+  border-radius:6px;background:var(--purpleSoft);color:var(--purple);text-align:center}
+.event-kind.tool{background:var(--blueSoft);color:var(--blue)}
+.event-kind.law{background:var(--redSoft);color:var(--red)}
+.event-kind.thinking{background:var(--orangeSoft);color:var(--orange)}
+.event-text{font-size:11px;color:var(--muted);line-height:1.5;min-width:0;word-break:break-word}
+.empty{color:var(--muted2);font-size:12px;padding:8px 2px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<main class="page">
+<header class="header">
+  <div class="brand">
+    <div class="brand-mark">✦</div>
+    <div>
+      <div class="brand-title">AVIS</div>
+      <div class="brand-subtitle">Video Agentic System</div>
+    </div>
+  </div>
+  <a class="back" href="/">← Dashboard</a>
+</header>
+
+<section class="panel agent-hero">
+  <div class="agent-icon">✦</div>
+  <div>
+    <div class="agent-name" id="agentName">…</div>
+    <div class="agent-role" id="agentRole">…</div>
+    <div class="agent-dept" id="agentDept">…</div>
+  </div>
+  <div class="status" id="agentStatus"><span class="status-dot"></span><span id="agentStatusLabel">…</span></div>
+</section>
+
+<div class="grid">
+  <section class="panel panel-body">
+    <div class="section-title">Current Task</div>
+    <div class="task-box" id="taskBox">…</div>
+    <div class="stage-note">
+      <strong>Workspace under construction.</strong><br>
+      The full Agent Workspace — conversation, work plan, tool calls, artifacts and
+      handoff approval — is the next build stage. This page shows real runtime data for this agent.
+    </div>
+  </section>
+
+  <section class="panel panel-body">
+    <div class="section-title">Recent Activity</div>
+    <div class="events" id="eventList"></div>
+  </section>
+</div>
+</main>
+
+<script>
+const agentId=decodeURIComponent(location.pathname.split("/").pop()||"");
+const STATUS_LABELS={
+  idle:["IDLE","idle"],working:["WORKING",""],waiting:["WAITING","waiting"],
+  completed:["COMPLETED","completed"],failed:["FAILED","failed"],
+  needs_attention:["NEEDS ATTENTION","waiting"],blocked:["BLOCKED","failed"],offline:["OFFLINE","idle"]
+};
+const KIND_CLASS={tool_call:"tool",tool_result:"tool",law_block:"law",thinking:"thinking"};
+
+function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;")
+  .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
+
+async function load(){
+  const r=await fetch(`/api/agents/${encodeURIComponent(agentId)}`);
+  if(!r.ok) throw new Error(`Agent lookup failed: ${r.status}`);
+  const data=await r.json();
+  const a=data.agent;
+  document.title=`AVIS — ${a.name}`;
+  document.getElementById("agentName").textContent=a.name;
+  document.getElementById("agentRole").textContent=a.description;
+  document.getElementById("agentDept").textContent=`${data.department} · ${data.tier}`;
+  const [label,cls]=STATUS_LABELS[a.status]||["UNKNOWN","idle"];
+  document.getElementById("agentStatus").className=`status ${cls}`;
+  document.getElementById("agentStatusLabel").textContent=label;
+  document.getElementById("taskBox").textContent=a.current_task||"No active task";
+
+  const list=document.getElementById("eventList");
+  try{
+    const es=new EventSource("/api/studio/events");
+    const seen=new Set();
+    es.addEventListener("activity_created",ev=>{
+      const data=JSON.parse(ev.data);
+      if(data.agent_id!==agentId||seen.has(data.timestamp)) return;
+      seen.add(data.timestamp);
+      addEvent(data);
+    });
+  }catch(e){}
+  const sr=await fetch("/api/studio/dashboard");
+  if(sr.ok){
+    const snap=await sr.json();
+    const mine=snap.recent_activity.filter(x=>x.agent_id===agentId).slice(0,8);
+    if(!mine.length){
+      list.innerHTML='<div class="empty">No activity yet for this agent.</div>';
+    }else{
+      list.innerHTML=mine.map(ev=>eventRow(ev)).join("");
+    }
+  }
+}
+
+function eventRow(ev){
+  const kind=(ev.event_type||"activity").toLowerCase();
+  const cls=KIND_CLASS[kind]||"";
+  const time=new Date(ev.timestamp).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  return `<div class="event">
+    <div class="event-time">${escapeHtml(time)}</div>
+    <div class="event-kind ${cls}">${escapeHtml((ev.event_type||"ACTIVITY").toUpperCase())}</div>
+    <div class="event-text">${escapeHtml(ev.message||ev.text||"")}</div>
+  </div>`;
+}
+
+function addEvent(ev){
+  const list=document.getElementById("eventList");
+  const empty=list.querySelector(".empty");
+  if(empty) empty.remove();
+  list.insertAdjacentHTML("afterbegin",eventRow({event_type:"ACTIVITY",timestamp:ev.timestamp,message:ev.message}));
+  while(list.children.length>12) list.lastElementChild.remove();
+}
+
+load().catch(err=>{
+  document.getElementById("agentName").textContent="Agent not found";
+  document.getElementById("taskBox").textContent=err.message;
+});
+</script>
+</body>
+</html>

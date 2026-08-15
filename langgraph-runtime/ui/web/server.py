@@ -1,15 +1,20 @@
-"""UI 2 — Graph View + live agent activity (FastAPI + mermaid.js).
+"""UI 2 — Agent Studio Dashboard + live activity (FastAPI).
 
 Serves:
-  GET  /                 the graph view page (mermaid diagram + live event panel)
-  GET  /api/graph        the LangGraph state graph as mermaid text
-  GET  /api/agents       the 17 agents and departments
-  GET  /api/examples     reference-analysis JSON files in examples/
-  GET  /api/events       Server-Sent Events: every thinking/tool/law/route event live
-  GET  /api/state        latest run state snapshot
-  GET  /api/pending      the pending CEO approval question (script / proposals)
-  POST /api/run          start a run (JSON: topic, reference_analysis?, llm?, auto_approve?)
-  POST /api/answer       answer the pending CEO approval question (JSON: resume)
+  GET  /                        the Agent Dashboard (presentation view)
+  GET  /workspace/{agent_id}    agent workspace (placeholder — Stage Two build)
+  GET  /graph                   the LangGraph technical view (mermaid)
+  GET  /api/graph               the LangGraph state graph as mermaid text
+  GET  /api/agents              the 17 agents and departments
+  GET  /api/agents/{agent_id}   one agent + live status
+  GET  /api/examples            reference-analysis JSON files in examples/
+  GET  /api/events              Server-Sent Events: raw runtime events
+  GET  /api/studio/dashboard    Agent Dashboard snapshot (real state)
+  GET  /api/studio/events       Server-Sent Events: studio-mapped events
+  GET  /api/state               latest run state snapshot
+  GET  /api/pending             the pending CEO approval question (script / proposals)
+  POST /api/run                 start a run (JSON: topic, reference_analysis?, llm?, auto_approve?)
+  POST /api/answer              answer the pending CEO approval question (JSON: resume)
 
 The orchestrator stays deterministic; this server only observes and streams."""
 
@@ -26,17 +31,19 @@ from fastapi import FastAPI, Request
 
 import avis.events as events
 import avis.graph as g
+import avis.studio as studio
 
 STATIC = Path(__file__).parent / "static"
 EXAMPLES = Path(__file__).resolve().parent.parent.parent / "examples"
 
-app = FastAPI(title="Agentic Video System — Graph View")
+app = FastAPI(title="AVIS — Agent Studio")
 
 _state: dict[str, Any] = {}
 _graph = None
 _mermaid = ""
 _graph_lock = threading.Lock()
 _sse_queues: list[asyncio.Queue] = []
+_studio_sse_queues: list[asyncio.Queue] = []
 _loop: asyncio.AbstractEventLoop | None = None
 _pending_resume: list[Any] = []
 _pending_question: dict[str, Any] = {}
@@ -49,6 +56,7 @@ def _startup() -> None:
     _loop = asyncio.get_event_loop()
     _graph, _mermaid = g.build_graph()
     events.bus.subscribe(_pump)
+    events.bus.subscribe(_pump_studio)
 
 
 def _pump(ev: dict[str, Any]) -> None:
@@ -58,9 +66,33 @@ def _pump(ev: dict[str, Any]) -> None:
     _loop.call_soon_threadsafe(lambda: [q.put_nowait(ev) for q in list(_sse_queues)])
 
 
+def _pump_studio(ev: dict[str, Any]) -> None:
+    """Bus listener → mapped studio events → studio SSE consumers."""
+    if _loop is None:
+        return
+    mapped = studio.map_studio_event(ev)
+    if mapped is not None:
+        _loop.call_soon_threadsafe(
+            lambda: [q.put_nowait(mapped) for q in list(_studio_sse_queues)])
+
+
 @app.get("/")
 def index() -> Any:
+    return _static("dashboard.html")
+
+
+@app.get("/graph")
+def graph_view() -> Any:
     return _static("index.html")
+
+
+@app.get("/workspace/{agent_id}")
+def workspace_view(agent_id: str) -> Any:
+    from fastapi import HTTPException
+    from avis.agents import BY_ID
+    if agent_id not in BY_ID:
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    return _static("workspace.html")
 
 
 def _static(name: str) -> Any:
@@ -82,6 +114,55 @@ def api_graph() -> dict[str, Any]:
 def api_agents() -> dict[str, Any]:
     from avis.agents import AGENTS
     return {"agents": AGENTS}
+
+
+@app.get("/api/agents/{agent_id}")
+def api_agent(agent_id: str) -> dict[str, Any]:
+    from fastapi import HTTPException
+    from avis.agents import BY_ID
+    if agent_id not in BY_ID:
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    snap = studio.agent_snapshot(agent_id,
+                                  bool(_state.get("running", False)),
+                                  studio.waiting_agent())
+    return {"agent": snap,
+            "department": BY_ID[agent_id]["department"],
+            "tier": BY_ID[agent_id]["tier"]}
+
+
+@app.get("/api/studio/dashboard")
+def api_studio_dashboard() -> dict[str, Any]:
+    with _graph_lock:
+        return studio.build_dashboard_snapshot(_state, _pending_question)
+
+
+@app.get("/api/studio/events")
+async def api_studio_events(request: Request):
+    from fastapi.responses import StreamingResponse
+
+    queue: asyncio.Queue = asyncio.Queue()
+    for ev in events.bus.history():
+        mapped = studio.map_studio_event(ev)
+        if mapped is not None:
+            queue.put_nowait(mapped)
+    _studio_sse_queues.append(queue)
+
+    async def gen():
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    ev = await asyncio.wait_for(queue.get(), timeout=15)
+                except asyncio.TimeoutError:
+                    yield ": keepalive\n\n"
+                    continue
+                yield f"event: {ev['type']}\ndata: {json.dumps(ev)}\n\n"
+        finally:
+            _studio_sse_queues.remove(queue)
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.get("/api/state")

@@ -27,9 +27,9 @@ python -m ui.cli --yes \
   --topic "Why Mbappé shines on the biggest stage" \
   --reference-analysis examples/reference-analysis-mbappe.json
 
-# Web UI — graph view + live agent activity + CEO approval modal
+# Web UI — dashboard + workspace landing
 uvicorn ui.web.server:app --port 8000
-# open http://127.0.0.1:8000
+# open http://127.0.0.1:8000  →  Agent Dashboard (default), /graph = technical mermaid view
 ```
 
 ## Architecture
@@ -46,6 +46,30 @@ uvicorn ui.web.server:app --port 8000
 | Events | `avis/events.py` | Thread-safe event bus → both UIs observe the run live |
 | UI 1 | `ui/cli.py` | Streaming console, ANSI colors, stdin approvals |
 | UI 2 | `ui/web/` | FastAPI + SSE + mermaid graph view, CEO modal, knowledge panel |
+| UI 3 | `avis/studio.py` + `static/dashboard.html` | Agent Dashboard — live overview of all 17 agents, statuses/attention from the real event bus (see below) |
+
+## Agent Studio — Dashboard (Stage One)
+
+Open `http://127.0.0.1:8000/` — the Agent Dashboard is the default landing page (the
+technical mermaid graph stays at `/graph`; `/workspace/<agent_id>` is the Stage Two
+workspace landing page).
+
+- **17 agent cards** — name/role, real status (`working` / `waiting` / `completed` /
+  `failed` / `idle`), real `current_task` and `last_activity_at` taken from the event bus,
+  progress (100 on completion, pipeline position while in flight, 0 idle). Never invented.
+- **Needs Your Attention** — an agent before a CEO approval (the run is blocked on its
+  interrupt) glows and shows a badge; answered from the run's own progress.
+- **Production Overview** — 5 department stages (Strategy / Audio / Production / Quality /
+  Personnel), derived from real agent completions. Not a graph.
+- **Activity heatmap** — real hourly buckets of event-bus activity; hidden when empty.
+- **Live updates** — SSE at `/api/studio/events` (`agent_status_changed`,
+  `agent_completed`, `agent_attention_required`, `agent_failed`, `agent_handoff_ready`,
+  `activity_created`), with loading and connection-loss states.
+- **API** — `GET /api/studio/dashboard` returns the full snapshot; `GET /api/agents/<id>`
+  returns an agent's real identity/description.
+
+Run it the same way as the web UI above. `AVIS_LLM_ENABLED` is honored — everything
+works fully offline with the deterministic scripted brain.
 
 ## The LLM brain (optional)
 
