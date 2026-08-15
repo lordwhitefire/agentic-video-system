@@ -12,8 +12,11 @@ Serves:
   GET  /api/studio/dashboard    Agent Dashboard snapshot (real state)
   GET  /api/studio/events       Server-Sent Events: studio-mapped events
   GET  /api/studio/agents/{id}      workspace snapshot (spec §32)
-  POST /api/studio/agents/{id}/messages  send the agent a task (runs its real node)
-  POST /api/studio/agents/{id}/handoff   approve / redirect / continue a handoff
+  POST /api/studio/agents/{id}/messages  send the agent a message (Plan or Build mode)
+  POST /api/studio/agents/{id}/mode      switch Plan/Build interaction mode
+  POST /api/studio/agents/{id}/approval  human answer to an inline approval_request
+  POST /api/studio/agents/{id}/stop      real runtime cancellation (cooperative)
+  POST /api/studio/agents/{id}/handoff   human-governed switch (requires explicit decision)
   GET  /api/studio/agents/{id}/events    workspace Server-Sent Events
   GET  /api/state               latest run state snapshot
   GET  /api/pending             the pending CEO approval question (script / proposals)
@@ -25,18 +28,21 @@ The orchestrator stays deterministic; this server only observes and streams."""
 from __future__ import annotations
 
 import asyncio
+import calendar
 import json
 import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from fastapi import FastAPI, Request
 
+import avis.brain as brain
 import avis.events as events
 import avis.graph as g
 import avis.studio as studio
+import avis.tools as tools
 
 STATIC = Path(__file__).parent / "static"
 EXAMPLES = Path(__file__).resolve().parent.parent.parent / "examples"
@@ -54,11 +60,12 @@ _pending_resume: list[Any] = []
 _pending_question: dict[str, Any] = {}
 _auto_approve = False
 
-# --- Agent Workspace (Stage Two) state -------------------------------------
-# shared project context: real outputs produced across workspace handoffs so
-# the next agent genuinely inherits the previous agent's work (spec §56/§57)
+# --- Agent Workspace (conversation-first) state ----------------------------
+# shared project context: real outputs produced across workspace runs so the
+# next agent genuinely inherits the previous agent's work (spec §56/§57)
 _workspace_context: dict[str, Any] = {}
-# per-agent workspace store: messages, synthetic run/handoff events, status
+# per-agent workspace store: ONE conversation stream + mode + run state. The
+# human is the governance layer; nothing is routed or handoff-recommended.
 _workspace_store: dict[str, dict[str, Any]] = {}
 _workspace_queues: list[asyncio.Queue] = []
 
@@ -69,30 +76,20 @@ def _iso(ts: float | None = None) -> str:
 
 
 def _fresh_ws_store() -> dict[str, Any]:
-    return {"messages": [], "events": [], "current_run": None,
-            "status": "idle", "run_id": None, "handoff": None}
-
-
-def _ws_events(agent_id: str, limit: int = 100) -> list[dict[str, Any]]:
-    """Merged, deduped, time-ordered events for one agent: synthetic store
-    events + real bus events (recoverable, survives refresh — spec §66)."""
-    merged = list(_workspace_store.get(agent_id, {}).get("events", [])) \
-        + studio.workspace_events(agent_id)
-    seen: set[tuple] = set()
-    out: list[dict[str, Any]] = []
-    for e in sorted(merged, key=lambda x: x.get("timestamp", "")):
-        key = (e.get("type"), e.get("timestamp"), str(e.get("data", ""))[:120])
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(e)
-    return out[-limit:]
+    """A fresh per-agent workspace: empty conversation, Plan Mode by default,
+    no running process. Greeting is seeded on first snapshot."""
+    return {"conversation": [], "current_run": None,
+            "status": "idle", "run_id": None,
+            "mode": "plan", "stop_requested": False,
+            "approval_pending": None}
 
 
 def _push_ws_event(agent_id: str, event: dict[str, Any]) -> None:
-    """Record a synthetic workspace event and broadcast it to open workspaces."""
+    """Persist ONE normalized conversation event (spec §11) and broadcast it
+    to every open workspace stream. This is the only place conversation
+    entries are created besides the worker's assistant messages."""
     store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    store["events"].append(event)
+    store["conversation"].append(event)
     if _loop is not None:
         _loop.call_soon_threadsafe(
             lambda: [q.put_nowait(event) for q in list(_workspace_queues)])
@@ -109,7 +106,9 @@ def _startup() -> None:
 
 
 def _pump_workspace(ev: dict[str, Any]) -> None:
-    """Bus listener → mapped workspace events → workspace SSE consumers."""
+    """Bus listener → normalized conversation events → workspace SSE streams.
+    Live events are broadcast (not persisted — the snapshot merge rebuilds the
+    timeline from the bus, spec §66), so nothing is double-recorded."""
     if _loop is None:
         return
     mapped = studio.workspace_event(ev)
@@ -232,7 +231,12 @@ def api_workspace_snapshot(agent_id: str) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     with _graph_lock:
         store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-        return studio.build_workspace_snapshot(agent_id, store, _state, _pending_question)
+        if not store["conversation"]:
+            _push_ws_event(agent_id, {"type": "assistant_message", "agent_id": agent_id,
+                                      "timestamp": _iso(),
+                                      "content": studio.greeting_reply(agent_id)})
+        return studio.build_workspace_snapshot(agent_id, store, _state,
+                                               _pending_question, _workspace_context)
 
 
 @app.post("/api/studio/agents/{agent_id}/messages")
@@ -246,168 +250,288 @@ async def api_workspace_message(agent_id: str, payload: dict[str, Any]) -> dict[
         return {"ok": False, "error": "message is empty"}
     llm = bool(payload.get("llm", False))
     store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    store["messages"].append({"role": "human", "content": message,
-                              "timestamp": _iso()})
+    if store["status"] in ("working", "waiting"):
+        return {"ok": False, "error": "agent is already running — wait or stop it"}
+    _push_ws_event(agent_id, {"type": "user_message", "agent_id": "you",
+                              "timestamp": _iso(), "content": message})
     threading.Thread(target=_run_agent_worker, args=(agent_id, message, llm),
                      daemon=True).start()
     return {"ok": True, "accepted": True}
 
 
 def _run_agent_worker(agent_id: str, message: str, llm: bool = False) -> None:
-    """Runs the agent's REAL node function (single-node graph, tested g.run
-    loop). Outcome and result text are derived from real bus events — never
-    invented. Context from the shared workspace project is carried forward.
-    LLM is off by default so workspace runs are deterministic and fast."""
+    """One human message → one conversational turn, driven by real state:
+      - greetings and status questions are answered conversationally, zero execution
+      - Plan Mode: real reasoning + plan response only — the node never runs and
+        the execution gate is ON (blocked, enforced by the runtime, spec §8)
+      - Build Mode: the agent's REAL node runs with inline human approval and
+        cooperative stop. Outcomes derive from real bus events, never invented.
+    The human message is part of the same conversation stream (spec §18)."""
     os.environ["AVIS_LLM_ENABLED"] = "1" if llm else "0"
     store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
     now = time.time()
-    run_id = f"run-ws-{time.strftime('%H%M%S', time.gmtime(now))}-{agent_id}"
+    run_id = f"run-ws-{int(time.time() * 1000)}-{agent_id}"
     started = _iso(now)
-    store["current_run"] = {"id": run_id, "status": "working", "started_at": started}
-    store["status"] = "working"
-    store["handoff"] = None
-    store["handoff_resolved"] = False
-    store["run_id"] = run_id
+    mode = store.get("mode", "plan")
 
-    _push_ws_event(agent_id, {"type": "run_started", "agent_id": agent_id,
-                              "run_id": run_id, "timestamp": started})
-    _push_ws_event(agent_id, {"type": "agent_status_changed", "agent_id": agent_id,
+    store["current_run"] = {"id": run_id, "status": "working", "started_at": started,
+                            "mode": mode, "message": message}
+    store["status"] = "working"
+    store["run_id"] = run_id
+    store["stop_requested"] = False
+
+    _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
                               "run_id": run_id, "timestamp": started,
-                              "data": {"status": "working"}})
-    _push_ws_event(agent_id, {"type": "agent_progress_changed", "agent_id": agent_id,
-                              "run_id": run_id, "timestamp": started,
-                              "data": {"progress": 0}})
-    _push_ws_event(agent_id, {"type": "plan_created", "agent_id": agent_id,
-                              "run_id": run_id, "timestamp": started,
-                              "data": {"steps": studio.workspace_plan(agent_id, message)}})
+                              "content": f"{mode.capitalize()} Mode turn started"})
+
+    if studio.is_greeting(message):
+        _finish_ws_turn(agent_id, run_id, "completed",
+                        studio.greeting_reply(agent_id), started)
+        return
+
+    if studio.is_status_question(message):
+        _finish_ws_turn(agent_id, run_id, "completed",
+                        studio.status_summary(agent_id, store["conversation"]), started)
+        return
+
+    # Before ANY consequential execution the agent says what it will do (spec §16)
+    _push_ws_event(agent_id, {"type": "intent", "agent_id": agent_id,
+                              "run_id": run_id, "timestamp": _iso(),
+                              "content": studio.intent_message(agent_id, message)})
+
+    if mode == "plan":
+        # Plan Mode has zero execution authority: the gate is set defensively
+        # AND the node is never invoked — only the real think stream runs, so
+        # reasoning_summary events are genuine.
+        tools.set_execution_blocked(True)
+        try:
+            brain.think_stream(agent_id, {"topic": message})
+        finally:
+            tools.set_execution_blocked(False)
+        _finish_ws_turn(agent_id, run_id, "completed",
+                        studio.plan_response(agent_id, message), started)
+        return
 
     ctx_before = dict(_workspace_context)
     since = time.time()
     try:
-        final = studio.execute_agent_run(agent_id, message, ctx_before)
+        final = studio.execute_agent_run(
+            agent_id, message, ctx_before,
+            approver=_make_approver(agent_id, run_id, store),
+            should_stop=lambda: bool(store.get("stop_requested")))
     except Exception as e:  # noqa: BLE001 — surface any failure honestly
-        _finish_ws_run(agent_id, run_id, "failed", None, f"run failed: {e}")
+        _finish_ws_turn(agent_id, run_id, "failed", f"Execution failed — {e}", started)
         return
 
     with _graph_lock:
         _workspace_context.update({k: v for k, v in final.items()
                                    if k not in ("log", "mailboxes")})
 
+    if final.get("stopped"):
+        _finish_ws_turn(agent_id, run_id, "stopped",
+                        _stopped_message(agent_id, since), started)
+        return
+
     scoped = [e for e in events.bus.history(since) if e.get("agent") == agent_id]
-    stopped = [e for e in scoped
-               if e.get("kind") == "note" and "stopped" in str(e.get("text", "")).lower()]
     error_log = [l for l in final.get("log", []) if l.get("level") == "error"]
-    if stopped or error_log:
-        detail = (stopped[-1]["text"] if stopped else str(error_log[-1]["text"]))
-        _finish_ws_run(agent_id, run_id, "failed", None, detail)
+    if error_log:
+        _finish_ws_turn(agent_id, run_id, "failed",
+                        f"Execution failed — {str(error_log[-1]['text'])}", started)
         return
 
     result_ev = [e for e in scoped if e.get("kind") == "result"]
     result_text = ""
     if result_ev:
-        result_text = str(result_ev[-1]["text"])
-        result_text = result_text.split(" -> ", 1)[-1]
-    artifacts = studio._artifacts_from_state(final, context=ctx_before)
-    _finish_ws_run(agent_id, run_id, "completed", result_text, None, artifacts)
+        result_text = str(result_ev[-1]["text"]).split(" -> ", 1)[-1]
+    for art in studio._artifacts_from_state(final, context=ctx_before):
+        _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
+                                  "run_id": run_id, "timestamp": _iso(),
+                                  "content": f"Produced artifact: {art['name']} — {art['meta']}"})
+    _finish_ws_turn(agent_id, run_id, "completed", result_text, started)
 
 
-def _finish_ws_run(agent_id: str, run_id: str, status: str,
-                   result_text: Optional[str], error: Optional[str],
-                   artifacts: Optional[list[dict[str, Any]]] = None) -> None:
+def _make_approver(agent_id: str, run_id: str,
+                   store: dict[str, Any]) -> Callable[[dict[str, Any]], str]:
+    """The inline human approval flow (spec §4/§5): the run PAUSES while the
+    approval_request is visible in the conversation; the human answers via
+    POST /approval. Stop also releases the approval as rejected."""
+    import threading as _threading
+    import uuid as _uuid
+
+    def approver(question: dict[str, Any]) -> str:
+        pending = {"id": f"approval-{_uuid.uuid4().hex[:8]}",
+                   "run_id": run_id,
+                   "question": str(question.get("question", ""))[:300],
+                   "event": _threading.Event(), "answer": None}
+        store["approval_pending"] = pending
+        store["status"] = "waiting"
+        if store.get("current_run"):
+            store["current_run"]["status"] = "waiting"
+        _push_ws_event(agent_id, {"type": "approval_request", "agent_id": agent_id,
+                                  "run_id": run_id, "timestamp": _iso(),
+                                  "approval": {"title": "Approval required",
+                                               "description": pending["question"],
+                                               "action": "approve",
+                                               "status": "required"}})
+        while not pending["event"].wait(0.2):
+            if store.get("stop_requested"):
+                break
+        answer = pending["answer"] or "rejected"
+        status = "approved" if answer == "approve" else "rejected"
+        _push_ws_event(agent_id, {"type": "approval_result", "agent_id": agent_id,
+                                  "run_id": run_id, "timestamp": _iso(),
+                                  "approval": {"title": pending["question"][:80],
+                                               "status": status}})
+        store["approval_pending"] = None
+        if store.get("current_run"):
+            store["current_run"]["status"] = "working"
+        return answer
+
+    return approver
+
+
+def _stopped_message(agent_id: str, since: float) -> str:
+    """The honest post-stop report, derived from this run's real events
+    (spec §6/§42). 'Stopped' is a real runtime cancellation, not a notice."""
+    scoped = [e for e in events.bus.history(since) if e.get("agent") == agent_id]
+    completed = [e for e in scoped if e.get("kind") == "tool_result"
+                 and not e.get("error")]
+    parts = ["Stopped — the run was cancelled.",
+             f"Before the stop request, {len(completed)} tool call(s) had completed."]
+    if not completed:
+        parts.append("No tool call had completed yet.")
+    parts.append("No further actions were taken after the stop request.")
+    return "\n".join(parts)
+
+
+def _finish_ws_turn(agent_id: str, run_id: str, status: str,
+                    reply: str, started: str) -> None:
+    """Close a conversational turn: persist the assistant message and the run
+    status as conversation events — the ONLY assistant_message in the stream
+    comes from here (bus result events are not mapped, so nothing duplicates).
+    No handoff is recommended, no next agent is routed: the human governs.
+    Events are pushed BEFORE the terminal status becomes visible so a client
+    that observes the finished run always sees its final message."""
     store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
     ended = _iso()
-    store["status"] = status
-    if store.get("current_run"):
-        store["current_run"]["status"] = status
 
     if status == "failed":
-        store["messages"].append({"role": "agent", "content": f"Execution failed — {error}",
-                                  "timestamp": ended})
-        store["events"].append({"type": "run_failed", "agent_id": agent_id,
-                                "run_id": run_id, "timestamp": ended,
-                                "data": {"error": error}})
-        _push_ws_event(agent_id, {"type": "run_failed", "agent_id": agent_id,
+        _push_ws_event(agent_id, {"type": "error", "agent_id": agent_id,
                                   "run_id": run_id, "timestamp": ended,
-                                  "data": {"error": error}})
-        _push_ws_event(agent_id, {"type": "agent_status_changed", "agent_id": agent_id,
+                                  "content": reply})
+    else:
+        _push_ws_event(agent_id, {"type": "assistant_message", "agent_id": agent_id,
                                   "run_id": run_id, "timestamp": ended,
-                                  "data": {"status": "failed"}})
-        return
+                                  "content": reply})
+        _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
+                                  "run_id": run_id, "timestamp": ended,
+                                  "content": f"Turn {status} ({time.time() - calendar.timegm(time.strptime(started, '%Y-%m-%dT%H:%M:%SZ')):.1f}s)"})
 
-    store["events"].append({"type": "run_completed", "agent_id": agent_id,
-                            "run_id": run_id, "timestamp": ended,
-                            "data": {"result": result_text or ""}})
-    _push_ws_event(agent_id, {"type": "run_completed", "agent_id": agent_id,
-                              "run_id": run_id, "timestamp": ended,
-                              "data": {"result": result_text or ""}})
-    _push_ws_event(agent_id, {"type": "agent_status_changed", "agent_id": agent_id,
-                              "run_id": run_id, "timestamp": ended,
-                              "data": {"status": "completed"}})
-    _push_ws_event(agent_id, {"type": "agent_progress_changed", "agent_id": agent_id,
-                              "run_id": run_id, "timestamp": ended,
-                              "data": {"progress": 100}})
-
-    if result_text:
-        store["messages"].append({"role": "agent", "content": result_text,
-                                  "timestamp": ended})
-        _push_ws_event(agent_id, {"type": "message_created", "agent_id": agent_id,
-                                  "run_id": run_id, "timestamp": ended,
-                                  "data": {"role": "agent", "content": result_text,
-                                           "timestamp": ended}})
-
-    for art in artifacts or []:
-        art_msg = dict(art)
-        art_msg["type"] = "artifact"
-        art_msg["timestamp"] = ended
-        store["messages"].append(art_msg)
-        _push_ws_event(agent_id, {"type": "artifact_created", "agent_id": agent_id,
-                                  "run_id": run_id, "timestamp": ended,
-                                  "data": {"name": art["name"], "filename": art["filename"],
-                                           "meta": art["meta"]}})
-
-    handoff = studio.handoff_recommendation(agent_id)
-    if handoff:
-        store["handoff"] = handoff
-        _push_ws_event(agent_id, {"type": "handoff_ready", "agent_id": agent_id,
-                                  "run_id": run_id, "timestamp": ended,
-                                  "data": handoff})
+    store["status"] = status
+    store["run_id"] = None
+    if store.get("current_run"):
+        store["current_run"]["status"] = status
+        store["current_run"]["ended_at"] = ended
 
 
 @app.post("/api/studio/agents/{agent_id}/handoff")
 async def api_workspace_handoff(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Human-governed agent switch (spec §6/§7): there is NO auto-routing and
+    NO handoff recommendation. This only carries out an EXPLICIT human
+    decision — without one the runtime refuses (400, tested)."""
     from fastapi import HTTPException
     from avis.agents import BY_ID
     if agent_id not in BY_ID:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
-    decision = str(payload.get("decision", ""))
-    if decision not in ("approve", "redirect", "continue"):
-        return {"ok": False, "error": f"invalid handoff decision: {decision}"}
+    decision = str(payload.get("decision", "")).strip().lower()
+    if not decision:
+        raise HTTPException(status_code=400,
+                            detail="unauthorized handoff: an explicit human decision is required")
+    if decision not in ("approve", "redirect"):
+        raise HTTPException(status_code=400, detail=f"invalid handoff decision: {decision}")
     target = payload.get("target_agent_id")
-    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-
-    if decision == "continue":
-        store["handoff"] = None
-        store["handoff_resolved"] = True
-        _push_ws_event(agent_id, {"type": "handoff_redirected", "agent_id": agent_id,
-                                  "timestamp": _iso(), "data": {"decision": "continue"}})
-        store["messages"].append({"role": "system",
-                                  "content": "Handoff declined — continuing with this agent.",
-                                  "timestamp": _iso()})
-        return {"approved": True, "decision": "continue"}
-
     if not target or target not in BY_ID:
         raise HTTPException(status_code=400, detail=f"invalid target agent: {target}")
-    store["handoff"] = None
-    store["handoff_resolved"] = True
-    wtype = "handoff_approved" if decision == "approve" else "handoff_redirected"
-    _push_ws_event(agent_id, {"type": wtype, "agent_id": agent_id,
-                              "timestamp": _iso(), "data": {"target_agent_id": target}})
-    store["messages"].append({"role": "system",
-                              "content": f"Handoff {'approved' if decision == 'approve' else 'redirected'} → "
-                                         f"{studio.NAMES.get(target, target)}.",
-                              "timestamp": _iso()})
+    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
+    _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
+                              "timestamp": _iso(),
+                              "content": f"Human decision: {decision} → "
+                                         f"{studio.NAMES.get(target, target)}"})
     return {"approved": True, "decision": decision, "source_agent_id": agent_id,
             "target_agent_id": target, "workspace_url": f"/workspace/{target}"}
+
+
+@app.post("/api/studio/agents/{agent_id}/mode")
+async def api_workspace_mode(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Switch this agent between Plan and Build interaction modes (spec §2).
+    Explicit only — never automatic; refused while a run is active."""
+    from fastapi import HTTPException
+    from avis.agents import BY_ID
+    if agent_id not in BY_ID:
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    mode = str(payload.get("mode", "")).strip().lower()
+    if mode not in ("plan", "build"):
+        raise HTTPException(status_code=400, detail="mode must be 'plan' or 'build'")
+    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
+    if store.get("status") in ("working", "waiting"):
+        return {"ok": False, "error": "agent is running — stop it first"}
+    store["mode"] = mode
+    _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
+                              "timestamp": _iso(),
+                              "content": f"Switched to {mode.capitalize()} Mode"})
+    return {"ok": True, "mode": mode}
+
+
+@app.post("/api/studio/agents/{agent_id}/approval")
+async def api_workspace_approval(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """The human answers an inline approval_request. The paused run resumes
+    only from this real answer (spec §4/§5)."""
+    from fastapi import HTTPException
+    from avis.agents import BY_ID
+    if agent_id not in BY_ID:
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
+    pending = store.get("approval_pending")
+    if not pending:
+        return {"ok": False, "error": "no approval is pending"}
+    answer = str(payload.get("answer", "")).strip().lower()
+    if answer not in ("approve", "reject", "rejected", "deny"):
+        return {"ok": False, "error": "answer must be approve|rejected"}
+    if answer in ("reject", "deny"):
+        answer = "rejected"
+    run_id = payload.get("run_id")
+    if run_id and str(run_id) != str(pending["run_id"]):
+        return {"ok": False, "error": "stale approval: that run has ended"}
+    pending["answer"] = answer
+    pending["event"].set()
+    return {"ok": True, "answer": answer}
+
+
+@app.post("/api/studio/agents/{agent_id}/stop")
+async def api_workspace_stop(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Real runtime cancellation (spec §6/§42): cooperative — the run is asked
+    to stop at its next checkpoint; a pending approval is released as rejected."""
+    from fastapi import HTTPException
+    from avis.agents import BY_ID
+    if agent_id not in BY_ID:
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
+    run = store.get("current_run")
+    run_id = payload.get("run_id")
+    if not run or run.get("status") not in ("working", "waiting"):
+        return {"ok": False, "error": "no active run to stop"}
+    if run_id and str(run_id) != str(run["id"]):
+        return {"ok": False, "error": "stale run id"}
+    store["stop_requested"] = True
+    store["status"] = "stopping"
+    pending = store.get("approval_pending")
+    if pending:
+        pending["answer"] = "rejected"
+        pending["event"].set()
+    _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
+                              "run_id": run["id"], "timestamp": _iso(),
+                              "content": "Stop requested — cancelling the run"})
+    return {"ok": True, "stopping": True}
 
 
 @app.get("/api/studio/agents/{agent_id}/events")
@@ -419,7 +543,12 @@ async def api_workspace_events(agent_id: str, request: Request):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
 
     queue: asyncio.Queue = asyncio.Queue()
-    for ev in _ws_events(agent_id):
+    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
+    if not store["conversation"]:
+        _push_ws_event(agent_id, {"type": "assistant_message", "agent_id": agent_id,
+                                  "timestamp": _iso(),
+                                  "content": studio.greeting_reply(agent_id)})
+    for ev in store["conversation"]:
         queue.put_nowait(ev)
     _workspace_queues.append(queue)
 
@@ -433,7 +562,7 @@ async def api_workspace_events(agent_id: str, request: Request):
                 except asyncio.TimeoutError:
                     yield ": keepalive\n\n"
                     continue
-                if ev.get("agent_id") != agent_id:
+                if ev.get("agent_id") not in (agent_id, "you"):
                     continue
                 yield f"event: {ev['type']}\ndata: {json.dumps(ev)}\n\n"
         finally:

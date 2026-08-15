@@ -325,33 +325,20 @@ def map_studio_event(ev: dict[str, Any]) -> Optional[dict[str, Any]]:
 
 
 # --------------------------------------------------------------------------
-# Agent Workspace (Stage Two)
+# Agent Workspace (Stage Two rebuild — conversation-first)
 # --------------------------------------------------------------------------
-# The workspace runs ONE agent's real node function per human message, via a
-# tiny single-node StateGraph driven through the SAME g.run() loop as the full
-# pipeline. No second execution engine, no fake chat: plan/action/tool events
-# are the real events the node emits. The handoff recommendation is the
-# canonical next-map below — deterministic, single source of truth.
+# The workspace is ONE continuous conversation. All events — messages,
+# reasoning summaries, intent, tool calls/results, approvals, errors — are
+# normalized entries of a single chronological stream (spec §11). There is
+# NO separate activity feed, NO handoff chain, NO auto-routing: the human is
+# the governance layer, Plan Mode has zero execution authority (runtime
+# gate), and handoffs only happen through an explicit human decision.
 
-HANDOFF_MAP: dict[str, dict[str, Optional[str]]] = {
-    "strategist":        {"next": "analyzer",    "reason": "The strategy is complete and the project now requires analysis."},
-    "analyzer":          {"next": "planner",     "reason": "The analysis is complete and the project now requires production planning."},
-    "planner":           {"next": "researcher",  "reason": "The script and manifest are ready and the project now requires asset sourcing."},
-    "researcher":        {"next": "audio-lead",  "reason": "The asset bundle is confirmed and the project now requires audio direction."},
-    "audio-lead":        {"next": "tts",         "reason": "The audio plan is locked and the project now requires the voice track."},
-    "tts":               {"next": "editor",      "reason": "The voice track spec is ready and the project now requires editing."},
-    "editor":            {"next": "graphics",    "reason": "The cut spec is assembled and the project now requires visual work."},
-    "graphics":          {"next": "animation",   "reason": "Graphics are placed and the project now requires motion design."},
-    "animation":         {"next": "animated-graphics", "reason": "Animation is done and the project now requires animated overlays."},
-    "animated-graphics": {"next": "video-effects", "reason": "Animated graphics are done and the project now requires effect design."},
-    "video-effects":     {"next": "clips",       "reason": "Effects are designed and the project now requires clip sourcing."},
-    "clips":             {"next": "images",      "reason": "Clips are sourced and the project now requires image sourcing."},
-    "images":            {"next": "reviewer",    "reason": "All assets are in place and the project now requires quality review."},
-    "reviewer":          {"next": "watcher-blocker", "reason": "The cut is reviewed and the project now requires a final law watch."},
-    "watcher-blocker":   {"next": "investigator", "reason": "The law watch found evidence and the project now requires investigation."},
-    "investigator":      {"next": "recruiter",   "reason": "Investigation is complete and the project now requires personnel action."},
-    "recruiter":         {"next": None,          "reason": "This is the final agent in the pipeline."},
-}
+CONVERSATION_TYPES = [
+    "user_message", "assistant_message", "reasoning_summary", "intent",
+    "tool_call", "tool_result", "approval_request", "approval_result",
+    "error", "status",
+]
 
 SENSITIVE_KEYS = {"api_key", "apikey", "authorization", "access_token",
                   "refresh_token", "password", "secret", "cookie"}
@@ -385,17 +372,132 @@ def workspace_agent_snapshot(agent_id: str, running: bool,
     base["department"] = agents_mod.BY_ID[agent_id].get("department", "")
     base["tier"] = agents_mod.BY_ID[agent_id].get("tier", "")
     base["capabilities"] = _capabilities(agent_id)
+    base["tools"] = agent_tools(agent_id)
+    base["about"] = (f"You are interacting with the {base['name']}. "
+                     f"I am your {DESCRIPTIONS.get(agent_id, 'agent')}.")
     return base
 
 
-def handoff_recommendation(agent_id: str) -> Optional[dict[str, Any]]:
-    cfg = HANDOFF_MAP.get(agent_id)
-    if not cfg or not cfg["next"]:
-        return None
-    target = NAMES.get(cfg["next"], cfg["next"])
-    return {"next_agent_id": cfg["next"], "next_agent_name": target,
-            "reason": cfg["reason"]}
+def agent_tools(agent_id: str) -> list[dict[str, Any]]:
+    """The tools this agent has really used — from the event bus, with their
+    real descriptions from the tool registry. Never invented (spec §26)."""
+    import avis.tools as tools
+    seen: dict[str, dict[str, Any]] = {}
+    for e in events.bus.history():
+        if e.get("agent") != agent_id or e.get("kind") != "tool_call":
+            continue
+        name = e.get("tool", "")
+        if not name:
+            continue
+        seen.setdefault(name, {"name": name,
+                               "doc": (tools.REGISTRY.get(name) or {}).get("doc", ""),
+                               "status": "blocked" if e.get("blocked") else "available"})
+    return sorted(seen.values(), key=lambda t: t["name"])
 
+
+def project_memory(context: Optional[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Real project context available to the agent — labels only, from the
+    shared workspace context. Never invented (spec §25)."""
+    labels = {
+        "topic": "Project Brief", "blueprint": "Structural Blueprint",
+        "script": "Script & Segments", "manifest": "Resource Manifest",
+        "asset_bundle": "Asset Bundle", "cut_spec": "Cut Spec",
+        "voice_track": "Voice Track", "review_report": "Review Report",
+    }
+    out = []
+    for key, label in labels.items():
+        value = (context or {}).get(key)
+        out.append({"label": label, "available": bool(value),
+                    "detail": label if value else "not produced yet"})
+    return out
+
+
+# --------------------------------------------------------------------------
+# conversational behavior — derived from identity + real state, zero execution
+# --------------------------------------------------------------------------
+
+def is_greeting(message: str) -> bool:
+    """A pure greeting (hello / hi / hey ...) — answered conversationally,
+    never triggering a plan, a project, routing, or any execution."""
+    m = message.strip().rstrip("!.,? ")
+    if not m:
+        return False
+    import re
+    words = [w for w in m.split() if w]
+    if len(words) > 3:
+        return False
+    first = re.sub(r"[^a-z']", "", words[0].lower())
+    return bool(re.fullmatch(r"(hi|hello|hey|yo|howdy|hola|greetings|"
+                             r"good(morning|afternoon|evening)|wazzup|sup|whatsup)", first))
+
+
+def greeting_reply(agent_id: str) -> str:
+    name = NAMES.get(agent_id, agent_id)
+    return (f"Hello. I'm the {name}. "
+            f"{DESCRIPTIONS.get(agent_id, 'How can I help?')} What are we working on today?")
+
+
+def is_status_question(message: str) -> bool:
+    import re
+    m = re.sub(r"[^a-z ]", "", message.lower())
+    return bool(re.search(r"(what (have you been doing|did you do|happened)|"
+                          r"(your )?(status|progress))", m))
+
+
+def status_summary(agent_id: str, conversation: list[dict[str, Any]]) -> str:
+    """'What have you been doing?' — an honest summary derived from THIS
+    conversation's real events, never invented (spec §38)."""
+    name = NAMES.get(agent_id, agent_id)
+    tools_done = [e for e in conversation if e.get("type") == "tool_result"
+                  and e.get("tool", {}).get("status") == "completed"]
+    blocks = [e for e in conversation if e.get("type") == "error"]
+    results = [e for e in conversation if e.get("type") == "assistant_message"
+               and e.get("agent_id") != "you"]
+    if not conversation and not tools_done:
+        return f"I'm {name}. We haven't done anything yet in this workspace."
+    lines = [f"I'm {name}. Here's what we've done in this workspace:"]
+    for e in tools_done:
+        lines.append(f"- tool: {e['tool']['name']} — {e.get('content', '')[:90]}")
+    if results:
+        last = results[-1].get("content", "")
+        if last:
+            lines.append(f"- last result: {last[:140]}")
+    if blocks:
+        lines.append(f"- {len(blocks)} error(s) reported in this conversation")
+    lines.append("")
+    lines.append("No changes were made unless a tool result above confirms them.")
+    return "\n".join(lines)
+
+
+def intent_message(agent_id: str, message: str) -> str:
+    """Before ANY consequential execution, the agent says what it's going to
+    do and why (spec §16/§36). Derived from the agent's real role."""
+    steps = workspace_plan(agent_id, message)
+    lines = ["Understood. Before I do anything, here's what I'm going to do:",
+             ""]
+    lines += [f"{i}. {s}" for i, s in enumerate(steps, 1)]
+    lines += ["", "I won't take consequential actions without explaining them."]
+    return "\n".join(lines)
+
+
+def plan_response(agent_id: str, message: str) -> str:
+    """Plan Mode reply: conversational, proposes the approach, executes NOTHING.
+    The runtime gate (tools.set_execution_blocked) backs this up."""
+    name = NAMES.get(agent_id, agent_id)
+    steps = workspace_plan(agent_id, message)
+    lines = [f"Understood. I'm {name} — {DESCRIPTIONS.get(agent_id, 'your agent')}.",
+             "In Plan Mode I won't execute anything or change any files. "
+             "Here's how I'd approach this:", ""]
+    lines += [f"{i}. {s}" for i, s in enumerate(steps, 1)]
+    lines += ["",
+              "Nothing was executed. If this looks right, switch to Build Mode "
+              "and I'll carry it out."]
+    return "\n".join(lines)
+
+
+# --------------------------------------------------------------------------
+# the real run (Build Mode)
+# --------------------------------------------------------------------------
 
 def workspace_plan(agent_id: str, message: str) -> list[str]:
     """Explicit pre-execution action rationale (spec §38) — derived from the
@@ -440,10 +542,13 @@ def _seed_workspace_state(agent_id: str, message: str,
 
 
 def execute_agent_run(agent_id: str, message: str,
-                      context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+                      context: Optional[dict[str, Any]] = None,
+                      approver: Optional[Callable[[dict[str, Any]], Any]] = None,
+                      should_stop: Optional[Callable[[], bool]] = None) -> dict[str, Any]:
     """Run ONE agent's real node function through a single-node graph driven
-    by the tested g.run() loop. Interrupts (planner/researcher approvals) are
-    auto-approved for the demo and recorded honestly as CEO notes."""
+    by the tested g.run() loop. `approver` answers interrupt() questions
+    (default: auto-approve, recorded honestly as CEO notes); `should_stop`
+    cancels the run cooperatively."""
     from langgraph.checkpoint.memory import InMemorySaver
     from langgraph.graph import END, START, StateGraph
     from avis.agents import build_node
@@ -452,7 +557,7 @@ def execute_agent_run(agent_id: str, message: str,
 
     state = _seed_workspace_state(agent_id, message, context)
 
-    def approver(question: dict[str, Any]) -> str:
+    def default_approver(question: dict[str, Any]) -> str:
         events.bus.emit("CEO", "note",
                         f"workspace auto-approve: {str(question.get('question', ''))[:60]}")
         return "approve"
@@ -462,7 +567,8 @@ def execute_agent_run(agent_id: str, message: str,
     sg.add_edge(START, agent_id)
     sg.add_edge(agent_id, END)
     graph = sg.compile(checkpointer=InMemorySaver())
-    return g.run(graph, state, approver, record=False)
+    return g.run(graph, state, approver or default_approver,
+                 record=False, should_stop=should_stop)
 
 
 def _artifacts_from_state(state: dict[str, Any],
@@ -496,53 +602,65 @@ def _artifacts_from_state(state: dict[str, Any],
     return out
 
 
+# --------------------------------------------------------------------------
+# bus event -> normalized conversation event (spec §11)
+# --------------------------------------------------------------------------
+
 def workspace_event(ev: dict[str, Any]) -> Optional[dict[str, Any]]:
-    """Raw bus event -> workspace event, or None if it carries no workspace
-    signal for the activity timeline / conversation."""
+    """Raw bus event -> one normalized conversation event, or None if it
+    carries no workspace signal. Everything stays in the SAME timeline."""
     kind = ev.get("kind", "")
     agent = ev.get("agent", "")
     ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ev.get("ts", 0.0)))
     text = (ev.get("text") or "")
+    if not text:
+        text = kind
 
-    if agent == "CEO" and kind == "interrupt":
-        return {"type": "agent_waiting", "agent_id": "CEO", "timestamp": ts,
-                "data": {"question": text[:240]}}
-    if agent == "CEO" and kind == "note":
-        return {"type": "activity_created", "agent_id": "CEO", "timestamp": ts,
-                "data": {"text": text[:240]}}
+    if agent == "CEO":
+        if kind == "interrupt":
+            return {"type": "status", "agent_id": agent, "timestamp": ts,
+                    "content": f"Waiting for your approval: {text[:240]}"}
+        return {"type": "status", "agent_id": agent, "timestamp": ts,
+                "content": text[:240]}
+
     if kind == "thinking":
-        return {"type": "action_started", "agent_id": agent, "timestamp": ts,
-                "data": {"text": text[:240]}}
+        return {"type": "reasoning_summary", "agent_id": agent, "timestamp": ts,
+                "content": text[:240]}
     if kind == "tool_call":
-        return {"type": "tool_call_started", "agent_id": agent, "timestamp": ts,
-                "data": {"tool": ev.get("tool", ""), "input": sanitize(ev.get("args", [])),
-                         "text": text[:240]}}
+        return {"type": "tool_call", "agent_id": agent, "timestamp": ts,
+                "tool": {"name": ev.get("tool", ""), "args": sanitize(ev.get("args", [])),
+                         "status": "running", "blocked": bool(ev.get("blocked"))},
+                "content": text[:240]}
     if kind == "tool_result":
-        wtype = "tool_call_failed" if ev.get("error") else "tool_call_completed"
-        return {"type": wtype, "agent_id": agent, "timestamp": ts,
-                "data": {"tool": ev.get("tool", ""), "text": text[:240]}}
+        return {"type": "tool_result", "agent_id": agent, "timestamp": ts,
+                "tool": {"name": ev.get("tool", ""),
+                         "status": "failed" if ev.get("error") else "completed",
+                         "blocked": bool(ev.get("blocked"))},
+                "content": text[:240]}
     if kind == "note":
         low = text.lower()
-        if any(w in low for w in ("decision", "approve", "reject", "locked", "confirmed")):
-            return {"type": "decision_created", "agent_id": agent, "timestamp": ts,
-                    "data": {"text": text[:240]}}
-        return {"type": "activity_created", "agent_id": agent, "timestamp": ts,
-                "data": {"text": text[:240]}}
-    if kind == "result":
-        return {"type": "result", "agent_id": agent, "timestamp": ts,
-                "data": {"text": text[:240]}}
+        if "stopped" in low:
+            return {"type": "error", "agent_id": agent, "timestamp": ts,
+                    "content": text[:240]}
+        return {"type": "status", "agent_id": agent, "timestamp": ts,
+                "content": text[:240]}
     if kind == "law_block":
-        return {"type": "activity_created", "agent_id": agent, "timestamp": ts,
-                "data": {"text": text[:240]}}
-    if kind == "route":
-        return {"type": "activity_created", "agent_id": agent, "timestamp": ts,
-                "data": {"text": text[:240]}}
+        return {"type": "error", "agent_id": agent, "timestamp": ts,
+                "content": text[:240]}
+    if kind in ("route", "result"):
+        # result becomes the agent's assistant message via the workspace store;
+        # mapping it here would duplicate the final message.
+        return None
+    if kind == "error":
+        return {"type": "error", "agent_id": agent, "timestamp": ts,
+                "content": text[:240]}
     return None
 
 
 def workspace_events(agent_id: str, limit: int = 100) -> list[dict[str, Any]]:
-    """This agent's real events from the bus, workspace-mapped. CEO events are
-    excluded so one agent's timeline never carries another agent's approvals."""
+    """This agent's real events from the bus, normalized to conversation
+    events (spec §11). CEO decision events are excluded from per-agent
+    timelines — they only appear as approvals the human explicitly sees."""
     out: list[dict[str, Any]] = []
     for ev in events.bus.history():
         if ev.get("agent") != agent_id:
@@ -556,35 +674,48 @@ def workspace_events(agent_id: str, limit: int = 100) -> list[dict[str, Any]]:
 def build_workspace_snapshot(agent_id: str,
                              store: dict[str, Any],
                              run_state: dict[str, Any],
-                             pending_question: Optional[dict[str, Any]]) -> dict[str, Any]:
-    """The workspace contract (spec §32/§53): agent + current run + messages +
-    events + handoff — all derived from real state."""
+                             pending_question: Optional[dict[str, Any]],
+                             context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """The workspace contract: agent + mode + current run + ONE conversation.
+    The conversation is the chronological merge of persisted store events and
+    this agent's real bus events — everything the human needs to know is in
+    that one timeline."""
     running = bool(run_state.get("running", False))
     waiting = waiting_agent() if (running and pending_question) else None
     status = store.get("status", "idle")
-    if status == "idle" and running:
-        status = "idle"
 
     agent = workspace_agent_snapshot(agent_id, running, waiting)
+    agent["status"] = status if store.get("run_id") else agent["status"]
+    if status in ("working", "waiting", "stopped", "failed"):
+        agent["progress"] = 50 if status == "working" else 100
+        agent["current_task"] = ({"waiting": "Waiting for your approval",
+                                  "working": "Working", "stopped": "Stopped",
+                                  "failed": "Failed"}.get(status, status))
 
-    handoff = store.get("handoff")
-    if not handoff and status == "completed" and not store.get("handoff_resolved"):
-        handoff = handoff_recommendation(agent_id)
-
-    merged = list(store.get("events", [])) + workspace_events(agent_id)
+    merged = list(store.get("conversation", [])) + workspace_events(agent_id)
     seen: set[tuple] = set()
-    events_out: list[dict[str, Any]] = []
+    conversation: list[dict[str, Any]] = []
     for e in sorted(merged, key=lambda x: x.get("timestamp", "")):
-        key = (e.get("type"), e.get("timestamp"), str(e.get("data", ""))[:120])
+        key = (e.get("type"), e.get("timestamp"), str(e.get("content", ""))[:120],
+               str((e.get("approval") or {}).get("status", "")),
+               str((e.get("tool") or {}).get("name", "")))
         if key in seen:
             continue
         seen.add(key)
-        events_out.append(e)
+        conversation.append(e)
 
+    run = store.get("current_run")
+    pending = store.get("approval_pending")
+    pending_out: Optional[dict[str, Any]] = None
+    if pending:
+        pending_out = {"id": pending.get("id"), "run_id": pending.get("run_id"),
+                       "question": pending.get("question", "")}
     return {
         "agent": agent,
-        "current_run": store.get("current_run"),
-        "messages": store.get("messages", []),
-        "events": events_out[-100:],
-        "handoff": handoff,
+        "mode": store.get("mode", "plan"),
+        "current_run": run,
+        "conversation": conversation[-200:],
+        "can_stop": bool(run and run.get("status") in ("working", "waiting")),
+        "pending_approval": pending_out,
+        "memory": project_memory(context),
     }

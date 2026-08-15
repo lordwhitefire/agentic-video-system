@@ -194,7 +194,9 @@ def test_workspace_page_served(client) -> None:
     r = client.get("/workspace/strategist")
     assert r.status_code == 200
     assert "Agent Workspace" in r.text
-    assert "Live Activity" in r.text
+    assert "Live Activity" not in r.text, "the old activity panel is gone"
+    assert "AGENT NETWORK" in r.text
+    assert "PLAN" in r.text and "BUILD" in r.text
     assert client.get("/workspace/nobody").status_code == 404
 
 

@@ -22,6 +22,23 @@ ToolFn = Callable[[dict[str, Any], list[Any]], dict[str, Any]]
 # wrapper merges them into the graph state update (append-reducers keep lists).
 _pending = threading.local()
 
+# Plan Mode execution gate. Tools that mutate state are rejected while the
+# gate is on — Plan Mode has no execution authority (runtime-enforced, not a
+# prompt instruction). Read-only inspection tools stay available.
+_execution_gate = threading.local()
+
+READ_ONLY_TOOLS = {"read_state", "retrieve_memory", "retrieve_knowledge",
+                   "score_fidelity", "pass_through"}
+
+
+def set_execution_blocked(flag: bool) -> None:
+    """Turn the Plan-Mode gate on/off for the current thread."""
+    _execution_gate.blocked = bool(flag)
+
+
+def execution_blocked() -> bool:
+    return getattr(_execution_gate, "blocked", False)
+
 
 def drain_pending() -> dict[str, Any]:
     out = getattr(_pending, "updates", {})
@@ -205,6 +222,15 @@ def call(state: dict[str, Any], agent_id: str, tool: str, *args: Any) -> dict[st
     if tool not in REGISTRY:
         events.bus.emit(agent_id, "tool_result", f"tool '{tool}' not found (Law 12)", error=True)
         return {"error": f"unknown tool {tool}"}
+    if execution_blocked() and tool not in READ_ONLY_TOOLS:
+        # Plan Mode has no execution authority: the tool is observed but never
+        # run, never staged, never mutated. The error is real and visible.
+        events.bus.emit(agent_id, "tool_call", f"{tool}({', '.join(str(a) for a in args)})",
+                        tool=tool, args=list(args), blocked=True)
+        events.bus.emit(agent_id, "tool_result",
+                        f"{tool} blocked: Plan Mode has no execution authority (read-only inspection only)",
+                        tool=tool, error=True, blocked=True)
+        return {"error": f"blocked: Plan Mode has no execution authority ({tool})"}
     events.bus.emit(agent_id, "tool_call", f"{tool}({', '.join(str(a) for a in args)})", tool=tool, args=list(args))
     try:
         result = REGISTRY[tool]["fn"](state, list(args))
@@ -224,5 +250,6 @@ def call(state: dict[str, Any], agent_id: str, tool: str, *args: Any) -> dict[st
                 cur = v
             updates[k] = cur
         _pending.updates = updates
-    events.bus.emit(agent_id, "tool_result", f"{tool} -> {result.get('note') or result}")
+    events.bus.emit(agent_id, "tool_result", f"{tool} -> {result.get('note') or result}",
+                    tool=tool)
     return result

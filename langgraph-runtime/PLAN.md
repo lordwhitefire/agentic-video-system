@@ -176,9 +176,80 @@ endpoint: `https://open.bigmodel.cn/api/paas/v4`, model `glm-4.5-flash`
 - [x] **8.4 Tests** `tests/test_workspace.py`: snapshot = real agent identity/status/capabilities; message → run starts → working → real tool_call/tool_result events → result → handoff ready (deterministic polling); handoff approve returns next workspace URL; redirect validates target; continue records + dismisses; workspace SSE streams; `/workspace/{id}` renders; unknown agent 404; history survives "refresh" (snapshot re-fetch). All 49 existing tests stay green
 - [x] **8.5 Docs**: runtime README workspace section; PLAN.md bugs found
 - [x] **8.6 Acceptance (spec §78/§80 DoD)**: dashboard card opens `/workspace/<id>`; workspace shows the agent; message runs the real node; status/progress/messages/plan/tools/results/artifacts live; conversation history survives refresh; handoff recommend→approve→switch opens `/workspace/next`; redirect works; continue works; no navbar/graph/workflow-builder/multi-agent chat/fake events; secrets redacted; large outputs truncated
-- [ ] **8.7 Commit + push**: `ADD: Agent Workspace (Stage Two)`
+- [x] **8.7 Commit + push**: `ADD: Agent Workspace (Stage Two)`
 
-**Bugs found & fixed during Phase 8:**
+## Phase 9 — Agent Workspace rebuild: conversation-first
+
+> Spec: `~/Downloads/AVIS_Agent_Workspace_Replacement.md`. The Stage Two workspace was
+> rebuilt after the user's review: ONE continuous conversation, no activity panel.
+> Plan and Build are interaction modes, not workflow stages; Plan Mode has zero
+> execution authority (enforced by a runtime gate, not by prompting); the human is the
+> governance layer; handoffs require an explicit human decision; stop is a real runtime
+> cancellation; four behaviors are locked by tests. Approved plan:
+> `WORKSPACE_REBUILD_PLAN.md` (updated with the 7 corrections).
+
+- [x] **9.1 Runtime guarantees**: `avis/tools.py` execution gate — `set_execution_blocked()`,
+  `READ_ONLY_TOOLS` (read_state, retrieve_memory, retrieve_knowledge, score_fidelity,
+  pass_through) stay allowed; any mutating `call()` while the gate is on emits a real
+  blocked tool_call/tool_result and refuses. `avis/graph.py` `RunStopped` +
+  `should_stop` — cooperative cancellation polled between stream updates,
+  `final["stopped"] = True`.
+- [x] **9.2 `avis/studio.py`**: one normalized timeline (`CONVERSATION_TYPES`):
+  user_message, assistant_message, reasoning_summary, intent, tool_call, tool_result,
+  approval_request, approval_result, error, status. `workspace_event()` remaps raw bus
+  events into that single stream (result/route → None; the store owns the final
+  assistant message). `is_greeting`/`greeting_reply` (conversational, zero execution),
+  `is_status_question`/`status_summary` ("What have you been doing?" from real
+  conversation events), `intent_message` (stated before any consequential execution),
+  `plan_response` (Plan Mode: approach + "Nothing was executed"). New snapshot contract:
+  `{agent(+about/capabilities/tools/memory), mode, current_run, conversation[],
+  can_stop, pending_approval}` — no handoff field, no activity feed. Tool registry list
+  per agent comes from the real bus; project memory labels from real `_workspace_context`.
+- [x] **9.3 `server.py`**: store = conversation + mode (default `"plan"`) + run + approval;
+  worker branches greeting / status question / Plan (think stream only, gate on) / Build
+  (real node, inline approver, `should_stop`); `_finish_ws_turn` pushes the final
+  message BEFORE the terminal status is visible (no observe-before-final-event race);
+  new endpoints `POST …/mode`, `POST …/approval`, `POST …/stop`; `POST …/handoff`
+  refuses (400) without an explicit human `decision`; user messages (`agent_id:"you"`)
+  pass the per-agent SSE filter; greeting seeded on first snapshot.
+- [x] **9.4 `static/workspace.html`**: full rebuild — top bar Plan|Build toggle + STOP;
+  one conversation timeline rendering all 9 event types inline (bubbles, reasoning,
+  intent card, tool cards with args/status, approval card with Approve/Reject, error,
+  status lines); left Agent Network (dynamic) + project resources; right panel =
+  about/capabilities/memory/tools; SSE reconnect + snapshot reload with dedup; no Live
+  Activity panel.
+- [x] **9.5 Tests** `tests/test_workspace.py` rewritten to the new model (18 tests,
+  incl. the four critical ones: plan mode blocks tool execution — gate unit + zero tool
+  events integration; build mode executes with real tool events; "Hello." = zero
+  execution; unauthorized handoff → 400). Also: approval pause/resume, rejection
+  surfaces as a failed run with an error event, stop = honest "Stopped" message,
+  refresh survival, SSE, 404s, secrets. `tests/test_studio.py` page test asserts the new
+  UI. Full suite **67/67 passed**.
+- [x] **9.6 Docs + acceptance**: README workspace section rewritten to the
+  conversation-first model; live acceptance — greeting zero-execution, Plan mode
+  intent+reasoning+plan reply with zero tools, Build mode real tool events, approval
+  pause→approve→resume→artifacts, stop releases approval and reports honestly,
+  SSE streams conversation events, unauthorized handoff 400.
+- [ ] **9.7 Commit + push**: `REBUILD: Agent Workspace — conversation-first (Plan/Build modes, runtime-enforced authority, inline approvals)`
+
+**Bugs found & fixed during Phase 9:**
+- The SSE per-agent filter dropped `user_message` events because the human's messages
+  carry `agent_id: "you"` — the filter now accepts both.
+- `threading.Event` (stored in `approval_pending`) leaked into the serialized snapshot —
+  `build_workspace_snapshot` returns a plain `{id, run_id, question}` payload.
+- Approval-result events were lost by the dedup key when two runs finished in the same
+  second — the key now includes approval status and tool name.
+- Workspace `run_id`s collided when two runs of the same agent started in one second,
+  breaking turn-scoped assertions — now `int(time.time() * 1000)` based.
+- `_finish_ws_turn` set the terminal status before pushing the final message; a client
+  polling the store could observe the finished run without its final message — pushes
+  now precede the status write.
+- `time.mktime` parsed the UTC timestamp as local time, showing "Turn completed (3601s)"
+  on UTC+1 machines — now `calendar.timegm`.
+- `tool_result` bus events did not carry the tool name (`tool=` kwarg) — the result card
+  now shows which tool completed.
+
+---
 - A `GLM_API_KEY` set in the shell made `AVIS_LLM_ENABLED` (default `"1"`) call the real
   LLM in workspace runs — 16s latency, non-deterministic tests. Workspace runs now
   default to the scripted brain (`POST …/messages` accepts `llm: true` to opt in);

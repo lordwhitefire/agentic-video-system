@@ -71,38 +71,55 @@ workspace landing page).
 Run it the same way as the web UI above. `AVIS_LLM_ENABLED` is honored — everything
 works fully offline with the deterministic scripted brain.
 
-## Agent Workspace (Stage Two)
+## Agent Workspace (conversation-first)
 
 Open `http://127.0.0.1:8000/workspace/<agent_id>` (any dashboard card) — a per-agent
-workspace where you can talk to one agent at a time. Each workspace is backed by a real
-run of that agent's node function through the same tested graph loop — no simulated
-chat, no invented output.
+workspace where you talk to one agent at a time. Everything is ONE continuous
+conversation: messages, reasoning summaries, intent, tool calls/results, approvals and
+errors are all entries of a single normalized timeline (spec §11) — there is no separate
+activity panel.
 
-- **Conversation** — send a message; the agent runs its REAL node, and the result comes
-  from its own event-bus outcome. The conversation is stored server-side per agent, so
-  it survives page reloads.
-- **Live Activity** — a per-agent timeline of real events (`plan_created`,
-  `action_started`, `tool_call_started/completed/failed`, `artifact_created`,
-  `run_completed`, …) streamed over SSE. CEO decision events are excluded — each
-  workspace only shows its own agent's work.
+- **Plan / Build are interaction modes, not workflow stages** — an explicit toggle in the
+  top bar, per agent, defaulting to Plan. There is no prescribed workflow: the human is
+  the governance layer.
+- **Plan Mode has zero execution authority** — enforced by the runtime, not by prompting:
+  a gate in `avis/tools.py` refuses every mutating tool while Plan Mode is active
+  (read-only inspection stays allowed). Plan turns run the real think stream for genuine
+  reasoning summaries, state an intent, then reply with an approach — nothing is executed
+  or changed.
+- **Build Mode runs the agent's REAL node** — the same tested `g.run()` loop as the full
+  pipeline, single-node. The run genuinely pauses when an approval is required: the
+  `approval_request` sits in the conversation until you answer Approve / Reject, and the
+  run resumes from your real answer.
+- **Stop is a real runtime cancellation** — cooperative; the run is halted at its next
+  checkpoint (a pending approval is released as rejected) and the agent reports honestly
+  what had completed before the stop request.
+- **Greetings are conversational, zero execution** — "Hello" gets a friendly identity
+  reply and never triggers a plan, a project, or any execution.
+- **No auto-routing, no handoff chains** — runs never recommend a next agent. Switching
+  agents is a human decision: the left-hand Agent Network (or a handoff call carrying an
+  explicit `decision`) takes you to another agent's workspace, and its run inherits the
+  real accumulated project context (`_workspace_context`).
 - **Context carries forward** — artifacts and decisions produced by a run seed the next
-  run's state (`_workspace_context`), so a chained strategist → analyzer → planner
-  conversation builds up the project across agents. Runs are recorded with
-  `record=False`, keeping the RAG corpus reserved for full pipeline runs.
-- **Handoffs** — when a run finishes, a recommended next agent appears
-  (HANDOFF_MAP). Approve &amp; Switch takes you to that agent's workspace (its run will
-  see the accumulated context); Choose Another Agent redirects to any of the other 16;
-  Continue Here declines the handoff.
+  run's state, so a strategist → analyzer → planner conversation builds up the project
+  across agents. Runs are recorded with `record=False`, keeping the RAG corpus reserved
+  for full pipeline runs.
+- **Right panel = agent context only** — about, capabilities, project memory (real
+  context keys present) and the tools the agent has actually used, from the real event
+  bus. Nothing invented.
 - **Deterministic by default** — workspace runs use the scripted brain unless you send
   `{"message": ..., "llm": true}`; every outcome is still derived from real events.
 
 API:
 
 ```
-GET  /api/studio/agents/<id>                agent + current run + messages + events + handoff
-POST /api/studio/agents/<id>/messages       {"message": "..."}            → real node run
-POST /api/studio/agents/<id>/handoff        {"decision": "approve"|"redirect"|"continue",
-                                             "target_agent_id": "...", "run_id": "..."}
+GET  /api/studio/agents/<id>                agent + mode + current run + one conversation
+POST /api/studio/agents/<id>/messages       {"message": "..."}            → Plan or Build turn
+POST /api/studio/agents/<id>/mode           {"mode": "plan"|"build"}      → explicit mode switch
+POST /api/studio/agents/<id>/approval       {"run_id": "...", "answer": "approve"|"rejected"}
+POST /api/studio/agents/<id>/stop           {"run_id": "..."}             → real cancellation
+POST /api/studio/agents/<id>/handoff        {"decision": "approve"|"redirect",
+                                             "target_agent_id": "..."}    → refuses without decision
 GET  /api/studio/agents/<id>/events         per-agent SSE stream (keepalive 15s)
 ```
 

@@ -160,13 +160,23 @@ class _Watchdog(RuntimeError):
     never spin: the 4-iteration review cap is the first guard, this is the last."""
 
 
+class RunStopped(RuntimeError):
+    """Raised when the human stops the run mid-flight. The run is cancelled
+    cooperatively between stream updates; state reflects exactly what
+    completed before the stop."""
+
+
 def run(graph: Any, state: dict[str, Any], approver: Callable[[dict[str, Any]], Any],
-        record: bool = True) -> dict[str, Any]:
+        record: bool = True,
+        should_stop: Optional[Callable[[], bool]] = None) -> dict[str, Any]:
     """Execute with human-in-the-loop approval. Deterministic control flow;
     the only nondeterminism is the CEO's answers to interrupt() questions.
     Recursively resumes through every interrupt; returns the final state.
     `record=False` skips persisting the run to the knowledge repository
-    (used by the Agent Workspace's single-agent runs, which are partial)."""
+    (used by the Agent Workspace's single-agent runs, which are partial).
+    `should_stop` is polled between stream updates: when it returns True the
+    run is cancelled honestly (`final["stopped"] = True`) — the caller
+    reports exactly what had completed before the stop."""
     config = {"configurable": {"thread_id": uuid.uuid4().hex}}
     final: dict[str, Any] = {}
     budget = {"steps": 0, "max": 500}
@@ -178,6 +188,8 @@ def run(graph: Any, state: dict[str, Any], approver: Callable[[dict[str, Any]], 
                 events.bus.emit("orchestrator", "error",
                                 f"watchdog: exceeded {budget['max']} stream updates — run aborted")
                 raise _Watchdog(f"exceeded {budget['max']} stream updates")
+            if should_stop is not None and should_stop():
+                raise RunStopped("stopped by the human")
             for node_name, values in update.items():
                 if node_name == "__interrupt__":
                     for i in values:
@@ -194,6 +206,8 @@ def run(graph: Any, state: dict[str, Any], approver: Callable[[dict[str, Any]], 
         _execute(state)
     except _Watchdog:
         pass
+    except RunStopped:
+        final["stopped"] = True
     snapshot = graph.get_state(config)
     if snapshot and snapshot.values:
         final.update(snapshot.values)
