@@ -2,7 +2,27 @@
 
 A reference-driven, script-driven, audio-as-master video editing system built for Agenticine (OpenCode fork). 17 agents across 5 departments, 12 laws, WebForge-style agent template, custom skills, human-in-the-loop sourcing.
 
-## Quick Start
+**This repo contains two layers:**
+
+1. **Agenticine config** — the agent definitions, laws, skills, and guardrail tools
+   that turn OpenCode into the 17-agent video studio (everything below).
+2. **`langgraph-runtime/` — a runnable Python implementation** of the same org
+   chart as a deterministic LangGraph orchestrator: CLI + FastAPI web dashboard,
+   human-in-the-loop CEO approvals, optional LLM brain (OpenAI-compatible, Zhipu
+   GLM supported), and a persistent BM25 RAG knowledge repository.
+
+```bash
+cd langgraph-runtime
+pip install -r requirements.txt
+python -m ui.cli --yes --topic "Why Mbappé shines on the biggest stage" \
+  --reference-analysis examples/reference-analysis-mbappe.json   # CLI demo
+uvicorn ui.web.server:app --port 8000                            # web dashboard
+```
+
+See [`langgraph-runtime/README.md`](langgraph-runtime/README.md) for the full
+runtime architecture, API reference, and test suite (36 tests).
+
+## Quick Start (Agenticine)
 
 ### Option A — Isolated install (recommended)
 

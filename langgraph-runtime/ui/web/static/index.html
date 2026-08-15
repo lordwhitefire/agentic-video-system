@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentic Video System — Graph View</title>
+<script src="/api/js/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3;
+    --dim: #8b949e; --accent: #58a6ff; --green: #3fb950; --red: #f85149;
+    --yellow: #d29922; --cyan: #39c5cf;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  header { display: flex; align-items: center; gap: 16px; padding: 12px 20px;
+           border-bottom: 1px solid var(--border); background: var(--panel); flex-wrap: wrap; }
+  header h1 { font-size: 15px; margin: 0; }
+  header .sub { color: var(--dim); font-size: 12px; }
+  .badge { padding: 2px 10px; border-radius: 99px; font-size: 11px;
+           border: 1px solid var(--border); white-space: nowrap; }
+  .badge.pass { border-color: var(--green); color: var(--green); }
+  .badge.revise { border-color: var(--yellow); color: var(--yellow); }
+  .badge.branch { border-color: var(--cyan); color: var(--cyan); }
+  .badge.running { border-color: var(--accent); color: var(--accent); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity: .5; } }
+  #controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+              padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 12px; }
+  #controls label { color: var(--dim); }
+  #controls input[type=text], #controls select {
+    background: var(--bg); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px; font-family: inherit; font-size: 12px; min-width: 240px; }
+  #controls .check { display: flex; align-items: center; gap: 5px; color: var(--dim); }
+  #runBtn { background: var(--accent); color: #000; border: 0; border-radius: 6px;
+            padding: 6px 16px; font-weight: 700; font-family: inherit; cursor: pointer; }
+  #runBtn:disabled { opacity: .5; cursor: not-allowed; }
+  #statusRow { display: flex; gap: 12px; align-items: center; padding: 10px 20px;
+               border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; }
+  #activeNode { color: var(--accent); font-weight: 700; }
+  .dim { color: var(--dim); }
+  main { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 20px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+              color: var(--dim); margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  #graph { padding: 14px; overflow: auto; min-height: 360px; }
+  #graph svg { max-width: 100%; height: auto; }
+  #graph g.node.hl rect, #graph g.node.hl circle, #graph g.node.hl polygon { stroke: var(--accent) !important; stroke-width: 2.5px !important; }
+  #graph g.node.hl { filter: drop-shadow(0 0 6px var(--accent)); }
+  #log { height: 460px; overflow-y: auto; padding: 8px 12px; font-size: 12px; }
+  .ev { display: grid; grid-template-columns: 14px 110px 1fr; gap: 8px;
+        padding: 2px 0; align-items: baseline; }
+  .ev .ico { text-align: center; }
+  .ev .who { color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ev .msg { white-space: pre-wrap; word-break: break-word; }
+  .thinking { color: #666; } .tool_call { color: var(--yellow); }
+  .law_block { color: var(--red); } .route { color: var(--cyan); }
+  .result { color: var(--green); } .interrupt { color: var(--accent); font-weight: 700; }
+  .error { color: var(--red); font-weight: 700; }
+  #modal { display: none; position: fixed; inset: 0; background: rgba(1,4,9,.75);
+           align-items: center; justify-content: center; z-index: 10; }
+  #modal .card { background: var(--panel); border: 1px solid var(--accent); border-radius: 10px;
+                 max-width: 640px; width: 90%; max-height: 80vh; display: flex; flex-direction: column; }
+  #modal .head { padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 700; color: var(--accent); }
+  #modal .body { padding: 14px 16px; overflow-y: auto; font-size: 12px; white-space: pre-wrap; }
+  #modal .body table { border-collapse: collapse; width: 100%; margin-top: 6px; }
+  #modal .body th, #modal .body td { border: 1px solid var(--border); padding: 5px 8px; text-align: left; }
+  #modal .body th { color: var(--dim); font-weight: 400; }
+  #modal .foot { padding: 12px 16px; border-top: 1px solid var(--border);
+                 display: flex; gap: 10px; justify-content: flex-end; }
+  #modal .foot button { border: 0; border-radius: 6px; padding: 7px 18px;
+                        font-family: inherit; font-weight: 700; cursor: pointer; }
+  #approveBtn { background: var(--green); color: #000; }
+  #rejectBtn { background: var(--red); color: #fff; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AGENTIC VIDEO SYSTEM</h1>
+  <span class="sub">LangGraph orchestrator · 17 agents · 5 departments · 12 laws · human-in-the-loop</span>
+  <span class="badge" id="engineBadge">connecting…</span>
+  <span class="badge" id="runBadge" style="display:none">idle</span>
+  <button id="runBtn">▶ RUN PIPELINE</button>
+</header>
+<div id="controls">
+  <label>topic</label>
+  <input type="text" id="topicInput" value="Why Mbappé shines on the biggest stage">
+  <label>reference analysis</label>
+  <select id="exampleSelect"></select>
+  <span class="check"><input type="checkbox" id="llmCheck"> LLM thinking</span>
+  <span class="check"><input type="checkbox" id="autoCheck" checked> auto-approve (demo)</span>
+</div>
+<div id="statusRow">
+  <span class="dim">pipeline:</span> <span id="routeLine">—</span>
+  <span class="dim">active node:</span> <span id="activeNode">—</span>
+  <span class="dim">iterations:</span> <span id="iterLine">0</span>
+  <span class="dim">review:</span> <span id="reviewLine" class="dim">—</span>
+  <span class="dim">law blocks:</span> <span id="blocksLine">0</span>
+  <span class="dim">visual assigns:</span> <span id="assignsLine">0</span>
+</div>
+<main>
+  <section class="panel">
+    <h2>State graph — deterministic orchestrator (click-through = pipeline order)</h2>
+    <div id="graph"><pre class="dim">loading mermaid…</pre></div>
+  </section>
+  <section class="panel">
+    <h2>Agent activity — live stream (thinking · tool calls · laws · routes)</h2>
+    <div id="log"></div>
+  </section>
+</main>
+<section class="panel" style="margin: 12px 20px;">
+  <h2>Knowledge repository — RAG over past runs (decisions · edits · review verdicts · law blocks)</h2>
+  <div style="padding: 10px 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+    <input type="text" id="queryInput" placeholder="query the knowledge base, e.g. 'blueprint'" style="flex:1;min-width:200px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:inherit;font-size:12px">
+    <button id="queryBtn" style="background:var(--accent);color:#000;border:0;border-radius:6px;padding:6px 14px;font-weight:700;font-family:inherit;cursor:pointer">RETRIEVE</button>
+    <span class="dim" id="runsLine">0 runs recorded</span>
+  </div>
+  <div id="knowledge" style="padding: 0 14px 12px; font-size: 12px; max-height: 220px; overflow-y: auto;"></div>
+</section>
+<div id="modal">
+  <div class="card">
+    <div class="head" id="modalHead">CEO approval required</div>
+    <div class="body" id="modalBody"></div>
+    <div class="foot">
+      <button id="rejectBtn">REJECT</button>
+      <button id="approveBtn">APPROVE</button>
+    </div>
+  </div>
+</div>
+<script>
+const es = new EventSource('/api/events');
+const log = document.getElementById('log');
+const icons = { note:'·', thinking:'…', tool_call:'→', tool_result:'←',
+                law_block:'✕', route:'►', interrupt:'?', result:'✓', error:'!' };
+const slice = t => { const d = new Date(t * 1000); return d.toTimeString().slice(0,8); };
+let pendingQuestion = null;
+
+function appendLog(ev) {
+  const row = document.createElement('div');
+  row.className = 'ev ' + ev.kind;
+  row.innerHTML = `<span class="ico">${icons[ev.kind] || '·'}</span>`
+    + `<span class="who">${slice(ev.ts)} ${ev.agent}</span>`
+    + `<span class="msg"></span>`;
+  row.querySelector('.msg').textContent = ev.text || '';
+  log.appendChild(row);
+  log.scrollTop = log.scrollHeight;
+  if (ev.agent && ev.kind !== 'thinking') {
+    document.getElementById('activeNode').textContent = ev.agent;
+    highlightNode(ev.agent);
+  }
+}
+
+function highlightNode(agent) {
+  const svg = document.querySelector('#graph svg');
+  if (!svg) return;
+  svg.querySelectorAll('g.node.hl').forEach(n => n.classList.remove('hl'));
+  if (!agent) return;
+  svg.querySelectorAll('g.node').forEach(n => {
+    const label = (n.textContent || '').trim();
+    if (label === agent) n.classList.add('hl');
+  });
+}
+
+function showModal() {
+  if (!pendingQuestion) return;
+  const q = pendingQuestion;
+  document.getElementById('modalHead').textContent = 'CEO approval — ' + (q.question || 'approve?');
+  const body = document.getElementById('modalBody');
+  let html = '';
+  if (q.script) {
+    html += '<b>SCRIPT DRAFT</b>\n' + q.script + '\n\n';
+  }
+  if (q.proposals && q.proposals.length) {
+    html += '<b>PROPOSED SOURCES (' + q.proposals.length + ')</b>\n<table><tr><th>#</th><th>kind</th><th>description</th><th>url</th><th>license</th><th>verified</th></tr>';
+    q.proposals.forEach((p, i) => {
+      html += `<tr><td>${i}</td><td>${p.kind || ''}</td><td>${p.description || ''}</td>`
+        + `<td>${p.url || ''}</td><td>${p.license || ''}</td><td>${p.content_verified ? 'yes' : 'no'}</td></tr>`;
+    });
+    html += '</table>';
+  }
+  if (q.manifest) {
+    html += '\n<b>RESOURCE MANIFEST</b>\n' + JSON.stringify(q.manifest, null, 2);
+  }
+  body.innerHTML = html || (q.question || '');
+  document.getElementById('modal').style.display = 'flex';
+}
+
+es.onmessage = (m) => {
+  const ev = JSON.parse(m.data);
+  appendLog(ev);
+  if (ev.kind === 'interrupt') {
+    fetch('/api/pending').then(r => r.json()).then(d => {
+      pendingQuestion = d.question || {};
+      showModal();
+    });
+  }
+  if (ev.kind === 'route') document.getElementById('routeLine').textContent = ev.text;
+};
+
+function refreshState() {
+  fetch('/api/state').then(r => r.json()).then(d => {
+    const badge = document.getElementById('runBadge');
+    badge.style.display = '';
+    if (d.running) { badge.textContent = 'running'; badge.className = 'badge running'; }
+    else {
+      const dec = d.review_decision || 'idle';
+      badge.textContent = dec;
+      badge.className = 'badge ' + (d.review_decision ? dec : '');
+    }
+    document.getElementById('iterLine').textContent = d.iterations ?? 0;
+    document.getElementById('reviewLine').textContent = d.review_decision || '—';
+    document.getElementById('blocksLine').textContent = d.revocations ?? 0;
+    document.getElementById('assignsLine').textContent = d.visual_assignments ?? 0;
+    if (d.topic) document.getElementById('topicInput').value = d.topic;
+    if (!d.running && d.review_decision) highlightNode(null);
+  }).catch(() => {});
+}
+
+fetch('/api/graph').then(r => r.json()).then(d => {
+  document.getElementById('engineBadge').textContent = 'langgraph ' + d.engine.split(' ').pop();
+  const pre = document.querySelector('#graph pre');
+  mermaid.initialize({ startOnLoad: false, theme: 'dark', themeVariables: {
+    nodeBkg: '#21262d', nodeBorder: '#8b949e', edgeLabelBackground: '#161b22',
+    clusterBkg: '#161b22', clusterBorder: '#21262d', fontSize: '12px' } });
+  mermaid.render('graphSvg', d.mermaid).then(({svg}) => {
+    pre.outerHTML = svg;
+  }).catch(e => { pre.textContent = 'mermaid parse failed: ' + e.message; });
+});
+
+fetch('/api/examples').then(r => r.json()).then(d => {
+  const sel = document.getElementById('exampleSelect');
+  (d.examples || []).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  if (d.examples && d.examples.length) sel.value = d.examples.find(n => n.includes('mbappe')) || d.examples[0];
+});
+
+document.getElementById('runBtn').onclick = async () => {
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('runBtn').textContent = 'RUNNING…';
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('routeLine').textContent = '—';
+  const sel = document.getElementById('exampleSelect');
+  await fetch('/api/run', { method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      topic: document.getElementById('topicInput').value,
+      reference_analysis: sel.value ? 'examples/' + sel.value : null,
+      llm: document.getElementById('llmCheck').checked,
+      auto_approve: document.getElementById('autoCheck').checked }) });
+};
+
+document.getElementById('approveBtn').onclick = async () => {
+  await fetch('/api/answer', { method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ resume: 'approve' }) });
+  document.getElementById('modal').style.display = 'none';
+};
+document.getElementById('rejectBtn').onclick = async () => {
+  await fetch('/api/answer', { method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ resume: 'rejected' }) });
+  document.getElementById('modal').style.display = 'none';
+};
+
+function renderKnowledge(results) {
+  const box = document.getElementById('knowledge');
+  if (!results.length) { box.innerHTML = '<span class="dim">no matches — run the pipeline first to build the knowledge base</span>'; return; }
+  box.innerHTML = results.map(r =>
+    `<div class="ev"><span class="ico">${r.kind === 'revocation' ? '✕' : '↗'}</span>` +
+    `<span class="who">${r.run}</span>` +
+    `<span class="msg">[${r.kind}] ${r.text} <span class="dim">(${r.score})</span></span></div>`).join('');
+}
+
+function refreshKnowledge() {
+  fetch('/api/knowledge').then(r => r.json()).then(d => {
+    document.getElementById('runsLine').textContent = d.runs.length + ' runs · ' + d.corpus_total + ' entries';
+  }).catch(() => {});
+}
+
+document.getElementById('queryBtn').onclick = () => {
+  const q = document.getElementById('queryInput').value.trim();
+  if (!q) return;
+  fetch('/api/knowledge/retrieve', { method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ query: q }) })
+    .then(r => r.json()).then(d => renderKnowledge(d.results));
+};
+
+setInterval(refreshState, 1500);
+setInterval(refreshKnowledge, 5000);
+</script>
+</body>
+</html>

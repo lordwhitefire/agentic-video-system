@@ -1,0 +1,28 @@
+{
+  "reference_analysis": {
+    "form": "long-form",
+    "genre": "analytical commentary",
+    "target_duration_s": 863,
+    "avg_shot_s": 2.95,
+    "visual_vocabulary": ["B-roll", "studio", "graphic overlays", "bold white sans-serif text"],
+    "audio_structure": ["voice commentary", "background music bed"],
+    "template_framing": {
+      "is_template": true,
+      "what_this_is": "structural shell only — what_to_preserve and what_to_discard below are decisions, not content",
+      "what_to_preserve": ["10-segment structure", "cutting rhythm", "pacing curve", "visual vocabulary", "audio structure"],
+      "what_to_discard": ["the reference's topic", "the reference's opinions", "all reference footage"]
+    },
+    "segments": [
+      {"name": "cold_open",  "role": "cold_open",  "purpose": "grab attention"},
+      {"name": "hook",       "role": "hook",       "purpose": "frame the paradox"},
+      {"name": "thesis",     "role": "thesis",     "purpose": "state the argument"},
+      {"name": "act_1",      "role": "act_1",      "purpose": "evidence part 1"},
+      {"name": "act_2",      "role": "act_2",      "purpose": "evidence part 2"},
+      {"name": "act_3",      "role": "act_3",      "purpose": "evidence part 3"},
+      {"name": "act_4",      "role": "act_4",      "purpose": "counter-evidence"},
+      {"name": "act_5",      "role": "act_5",      "purpose": "turning point"},
+      {"name": "act_6",      "role": "act_6",      "purpose": "synthesis"},
+      {"name": "conclusion", "role": "conclusion", "purpose": "verdict and close"}
+    ]
+  }
+}
