@@ -190,10 +190,11 @@ def test_graph_view_moved_to_graph_route(client) -> None:
     assert "strategist" in g["mermaid"]
 
 
-def test_workspace_placeholder_served(client) -> None:
+def test_workspace_page_served(client) -> None:
     r = client.get("/workspace/strategist")
     assert r.status_code == 200
-    assert "Workspace under construction" in r.text
+    assert "Agent Workspace" in r.text
+    assert "Live Activity" in r.text
     assert client.get("/workspace/nobody").status_code == 404
 
 

@@ -11,6 +11,7 @@ its node is mid-flight; "waiting" only when a CEO interrupt is pending.
 
 from __future__ import annotations
 
+import json
 import time
 from typing import Any, Optional
 
@@ -321,3 +322,269 @@ def map_studio_event(ev: dict[str, Any]) -> Optional[dict[str, Any]]:
         return {"type": "activity_created", "agent_id": agent,
                 "message": text or kind, "timestamp": ts}
     return None
+
+
+# --------------------------------------------------------------------------
+# Agent Workspace (Stage Two)
+# --------------------------------------------------------------------------
+# The workspace runs ONE agent's real node function per human message, via a
+# tiny single-node StateGraph driven through the SAME g.run() loop as the full
+# pipeline. No second execution engine, no fake chat: plan/action/tool events
+# are the real events the node emits. The handoff recommendation is the
+# canonical next-map below — deterministic, single source of truth.
+
+HANDOFF_MAP: dict[str, dict[str, Optional[str]]] = {
+    "strategist":        {"next": "analyzer",    "reason": "The strategy is complete and the project now requires analysis."},
+    "analyzer":          {"next": "planner",     "reason": "The analysis is complete and the project now requires production planning."},
+    "planner":           {"next": "researcher",  "reason": "The script and manifest are ready and the project now requires asset sourcing."},
+    "researcher":        {"next": "audio-lead",  "reason": "The asset bundle is confirmed and the project now requires audio direction."},
+    "audio-lead":        {"next": "tts",         "reason": "The audio plan is locked and the project now requires the voice track."},
+    "tts":               {"next": "editor",      "reason": "The voice track spec is ready and the project now requires editing."},
+    "editor":            {"next": "graphics",    "reason": "The cut spec is assembled and the project now requires visual work."},
+    "graphics":          {"next": "animation",   "reason": "Graphics are placed and the project now requires motion design."},
+    "animation":         {"next": "animated-graphics", "reason": "Animation is done and the project now requires animated overlays."},
+    "animated-graphics": {"next": "video-effects", "reason": "Animated graphics are done and the project now requires effect design."},
+    "video-effects":     {"next": "clips",       "reason": "Effects are designed and the project now requires clip sourcing."},
+    "clips":             {"next": "images",      "reason": "Clips are sourced and the project now requires image sourcing."},
+    "images":            {"next": "reviewer",    "reason": "All assets are in place and the project now requires quality review."},
+    "reviewer":          {"next": "watcher-blocker", "reason": "The cut is reviewed and the project now requires a final law watch."},
+    "watcher-blocker":   {"next": "investigator", "reason": "The law watch found evidence and the project now requires investigation."},
+    "investigator":      {"next": "recruiter",   "reason": "Investigation is complete and the project now requires personnel action."},
+    "recruiter":         {"next": None,          "reason": "This is the final agent in the pipeline."},
+}
+
+SENSITIVE_KEYS = {"api_key", "apikey", "authorization", "access_token",
+                  "refresh_token", "password", "secret", "cookie"}
+
+
+def sanitize(value: Any) -> Any:
+    """Recursively redact credentials before any event payload reaches the UI."""
+    if isinstance(value, dict):
+        return {k: ("[REDACTED]" if str(k).lower() in SENSITIVE_KEYS else sanitize(v))
+                for k, v in value.items()}
+    if isinstance(value, list):
+        return [sanitize(item) for item in value]
+    return value
+
+
+def _capabilities(agent_id: str) -> list[str]:
+    a = agents_mod.BY_ID.get(agent_id, {})
+    caps = [a.get("department", ""), a.get("tier", "")]
+    if a.get("manages"):
+        caps += [NAMES.get(m, m) for m in a["manages"]]
+    if a.get("head"):
+        caps.append(f"Reports to {NAMES.get(a['head'], a['head'])}")
+    return [c for c in caps if c]
+
+
+def workspace_agent_snapshot(agent_id: str, running: bool,
+                             waiting: Optional[str]) -> dict[str, Any]:
+    """The workspace's agent header: identity + capabilities + live status."""
+    a = {x["id"]: x for x in registry()}.get(agent_id)
+    base = agent_snapshot(agent_id, running, waiting)
+    base["department"] = agents_mod.BY_ID[agent_id].get("department", "")
+    base["tier"] = agents_mod.BY_ID[agent_id].get("tier", "")
+    base["capabilities"] = _capabilities(agent_id)
+    return base
+
+
+def handoff_recommendation(agent_id: str) -> Optional[dict[str, Any]]:
+    cfg = HANDOFF_MAP.get(agent_id)
+    if not cfg or not cfg["next"]:
+        return None
+    target = NAMES.get(cfg["next"], cfg["next"])
+    return {"next_agent_id": cfg["next"], "next_agent_name": target,
+            "reason": cfg["reason"]}
+
+
+def workspace_plan(agent_id: str, message: str) -> list[str]:
+    """Explicit pre-execution action rationale (spec §38) — derived from the
+    agent's real role, never claimed to be private model reasoning."""
+    role = DESCRIPTIONS.get(agent_id, "your task")
+    return [f"Receive task: {message.strip()[:80] or 'work request'}",
+            f"Apply {role}",
+            "Produce the result and report back"]
+
+
+def _default_reference() -> dict[str, Any]:
+    import os
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                     "..", "examples", "reference-analysis-mbappe.json")
+    try:
+        with open(p) as f:
+            data = json.load(f)
+        return data.get("reference_analysis") or data
+    except Exception:
+        return {}
+
+
+def _seed_workspace_state(agent_id: str, message: str,
+                          context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """Real context transfer (spec §56/§57): seed from the shared workspace
+    context (previous agents' actual outputs), else the most recent recorded
+    pipeline run, else a fresh seed with the default project brief. The human
+    message becomes the topic. Never fabricates upstream inputs."""
+    import avis.graph as g
+    base = dict(context) if context else None
+    if base is None:
+        base = knowledge.latest_run_state() or {}
+    state = {k: v for k, v in base.items() if k not in ("running", "log", "mailboxes")}
+    if not state.get("topic"):
+        state = g.seed_state(message, **({"reference_analysis": state.get("reference_analysis")}
+                                         if state.get("reference_analysis") else {}))
+    state["topic"] = message
+    state.setdefault("voice_profile", {})
+    if not state.get("reference_analysis"):
+        state["reference_analysis"] = _default_reference()
+    return state
+
+
+def execute_agent_run(agent_id: str, message: str,
+                      context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """Run ONE agent's real node function through a single-node graph driven
+    by the tested g.run() loop. Interrupts (planner/researcher approvals) are
+    auto-approved for the demo and recorded honestly as CEO notes."""
+    from langgraph.checkpoint.memory import InMemorySaver
+    from langgraph.graph import END, START, StateGraph
+    from avis.agents import build_node
+    from avis.state import AgentState
+    import avis.graph as g
+
+    state = _seed_workspace_state(agent_id, message, context)
+
+    def approver(question: dict[str, Any]) -> str:
+        events.bus.emit("CEO", "note",
+                        f"workspace auto-approve: {str(question.get('question', ''))[:60]}")
+        return "approve"
+
+    sg = StateGraph(AgentState)
+    sg.add_node(agent_id, build_node(agent_id))
+    sg.add_edge(START, agent_id)
+    sg.add_edge(agent_id, END)
+    graph = sg.compile(checkpointer=InMemorySaver())
+    return g.run(graph, state, approver, record=False)
+
+
+def _artifacts_from_state(state: dict[str, Any],
+                          context: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+    """Real artifacts THIS run produced — the node's actual new state keys,
+    rendered as cards. No invented files (spec §14/§71)."""
+    out: list[dict[str, Any]] = []
+    spec = {
+        "blueprint": ("Blueprint", "structural analysis"),
+        "script": ("Script", "markdown + segments"),
+        "manifest": ("Resource Manifest", "resource needs"),
+        "asset_bundle": ("Asset Bundle", "sourced assets"),
+        "cut_spec": ("Cut Spec", "edit timeline"),
+        "voice_track": ("Voice Track Spec", "TTS segments"),
+    }
+    for key, (name, meta) in spec.items():
+        if context is not None and key in context:
+            continue  # inherited from the shared project context, not this run
+        value = state.get(key)
+        if not value:
+            continue
+        if isinstance(value, dict):
+            count = len(value.get("segments", value.get("shots", [])))
+            size = f"{count} items" if count else meta
+        elif isinstance(value, list):
+            size = f"{len(value)} items"
+        else:
+            size = meta
+        out.append({"type": "DOCUMENT", "name": name, "filename": key,
+                    "meta": size, "key": key})
+    return out
+
+
+def workspace_event(ev: dict[str, Any]) -> Optional[dict[str, Any]]:
+    """Raw bus event -> workspace event, or None if it carries no workspace
+    signal for the activity timeline / conversation."""
+    kind = ev.get("kind", "")
+    agent = ev.get("agent", "")
+    ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ev.get("ts", 0.0)))
+    text = (ev.get("text") or "")
+
+    if agent == "CEO" and kind == "interrupt":
+        return {"type": "agent_waiting", "agent_id": "CEO", "timestamp": ts,
+                "data": {"question": text[:240]}}
+    if agent == "CEO" and kind == "note":
+        return {"type": "activity_created", "agent_id": "CEO", "timestamp": ts,
+                "data": {"text": text[:240]}}
+    if kind == "thinking":
+        return {"type": "action_started", "agent_id": agent, "timestamp": ts,
+                "data": {"text": text[:240]}}
+    if kind == "tool_call":
+        return {"type": "tool_call_started", "agent_id": agent, "timestamp": ts,
+                "data": {"tool": ev.get("tool", ""), "input": sanitize(ev.get("args", [])),
+                         "text": text[:240]}}
+    if kind == "tool_result":
+        wtype = "tool_call_failed" if ev.get("error") else "tool_call_completed"
+        return {"type": wtype, "agent_id": agent, "timestamp": ts,
+                "data": {"tool": ev.get("tool", ""), "text": text[:240]}}
+    if kind == "note":
+        low = text.lower()
+        if any(w in low for w in ("decision", "approve", "reject", "locked", "confirmed")):
+            return {"type": "decision_created", "agent_id": agent, "timestamp": ts,
+                    "data": {"text": text[:240]}}
+        return {"type": "activity_created", "agent_id": agent, "timestamp": ts,
+                "data": {"text": text[:240]}}
+    if kind == "result":
+        return {"type": "result", "agent_id": agent, "timestamp": ts,
+                "data": {"text": text[:240]}}
+    if kind == "law_block":
+        return {"type": "activity_created", "agent_id": agent, "timestamp": ts,
+                "data": {"text": text[:240]}}
+    if kind == "route":
+        return {"type": "activity_created", "agent_id": agent, "timestamp": ts,
+                "data": {"text": text[:240]}}
+    return None
+
+
+def workspace_events(agent_id: str, limit: int = 100) -> list[dict[str, Any]]:
+    """This agent's real events from the bus, workspace-mapped. CEO events are
+    excluded so one agent's timeline never carries another agent's approvals."""
+    out: list[dict[str, Any]] = []
+    for ev in events.bus.history():
+        if ev.get("agent") != agent_id:
+            continue
+        mapped = workspace_event(ev)
+        if mapped:
+            out.append(mapped)
+    return out[-limit:]
+
+
+def build_workspace_snapshot(agent_id: str,
+                             store: dict[str, Any],
+                             run_state: dict[str, Any],
+                             pending_question: Optional[dict[str, Any]]) -> dict[str, Any]:
+    """The workspace contract (spec §32/§53): agent + current run + messages +
+    events + handoff — all derived from real state."""
+    running = bool(run_state.get("running", False))
+    waiting = waiting_agent() if (running and pending_question) else None
+    status = store.get("status", "idle")
+    if status == "idle" and running:
+        status = "idle"
+
+    agent = workspace_agent_snapshot(agent_id, running, waiting)
+
+    handoff = store.get("handoff")
+    if not handoff and status == "completed" and not store.get("handoff_resolved"):
+        handoff = handoff_recommendation(agent_id)
+
+    merged = list(store.get("events", [])) + workspace_events(agent_id)
+    seen: set[tuple] = set()
+    events_out: list[dict[str, Any]] = []
+    for e in sorted(merged, key=lambda x: x.get("timestamp", "")):
+        key = (e.get("type"), e.get("timestamp"), str(e.get("data", ""))[:120])
+        if key in seen:
+            continue
+        seen.add(key)
+        events_out.append(e)
+
+    return {
+        "agent": agent,
+        "current_run": store.get("current_run"),
+        "messages": store.get("messages", []),
+        "events": events_out[-100:],
+        "handoff": handoff,
+    }

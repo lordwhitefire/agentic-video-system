@@ -145,6 +145,55 @@ endpoint: `https://open.bigmodel.cn/api/paas/v4`, model `glm-4.5-flash`
 
 ---
 
+## Phase 8 — Agent Workspace (Stage Two, complete build)
+
+> Spec: `~/Downloads/avis_agent_workspace_complete_build.md` (4720 lines). Two
+> user-facing surfaces only: **Dashboard = overview**, **Workspace = work**.
+> `Human = controller, Agent = worker, Handoff = human-approved transition`.
+> No navbar, no graph, no workflow builder, no multi-agent chat, no fake events.
+
+**Design decisions (adapting the spec to the real runtime):**
+- **Per-agent runs run REAL node functions** (§3/§35/§77): each workspace message
+  compiles a tiny single-node `StateGraph` around `build_node(agent_id)` and drives
+  it through the existing `g.run()` loop. This keeps the tested node functions,
+  tools, laws, and events — no second engine, no fake chat. `interrupt()` works
+  because it runs inside a real (single-node) graph; the workspace approver
+  auto-approves demo interrupts and the CEO note is recorded (honest).
+- **Context transfer** (§56/§57): the run is seeded from the most recent recorded
+  run's real `state.json` (reference_analysis, blueprint, script, manifest, …) so
+  the next agent genuinely inherits the previous agent's outputs. If a node's
+  upstream input is missing, it errors with the real Law-1 message (honest).
+- **Artifacts** (§14/§71): real state keys produced by the node (blueprint, script,
+  manifest, plan lock, …) render as artifact cards with the recorded run as the
+  artifact store. No invented files.
+- **Persistence** (§66/§67/§78): messages live in a server-side per-agent store;
+  events are recoverable from `events.bus.history()`. Browser refresh restores both.
+
+### Stage Two — checklist
+- [x] **8.1 `avis/studio.py`**: canonical `HANDOFF_MAP` (full pipeline chain + reasons, single source of truth, spec §22/§54); `execute_agent_run(agent_id, message)` — single-node graph + `g.run()` + auto-approve approver + context seed from last recorded run; `build_workspace_snapshot(agent_id)` (agent §32 + messages + events + current run + handoff); `workspace_event(ev)` mapping raw bus kinds → workspace types (thinking→action, tool_call→tool_call_started, tool_result→tool_call_completed, result→agent message, interrupt→agent_waiting, …) with `sanitize()` for secrets + result truncation (§37/§70)
+- [x] **8.2 `server.py`**: `GET /api/studio/agents/{id}` snapshot; `POST /api/studio/agents/{id}/messages` (real run); `POST /api/studio/agents/{id}/handoff` (approve/redirect/continue, validates target, returns `workspace_url`); `GET /api/studio/agents/{id}/events` (workspace SSE, replay + live). `/workspace/{id}` stays; dashboard endpoints untouched
+- [x] **8.3 `static/workspace.html`**: replace placeholder with the spec's complete reference UI (§49): `← Overview`, agent context (identity/status/task/progress/last activity/capabilities), conversation (human/agent messages, PLAN cards, artifact cards), live activity timeline (PLAN/ACTION/TOOL CALL/TOOL RESULT/DECISION/RESULT/HANDOFF with expandable details), typing-only composer with agent-working/waiting states, handoff bar (Approve & Switch / Choose Another Agent / Continue Here), agent-selector modal, loading skeleton + empty state, SSE reconnect + snapshot reload, keyboard + reduced motion. Same visual language as the dashboard
+- [x] **8.4 Tests** `tests/test_workspace.py`: snapshot = real agent identity/status/capabilities; message → run starts → working → real tool_call/tool_result events → result → handoff ready (deterministic polling); handoff approve returns next workspace URL; redirect validates target; continue records + dismisses; workspace SSE streams; `/workspace/{id}` renders; unknown agent 404; history survives "refresh" (snapshot re-fetch). All 49 existing tests stay green
+- [x] **8.5 Docs**: runtime README workspace section; PLAN.md bugs found
+- [x] **8.6 Acceptance (spec §78/§80 DoD)**: dashboard card opens `/workspace/<id>`; workspace shows the agent; message runs the real node; status/progress/messages/plan/tools/results/artifacts live; conversation history survives refresh; handoff recommend→approve→switch opens `/workspace/next`; redirect works; continue works; no navbar/graph/workflow-builder/multi-agent chat/fake events; secrets redacted; large outputs truncated
+- [ ] **8.7 Commit + push**: `ADD: Agent Workspace (Stage Two)`
+
+**Bugs found & fixed during Phase 8:**
+- A `GLM_API_KEY` set in the shell made `AVIS_LLM_ENABLED` (default `"1"`) call the real
+  LLM in workspace runs — 16s latency, non-deterministic tests. Workspace runs now
+  default to the scripted brain (`POST …/messages` accepts `llm: true` to opt in);
+  tests pin `AVIS_LLM_ENABLED=0`.
+- The handoff recommendation re-appeared after approve/redirect/continue because
+  `build_workspace_snapshot` re-derives it whenever the agent status is `completed` and
+  the store handoff is `None`. Added a `handoff_resolved` flag set by the handoff
+  endpoint and cleared on each new run, so a human decision sticks.
+- Initial `tests/test_workspace.py` draft used `pytest.mark.asyncio`, which the suite
+  does not use (no pytest-asyncio installed); streaming is exercised with the same
+  `asyncio.run` + endpoint-function pattern as Stage One.
+- `BY_ID` entries are plain dicts, not objects — test used `.name`; now reads the dict.
+
+---
+
 ## Safety notes (PC hang question)
 - Pipeline is pure in-memory CPU work: no ffmpeg, no GPU, no downloads, no disk writes.
 - Bounded: 4 review-iteration cap already in `graph.py`; Phase 1 adds a hard step watchdog.

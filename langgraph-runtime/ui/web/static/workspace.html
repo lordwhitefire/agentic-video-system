@@ -6,183 +6,1185 @@
 <title>AVIS — Agent Workspace</title>
 <style>
 :root{
-  --bg:#07090f; --surface:#0d111a; --surface2:#111722; --surface3:#161d29;
-  --border:rgba(255,255,255,.08); --text:#f4f5f8; --muted:#8f98aa; --muted2:#657083;
-  --purple:#8b5cf6; --purpleSoft:rgba(139,92,246,.16);
-  --green:#35d07f; --greenSoft:rgba(53,208,127,.14);
-  --blue:#4b8cff; --blueSoft:rgba(75,140,255,.14);
-  --orange:#f59e0b; --orangeSoft:rgba(245,158,11,.14);
-  --red:#ef5b6b; --redSoft:rgba(239,91,107,.14);
+  --bg:#07090f;
+  --surface:#0d111a;
+  --surface2:#111722;
+  --surface3:#161d29;
+  --border:rgba(255,255,255,.08);
+  --text:#f4f5f8;
+  --muted:#8f98aa;
+  --muted2:#657083;
+
+  --purple:#8b5cf6;
+  --purpleSoft:rgba(139,92,246,.16);
+
+  --green:#35d07f;
+  --greenSoft:rgba(53,208,127,.14);
+
+  --orange:#f59e0b;
+  --orangeSoft:rgba(245,158,11,.14);
+
+  --red:#ef5b6b;
+  --redSoft:rgba(239,91,107,.14);
+
+  --blue:#4b8cff;
   --radius:16px;
 }
+
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);
-  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
-button{font:inherit}
-.page{width:min(1100px,100%);margin:auto;padding:28px}
-.header{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:28px}
-.brand{display:flex;align-items:center;gap:14px}
-.brand-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;
-  background:var(--purpleSoft);border:1px solid rgba(139,92,246,.25);color:var(--purple);
-  font-weight:900;box-shadow:0 0 28px rgba(139,92,246,.12)}
-.brand-title{font-size:18px;font-weight:800}
-.brand-subtitle{color:var(--muted);font-size:12px;margin-top:2px}
-.back{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;
-  border:1px solid var(--border);background:var(--surface);color:var(--text);
-  font-size:12px;font-weight:750;cursor:pointer;text-decoration:none}
-.back:hover{border-color:rgba(139,92,246,.32)}
-.panel{background:linear-gradient(180deg,rgba(255,255,255,.018),rgba(255,255,255,.006)),var(--surface);
-  border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 20px 60px rgba(0,0,0,.28)}
-.agent-hero{padding:22px;display:flex;align-items:center;gap:18px}
-.agent-icon{width:56px;height:56px;display:grid;place-items:center;border-radius:15px;
-  background:var(--purpleSoft);border:1px solid rgba(139,92,246,.25);color:var(--purple);
-  font-size:22px;font-weight:900}
-.agent-name{font-size:20px;font-weight:850;letter-spacing:-.02em}
-.agent-role{color:var(--muted);font-size:12px;margin-top:4px}
-.agent-dept{margin-top:6px;color:var(--muted2);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
-.status{display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding:7px 11px;
-  border-radius:999px;background:var(--greenSoft);color:var(--green);font-size:10px;font-weight:850}
-.status.waiting{background:var(--orangeSoft);color:var(--orange)}
-.status.idle{background:var(--blueSoft);color:var(--blue)}
-.status.failed{background:var(--redSoft);color:var(--red)}
-.status.completed{background:var(--greenSoft);color:var(--green)}
-.status-dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
-.panel-body{padding:20px}
-.section-title{font-size:12px;font-weight:800;margin-bottom:12px}
-.task-box{padding:14px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);
-  font-size:12px;line-height:1.5;color:var(--muted)}
-.stage-note{margin-top:14px;padding:16px;border-radius:12px;border:1px solid rgba(139,92,246,.25);
-  background:var(--purpleSoft);font-size:12px;line-height:1.6;color:#cfc2ff}
-.stage-note strong{color:#e4daff}
-.events{display:flex;flex-direction:column;gap:8px}
-.event{display:flex;gap:12px;padding:11px 12px;border-radius:10px;background:var(--surface2);
-  border:1px solid var(--border);align-items:flex-start}
-.event-time{flex:0 0 52px;color:var(--muted2);font-size:10px;padding-top:2px}
-.event-kind{flex:0 0 86px;font-size:9px;font-weight:850;letter-spacing:.06em;padding:3px 7px;
-  border-radius:6px;background:var(--purpleSoft);color:var(--purple);text-align:center}
-.event-kind.tool{background:var(--blueSoft);color:var(--blue)}
-.event-kind.law{background:var(--redSoft);color:var(--red)}
-.event-kind.thinking{background:var(--orangeSoft);color:var(--orange)}
-.event-text{font-size:11px;color:var(--muted);line-height:1.5;min-width:0;word-break:break-word}
-.empty{color:var(--muted2);font-size:12px;padding:8px 2px}
-@media(max-width:820px){.grid{grid-template-columns:1fr}}
-@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,
+    BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+body{min-height:100vh}
+
+button,textarea{font:inherit}
+
+button{cursor:pointer}
+
+.workspace{
+  width:min(1800px,100%);
+  min-height:100vh;
+  margin:auto;
+  padding:20px;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  gap:14px;
+}
+
+.workspace-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.back-button{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--muted);
+  padding:9px 12px;
+  font-size:11px;
+  font-weight:750;
+  text-decoration:none;
+}
+
+.back-button:hover{
+  color:var(--text);
+  border-color:rgba(139,92,246,.3);
+}
+
+.agent-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-left:4px;
+  flex:1;
+}
+
+.agent-icon{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:var(--purpleSoft);
+  color:var(--purple);
+  font-weight:900;
+  box-shadow:0 0 28px rgba(139,92,246,.10);
+}
+
+.agent-name{font-size:16px;font-weight:850}
+
+.agent-role{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:10px;
+}
+
+.header-run{
+  color:var(--muted);
+  text-align:right;
+  font-size:10px;
+}
+
+.header-run strong{
+  display:block;
+  color:var(--text);
+  font-size:11px;
+}
+
+.workspace-main{
+  display:grid;
+  grid-template-columns:230px minmax(0,1fr) 320px;
+  min-height:0;
+  gap:14px;
+}
+
+.panel{
+  min-height:0;
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.018),
+      rgba(255,255,255,.006)
+    ),
+    var(--surface);
+  box-shadow:0 20px 60px rgba(0,0,0,.28);
+}
+
+.context-panel{display:flex;flex-direction:column}
+
+.context-body{padding:18px;overflow:auto}
+
+.context-heading{
+  font-size:10px;
+  color:var(--muted2);
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  font-weight:850;
+}
+
+.context-status{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:12px;
+  padding:6px 9px;
+  border-radius:999px;
+  background:var(--greenSoft);
+  color:var(--green);
+  font-size:9px;
+  font-weight:850;
+}
+
+.context-status.waiting,
+.context-status.needs_attention{background:var(--orangeSoft);color:var(--orange)}
+.context-status.idle{background:var(--blueSoft);color:var(--blue)}
+.context-status.failed{background:var(--redSoft);color:var(--red)}
+
+.status-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:currentColor;
+  box-shadow:0 0 10px currentColor;
+}
+
+.context-section{margin-top:25px}
+
+.context-label{
+  color:var(--muted2);
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.context-value{
+  margin-top:6px;
+  font-size:11px;
+  line-height:1.45;
+}
+
+.context-progress{
+  height:5px;
+  margin-top:10px;
+  border-radius:999px;
+  background:#202737;
+  overflow:hidden;
+}
+
+.context-progress > div{
+  height:100%;
+  width:0%;
+  background:var(--purple);
+  border-radius:inherit;
+  transition:width .25s ease;
+}
+
+.capability{
+  display:inline-block;
+  margin:5px 4px 0 0;
+  padding:5px 7px;
+  border-radius:7px;
+  background:rgba(255,255,255,.04);
+  color:var(--muted);
+  font-size:9px;
+}
+
+.conversation-panel{
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+}
+
+.conversation-header{
+  padding:15px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.conversation-title{font-size:12px;font-weight:850}
+
+.conversation-subtitle{
+  color:var(--muted);
+  font-size:9px;
+  margin-top:3px;
+}
+
+.run-status{color:var(--muted);font-size:9px}
+
+.messages{
+  min-height:0;
+  overflow:auto;
+  padding:20px;
+}
+
+.message{max-width:820px;margin-bottom:20px}
+
+.message.human{
+  margin-left:auto;
+  max-width:75%;
+}
+
+.message-meta{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:6px;
+  color:var(--muted2);
+  font-size:9px;
+}
+
+.message-author{color:var(--text);font-weight:800}
+
+.message-bubble{
+  padding:12px 14px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:var(--surface2);
+  font-size:11px;
+  line-height:1.55;
+  white-space:pre-wrap;
+}
+
+.message.human .message-bubble{
+  background:var(--purpleSoft);
+  border-color:rgba(139,92,246,.22);
+}
+
+.plan-card{
+  margin-top:9px;
+  border:1px solid rgba(139,92,246,.18);
+  border-radius:12px;
+  overflow:hidden;
+  background:rgba(139,92,246,.06);
+}
+
+.plan-header{
+  padding:9px 11px;
+  border-bottom:1px solid rgba(139,92,246,.14);
+  color:#cfc2ff;
+  font-size:9px;
+  font-weight:850;
+  letter-spacing:.08em;
+}
+
+.plan-list{
+  margin:0;
+  padding:10px 26px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.65;
+}
+
+.system-note{
+  margin-top:9px;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:rgba(255,255,255,.025);
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.5;
+}
+
+.artifact-card{
+  margin-top:10px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:rgba(255,255,255,.025);
+}
+
+.artifact-type{
+  color:var(--purple);
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.1em;
+}
+
+.artifact-name{
+  margin-top:4px;
+  font-size:11px;
+  font-weight:800;
+}
+
+.artifact-meta{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:9px;
+}
+
+.composer{
+  padding:12px;
+  border-top:1px solid var(--border);
+}
+
+.composer-box{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  padding:9px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface2);
+}
+
+.composer-box:focus-within{
+  border-color:rgba(139,92,246,.38);
+  box-shadow:0 0 0 3px rgba(139,92,246,.06);
+}
+
+#messageInput{
+  flex:1;
+  min-height:40px;
+  max-height:150px;
+  resize:none;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--text);
+  padding:9px;
+  font-size:11px;
+  line-height:1.45;
+}
+
+#messageInput::placeholder{color:var(--muted2)}
+
+.send-button{
+  min-width:64px;
+  padding:9px 12px;
+  border:1px solid rgba(139,92,246,.25);
+  border-radius:9px;
+  background:var(--purpleSoft);
+  color:#ddd2ff;
+  font-size:10px;
+  font-weight:850;
+}
+
+.send-button:disabled{opacity:.45;cursor:not-allowed}
+
+.activity-panel{
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+}
+
+.activity-header{
+  padding:15px 16px;
+  border-bottom:1px solid var(--border);
+}
+
+.activity-title{font-size:12px;font-weight:850}
+
+.activity-subtitle{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:9px;
+}
+
+.activity-stream{
+  min-height:0;
+  overflow:auto;
+  padding:14px;
+}
+
+.event{
+  position:relative;
+  padding:0 0 17px 17px;
+  margin-left:3px;
+  border-left:1px solid rgba(139,92,246,.16);
+}
+
+.event:last-child{border-left-color:transparent}
+
+.event::before{
+  content:"";
+  position:absolute;
+  top:3px;
+  left:-4px;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--purple);
+  box-shadow:0 0 12px rgba(139,92,246,.4);
+}
+
+.event-time{color:var(--muted2);font-size:8px}
+
+.event-type{
+  margin-top:3px;
+  color:#cfc2ff;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+
+.event-type.tool{color:var(--blue)}
+.event-type.failed,.event-type.error{color:#ffb1ba}
+.event-type.handoff,.event-type.decision{color:var(--orange)}
+
+.event-title{
+  margin-top:4px;
+  font-size:10px;
+  line-height:1.4;
+}
+
+.event-details{
+  margin-top:7px;
+  padding:8px;
+  border-radius:7px;
+  background:rgba(0,0,0,.2);
+  color:var(--muted);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:8px;
+  line-height:1.5;
+  overflow:auto;
+  max-height:150px;
+}
+
+.details-button{
+  margin-top:6px;
+  padding:4px 6px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:transparent;
+  color:var(--muted);
+  font-size:8px;
+}
+
+.handoff{
+  padding:14px 16px;
+  border:1px solid rgba(139,92,246,.28);
+  border-radius:14px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(139,92,246,.10),
+      rgba(139,92,246,.035)
+    );
+}
+
+.handoff.hidden{display:none}
+
+.handoff-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+}
+
+.handoff-label{
+  color:#cfc2ff;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.1em;
+}
+
+.handoff-title{
+  margin-top:5px;
+  font-size:13px;
+  font-weight:850;
+}
+
+.handoff-reason{
+  margin-top:4px;
+  max-width:760px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.45;
+}
+
+.handoff-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+
+.handoff-primary,
+.handoff-secondary{
+  padding:8px 11px;
+  border-radius:8px;
+  font-size:9px;
+  font-weight:850;
+}
+
+.handoff-primary{
+  border:1px solid rgba(139,92,246,.3);
+  background:var(--purple);
+  color:white;
+}
+
+.handoff-secondary{
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+}
+
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(0,0,0,.68);
+  z-index:100;
+}
+
+.modal-backdrop.open{display:flex}
+
+.modal{
+  width:min(430px,100%);
+  padding:18px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--surface);
+  box-shadow:0 30px 100px rgba(0,0,0,.5);
+}
+
+.modal h2{margin:0;font-size:14px}
+
+.modal p{
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.5;
+}
+
+.agent-option{
+  width:100%;
+  padding:11px;
+  margin-top:7px;
+  text-align:left;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface2);
+  color:var(--text);
+}
+
+.agent-option:hover{border-color:rgba(139,92,246,.32)}
+
+.agent-option-name{font-size:10px;font-weight:800}
+
+.agent-option-role{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:9px;
+}
+
+.modal-close{
+  margin-top:12px;
+  padding:8px 10px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:transparent;
+  color:var(--muted);
+  font-size:9px;
+}
+
+.skeleton{
+  position:relative;
+  overflow:hidden;
+  background:rgba(255,255,255,.03);
+  border-radius:8px;
+}
+
+.skeleton::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);
+  animation:shimmer 1.4s infinite;
+}
+
+@keyframes shimmer{100%{transform:translateX(100%)}}
+
+.empty{
+  color:var(--muted2);
+  font-size:11px;
+  line-height:1.6;
+}
+
+@media(max-width:1250px){
+  .workspace-main{grid-template-columns:210px minmax(0,1fr)}
+  .activity-panel{grid-column:1/-1;min-height:280px}
+}
+
+@media(max-width:850px){
+  .workspace{padding:12px}
+  .workspace-main{grid-template-columns:1fr}
+  .context-panel{max-height:280px}
+  .activity-panel{grid-column:auto}
+  .header-run{display:none}
+}
+
+@media(max-width:600px){
+  .workspace-header{align-items:flex-start}
+  .agent-name{font-size:14px}
+  .messages{padding:14px}
+  .message.human{max-width:90%}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,
+  *::before,
+  *::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
 </style>
 </head>
 <body>
-<main class="page">
-<header class="header">
-  <div class="brand">
-    <div class="brand-mark">✦</div>
+
+<div class="workspace">
+
+<header class="workspace-header">
+
+  <a class="back-button" id="backButton" href="/" aria-label="Return to Agent Dashboard">
+    ← Overview
+  </a>
+
+  <div class="agent-header">
+    <div class="agent-icon">✦</div>
     <div>
-      <div class="brand-title">AVIS</div>
-      <div class="brand-subtitle">Video Agentic System</div>
+      <div class="agent-name" id="agentName">Agent</div>
+      <div class="agent-role" id="agentRole">Agent Workspace</div>
     </div>
   </div>
-  <a class="back" href="/">← Dashboard</a>
+
+  <div class="header-run">
+    <strong id="runId">No active run</strong>
+    <span id="runTime"></span>
+  </div>
+
 </header>
 
-<section class="panel agent-hero">
-  <div class="agent-icon">✦</div>
-  <div>
-    <div class="agent-name" id="agentName">…</div>
-    <div class="agent-role" id="agentRole">…</div>
-    <div class="agent-dept" id="agentDept">…</div>
+<section class="workspace-main">
+
+<aside class="panel context-panel" id="contextPanel">
+
+  <div class="context-body">
+
+    <div class="context-heading">Agent Context</div>
+
+    <div class="context-status idle" id="agentStatus">
+      <span class="status-dot"></span>
+      IDLE
+    </div>
+
+    <div class="context-section">
+      <div class="context-label">Current Task</div>
+      <div class="context-value" id="currentTask">No active task</div>
+    </div>
+
+    <div class="context-section">
+      <div class="context-label">Progress</div>
+      <div class="context-value" id="progressValue">0%</div>
+      <div class="context-progress"><div id="progressBar"></div></div>
+    </div>
+
+    <div class="context-section">
+      <div class="context-label">Last Activity</div>
+      <div class="context-value" id="lastActivity">—</div>
+    </div>
+
+    <div class="context-section">
+      <div class="context-label">Capabilities</div>
+      <div id="capabilities"></div>
+    </div>
+
   </div>
-  <div class="status" id="agentStatus"><span class="status-dot"></span><span id="agentStatusLabel">…</span></div>
+
+</aside>
+
+<section class="panel conversation-panel">
+
+  <header class="conversation-header">
+    <div>
+      <div class="conversation-title">Conversation</div>
+      <div class="conversation-subtitle">Talk directly with this agent</div>
+    </div>
+    <div class="run-status" id="conversationStatus">Ready</div>
+  </header>
+
+  <div class="messages" id="messages"></div>
+
+  <form class="composer" id="composer">
+    <div class="composer-box">
+      <textarea id="messageInput" rows="1"
+        placeholder="Type a message to this agent..."
+        aria-label="Message agent"></textarea>
+      <button class="send-button" id="sendButton" type="submit">Send</button>
+    </div>
+  </form>
+
 </section>
 
-<div class="grid">
-  <section class="panel panel-body">
-    <div class="section-title">Current Task</div>
-    <div class="task-box" id="taskBox">…</div>
-    <div class="stage-note">
-      <strong>Workspace under construction.</strong><br>
-      The full Agent Workspace — conversation, work plan, tool calls, artifacts and
-      handoff approval — is the next build stage. This page shows real runtime data for this agent.
-    </div>
-  </section>
+<aside class="panel activity-panel">
 
-  <section class="panel panel-body">
-    <div class="section-title">Recent Activity</div>
-    <div class="events" id="eventList"></div>
-  </section>
+  <header class="activity-header">
+    <div class="activity-title">Live Activity</div>
+    <div class="activity-subtitle">Observable agent work and actions</div>
+  </header>
+
+  <div class="activity-stream" id="activityStream"></div>
+
+</aside>
+
+</section>
+
+<section class="handoff hidden" id="handoff">
+
+  <div class="handoff-top">
+    <div>
+      <div class="handoff-label">HANDOFF READY</div>
+      <div class="handoff-title" id="handoffTitle">Recommended next agent</div>
+      <div class="handoff-reason" id="handoffReason"></div>
+    </div>
+  </div>
+
+  <div class="handoff-actions">
+    <button class="handoff-primary" id="approveHandoff" type="button">Approve &amp; Switch</button>
+    <button class="handoff-secondary" id="chooseAgent" type="button">Choose Another Agent</button>
+    <button class="handoff-secondary" id="continueAgent" type="button">Continue Here</button>
+  </div>
+
+</section>
+
 </div>
-</main>
+
+<div class="modal-backdrop" id="agentModal">
+
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="agentModalTitle">
+    <h2 id="agentModalTitle">Choose Next Agent</h2>
+    <p>Select the agent you want to continue the work with.</p>
+    <div id="agentOptions"></div>
+    <button class="modal-close" id="closeModal" type="button">Cancel</button>
+  </div>
+
+</div>
 
 <script>
-const agentId=decodeURIComponent(location.pathname.split("/").pop()||"");
+const agentId=decodeURIComponent(window.location.pathname.split("/").pop()||"");
+
+let workspaceData=null;
+let eventSource=null;
+
 const STATUS_LABELS={
-  idle:["IDLE","idle"],working:["WORKING",""],waiting:["WAITING","waiting"],
-  completed:["COMPLETED","completed"],failed:["FAILED","failed"],
-  needs_attention:["NEEDS ATTENTION","waiting"],blocked:["BLOCKED","failed"],offline:["OFFLINE","idle"]
+  idle:"IDLE",working:"WORKING",waiting:"WAITING",needs_attention:"NEEDS ATTENTION",
+  blocked:"BLOCKED",completed:"COMPLETED",failed:"FAILED",offline:"OFFLINE"
 };
-const KIND_CLASS={tool_call:"tool",tool_result:"tool",law_block:"law",thinking:"thinking"};
 
-function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;")
-  .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
+function escapeHtml(value){
+  return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;")
+    .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
 
-async function load(){
-  const r=await fetch(`/api/agents/${encodeURIComponent(agentId)}`);
-  if(!r.ok) throw new Error(`Agent lookup failed: ${r.status}`);
-  const data=await r.json();
-  const a=data.agent;
-  document.title=`AVIS — ${a.name}`;
-  document.getElementById("agentName").textContent=a.name;
-  document.getElementById("agentRole").textContent=a.description;
-  document.getElementById("agentDept").textContent=`${data.department} · ${data.tier}`;
-  const [label,cls]=STATUS_LABELS[a.status]||["UNKNOWN","idle"];
-  document.getElementById("agentStatus").className=`status ${cls}`;
-  document.getElementById("agentStatusLabel").textContent=label;
-  document.getElementById("taskBox").textContent=a.current_task||"No active task";
+function formatTime(timestamp){
+  if(!timestamp) return "";
+  return new Date(timestamp).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
 
-  const list=document.getElementById("eventList");
-  try{
-    const es=new EventSource("/api/studio/events");
-    const seen=new Set();
-    es.addEventListener("activity_created",ev=>{
-      const data=JSON.parse(ev.data);
-      if(data.agent_id!==agentId||seen.has(data.timestamp)) return;
-      seen.add(data.timestamp);
-      addEvent(data);
-    });
-  }catch(e){}
-  const sr=await fetch("/api/studio/dashboard");
-  if(sr.ok){
-    const snap=await sr.json();
-    const mine=snap.recent_activity.filter(x=>x.agent_id===agentId).slice(0,8);
-    if(!mine.length){
-      list.innerHTML='<div class="empty">No activity yet for this agent.</div>';
-    }else{
-      list.innerHTML=mine.map(ev=>eventRow(ev)).join("");
+function formatJson(value){
+  try{return JSON.stringify(value,null,2);}catch{return String(value);}
+}
+
+function showLoading(){
+  document.getElementById("agentName").textContent="Loading…";
+  document.getElementById("contextPanel").innerHTML=`
+    <div class="context-body">
+      <div class="skeleton" style="height:14px;width:40%;"></div>
+      <div class="skeleton" style="height:24px;width:70%;margin-top:18px;"></div>
+      <div class="skeleton" style="height:24px;width:55%;margin-top:18px;"></div>
+      <div class="skeleton" style="height:24px;width:62%;margin-top:18px;"></div>
+    </div>`;
+  document.getElementById("conversationStatus").textContent="Loading…";
+}
+
+function renderAgent(agent){
+  document.getElementById("agentName").textContent=agent.name;
+  document.getElementById("agentRole").textContent=`${agent.description} · ${escapeHtml(agent.department||"")} / ${escapeHtml(agent.tier||"")}`;
+
+  const status=STATUS_LABELS[agent.status]||agent.status||"IDLE";
+  const statusEl=document.getElementById("agentStatus");
+  statusEl.className=`context-status ${agent.status||"idle"}`;
+  statusEl.innerHTML=`<span class="status-dot"></span>${escapeHtml(status)}`;
+
+  document.getElementById("currentTask").textContent=agent.current_task||"No active task";
+
+  const progress=Math.max(0,Math.min(100,Number(agent.progress)||0));
+  document.getElementById("progressValue").textContent=`${progress}%`;
+  document.getElementById("progressBar").style.width=`${progress}%`;
+
+  document.getElementById("lastActivity").textContent=
+    agent.last_activity_at?formatTime(agent.last_activity_at):"—";
+
+  document.getElementById("capabilities").innerHTML=
+    (agent.capabilities||[]).map(c=>`<span class="capability">${escapeHtml(c)}</span>`).join("");
+}
+
+function renderMessages(messages=[]){
+  const container=document.getElementById("messages");
+  container.innerHTML=messages.map(message=>{
+
+    if(message.type==="plan"){
+      return `
+        <article class="message agent">
+          <div class="message-meta">
+            <span class="message-author">${escapeHtml(workspaceData?.agent?.name||"Agent")}</span>
+            <span>PLAN</span>
+            <span>${formatTime(message.timestamp)}</span>
+          </div>
+          <div class="plan-card">
+            <div class="plan-header">PLAN</div>
+            <ol class="plan-list">${(message.steps||[]).map(s=>`<li>${escapeHtml(s)}</li>`).join("")}</ol>
+          </div>
+        </article>`;
     }
+
+    if(message.type==="artifact"){
+      return `
+        <article class="message agent">
+          <div class="message-meta">
+            <span class="message-author">${escapeHtml(workspaceData?.agent?.name||"Agent")}</span>
+            <span>${formatTime(message.timestamp)}</span>
+          </div>
+          <div class="artifact-card">
+            <div class="artifact-type">ARTIFACT</div>
+            <div class="artifact-name">${escapeHtml(message.name)}</div>
+            <div class="artifact-meta">${escapeHtml(message.filename||"")} · ${escapeHtml(message.meta||"")}</div>
+          </div>
+        </article>`;
+    }
+
+    if(message.type==="system"){
+      return `
+        <article class="message agent">
+          <div class="message-meta"><span class="message-author">System</span><span>${formatTime(message.timestamp)}</span></div>
+          <div class="system-note">${escapeHtml(message.content)}</div>
+        </article>`;
+    }
+
+    const isHuman=message.role==="human"||message.role==="user";
+    return `
+      <article class="message ${isHuman?"human":"agent"}">
+        <div class="message-meta">
+          <span class="message-author">${isHuman?"You":escapeHtml(workspaceData?.agent?.name||"Agent")}</span>
+          <span>${formatTime(message.timestamp)}</span>
+        </div>
+        <div class="message-bubble">${escapeHtml(message.content)}</div>
+      </article>`;
+  }).join("");
+
+  container.scrollTop=container.scrollHeight;
+}
+
+const EVENT_ICON={action_started:"ACTION",tool_call_started:"TOOL CALL",tool_call_completed:"TOOL RESULT",
+  tool_call_failed:"TOOL FAILED",decision_created:"DECISION",artifact_created:"ARTIFACT",
+  handoff_ready:"HANDOFF",run_started:"RUN",run_completed:"RESULT",run_failed:"FAILED",
+  agent_waiting:"WAITING",plan_created:"PLAN"};
+
+function renderEvent(event){
+  const container=document.getElementById("activityStream");
+  const type=String(event.type||"").replaceAll("_"," ").toUpperCase();
+  const kindClass=event.type||"";
+  const title=event.title||event.data?.text||event.data?.tool||(event.data?.steps&&"Action plan ready")||"";
+
+  const details=event.data?`
+      <details>
+        <summary class="details-button">Details</summary>
+        <pre class="event-details">${escapeHtml(formatJson(event.data))}</pre>
+      </details>`:"";
+
+  const node=document.createElement("div");
+  node.className="event";
+  node.innerHTML=`
+    <div class="event-time">${formatTime(event.timestamp)}</div>
+    <div class="event-type ${kindClass.includes("tool")?"tool":""} ${(kindClass.includes("fail"))?"failed":""}">${escapeHtml(type)}</div>
+    <div class="event-title">${escapeHtml(title||"")}</div>
+    ${details}`;
+
+  container.appendChild(node);
+
+  const nearBottom=container.scrollHeight-container.scrollTop-container.clientHeight<80;
+  if(nearBottom) container.scrollTop=container.scrollHeight;
+}
+
+function renderEvents(events=[]){
+  document.getElementById("activityStream").innerHTML="";
+  events.forEach(renderEvent);
+}
+
+function renderHandoff(handoff){
+  const container=document.getElementById("handoff");
+  if(!handoff){
+    container.classList.add("hidden");
+    return;
+  }
+  container.classList.remove("hidden");
+  document.getElementById("handoffTitle").textContent=
+    handoff.next_agent_name?`Recommended next: ${handoff.next_agent_name}`:"Recommended next agent";
+  document.getElementById("handoffReason").textContent=handoff.reason||"";
+}
+
+function renderWorkspace(data){
+  workspaceData=data;
+  renderAgent(data.agent);
+  renderMessages(data.messages||[]);
+  renderEvents(data.events||[]);
+  renderHandoff(data.handoff||null);
+
+  if(data.current_run){
+    document.getElementById("runId").textContent=`Run ${data.current_run.id}`;
+    document.getElementById("runTime").textContent=data.current_run.started_at?formatTime(data.current_run.started_at):"";
+  }else{
+    document.getElementById("runId").textContent="No active run";
+    document.getElementById("runTime").textContent="";
+  }
+
+  document.getElementById("conversationStatus").textContent=
+    STATUS_LABELS[data.agent.status]||"Ready";
+}
+
+async function loadWorkspace(){
+  const response=await fetch(`/api/studio/agents/${encodeURIComponent(agentId)}`);
+  if(!response.ok) throw new Error(`Workspace request failed: ${response.status}`);
+  renderWorkspace(await response.json());
+}
+
+function addLiveMessage(message){
+  if(!workspaceData) return;
+  workspaceData.messages=workspaceData.messages||[];
+  workspaceData.messages.push(message);
+  renderMessages(workspaceData.messages);
+}
+
+function handleEvent(event){
+  if(!event) return;
+  renderEvent(event);
+
+  switch(event.type){
+    case "message_created":
+      addLiveMessage(event.data);
+      break;
+    case "agent_status_changed":
+      if(workspaceData?.agent){
+        workspaceData.agent.status=event.data?.status;
+        renderAgent(workspaceData.agent);
+        document.getElementById("conversationStatus").textContent=STATUS_LABELS[event.data?.status]||"Ready";
+      }
+      break;
+    case "agent_progress_changed":
+      if(workspaceData?.agent){
+        workspaceData.agent.progress=event.data?.progress;
+        renderAgent(workspaceData.agent);
+      }
+      break;
+    case "handoff_ready":
+      renderHandoff(event.data);
+      break;
+    case "handoff_redirected":
+      renderHandoff(null);
+      break;
+    case "run_completed":
+      document.getElementById("conversationStatus").textContent="COMPLETED";
+      break;
+    case "run_failed":
+      document.getElementById("conversationStatus").textContent="FAILED";
+      break;
   }
 }
 
-function eventRow(ev){
-  const kind=(ev.event_type||"activity").toLowerCase();
-  const cls=KIND_CLASS[kind]||"";
-  const time=new Date(ev.timestamp).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-  return `<div class="event">
-    <div class="event-time">${escapeHtml(time)}</div>
-    <div class="event-kind ${cls}">${escapeHtml((ev.event_type||"ACTIVITY").toUpperCase())}</div>
-    <div class="event-text">${escapeHtml(ev.message||ev.text||"")}</div>
-  </div>`;
+function connectEvents(){
+  if(!window.EventSource) return;
+
+  eventSource=new EventSource(`/api/studio/agents/${encodeURIComponent(agentId)}/events`);
+
+  const types=[
+    "run_started","run_completed","run_failed","plan_created","action_started",
+    "action_completed","tool_call_started","tool_call_completed","tool_call_failed",
+    "artifact_created","artifact_updated","decision_created","message_created",
+    "handoff_ready","handoff_approved","handoff_redirected","agent_waiting",
+    "agent_attention_required","agent_status_changed","agent_progress_changed","result",
+    "activity_created"
+  ];
+
+  types.forEach(type=>{
+    eventSource.addEventListener(type,event=>{
+      try{handleEvent(JSON.parse(event.data));}catch(error){console.error("Invalid workspace event",error);}
+    });
+  });
+
+  eventSource.onerror=()=>{
+    document.getElementById("conversationStatus").textContent="Reconnecting…";
+    eventSource.close();
+    setTimeout(async()=>{
+      try{await loadWorkspace();}catch(e){}
+      connectEvents();
+    },1500);
+  };
 }
 
-function addEvent(ev){
-  const list=document.getElementById("eventList");
-  const empty=list.querySelector(".empty");
-  if(empty) empty.remove();
-  list.insertAdjacentHTML("afterbegin",eventRow({event_type:"ACTIVITY",timestamp:ev.timestamp,message:ev.message}));
-  while(list.children.length>12) list.lastElementChild.remove();
+async function sendMessage(message){
+  const response=await fetch(`/api/studio/agents/${encodeURIComponent(agentId)}/messages`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({message})
+  });
+  if(!response.ok){
+    const text=await response.text();
+    throw new Error(text||"Unable to send message");
+  }
+  return response.json();
 }
 
-load().catch(err=>{
-  document.getElementById("agentName").textContent="Agent not found";
-  document.getElementById("taskBox").textContent=err.message;
+document.getElementById("composer").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const input=document.getElementById("messageInput");
+  const button=document.getElementById("sendButton");
+  const message=input.value.trim();
+  if(!message) return;
+
+  button.disabled=true;
+  input.disabled=true;
+  addLiveMessage({role:"human",content:message,timestamp:new Date().toISOString()});
+  input.value="";
+
+  try{
+    await sendMessage(message);
+    document.getElementById("conversationStatus").textContent="WORKING";
+  }catch(error){
+    console.error(error);
+    addLiveMessage({role:"agent",content:"The message could not be submitted. Check the execution status and try again.",timestamp:new Date().toISOString()});
+  }finally{
+    button.disabled=false;
+    input.disabled=false;
+    input.focus();
+  }
 });
+
+document.getElementById("backButton").addEventListener("click",()=>{window.location.href="/";});
+
+document.getElementById("approveHandoff").addEventListener("click",async()=>{
+  const handoff=workspaceData?.handoff;
+  if(!handoff?.next_agent_id) return;
+  const response=await fetch(`/api/studio/agents/${encodeURIComponent(agentId)}/handoff`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      target_agent_id:handoff.next_agent_id,
+      decision:"approve",
+      run_id:workspaceData?.current_run?.id||null
+    })
+  });
+  if(!response.ok){alert("Unable to approve handoff.");return;}
+  const result=await response.json();
+  if(result.workspace_url) window.location.href=result.workspace_url;
+});
+
+document.getElementById("continueAgent").addEventListener("click",async()=>{
+  const response=await fetch(`/api/studio/agents/${encodeURIComponent(agentId)}/handoff`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({target_agent_id:null,decision:"continue",run_id:workspaceData?.current_run?.id||null})
+  });
+  if(!response.ok){alert("Unable to record decision.");return;}
+  document.getElementById("handoff").classList.add("hidden");
+});
+
+document.getElementById("chooseAgent").addEventListener("click",async()=>{
+  const response=await fetch("/api/studio/dashboard");
+  if(!response.ok){alert("Unable to load agents.");return;}
+  const data=await response.json();
+  const options=document.getElementById("agentOptions");
+  options.innerHTML=(data.agents||[])
+    .filter(agent=>agent.id!==agentId)
+    .map(agent=>`
+      <button class="agent-option" data-target-agent="${escapeHtml(agent.id)}" type="button">
+        <div class="agent-option-name">${escapeHtml(agent.name)}</div>
+        <div class="agent-option-role">${escapeHtml(agent.description)}</div>
+      </button>`)
+    .join("");
+
+  options.querySelectorAll(".agent-option").forEach(button=>{
+    button.addEventListener("click",async()=>{
+      const target=button.dataset.targetAgent;
+      if(!window.confirm(`Continue the work with ${button.querySelector(".agent-option-name").textContent}?`)) return;
+      const response=await fetch(`/api/studio/agents/${encodeURIComponent(agentId)}/handoff`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({target_agent_id:target,decision:"redirect",run_id:workspaceData?.current_run?.id||null})
+      });
+      if(!response.ok){alert("Unable to redirect handoff.");return;}
+      const result=await response.json();
+      if(result.workspace_url) window.location.href=result.workspace_url;
+    });
+  });
+
+  document.getElementById("agentModal").classList.add("open");
+});
+
+document.getElementById("closeModal").addEventListener("click",()=>{
+  document.getElementById("agentModal").classList.remove("open");
+});
+
+document.getElementById("agentModal").addEventListener("click",event=>{
+  if(event.target.id==="agentModal") event.currentTarget.classList.remove("open");
+});
+
+document.getElementById("messageInput").addEventListener("keydown",event=>{
+  if(event.key==="Enter"&&!event.shiftKey){
+    event.preventDefault();
+    document.getElementById("composer").requestSubmit();
+  }
+});
+
+showLoading();
+loadWorkspace()
+  .catch(error=>{
+    console.error(error);
+    document.getElementById("conversationStatus").textContent="Unable to load workspace";
+    document.getElementById("agentName").textContent="Agent not found";
+  })
+  .finally(()=>{connectEvents();});
 </script>
 </body>
 </html>

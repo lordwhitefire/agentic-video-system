@@ -74,6 +74,19 @@ def record_run(state: dict[str, Any], run_id: Optional[str] = None) -> str:
     return run_id
 
 
+def latest_run_state() -> Optional[dict[str, Any]]:
+    """The full persisted state of the most recent recorded run, or None."""
+    runs = list_runs()
+    if not runs:
+        return None
+    path = os.path.join(_run_dir(runs[-1]), "state.json")
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
 def load_corpus() -> list[dict[str, Any]]:
     """All knowledge entries across every recorded run, newest runs first."""
     out: list[dict[str, Any]] = []

@@ -160,10 +160,13 @@ class _Watchdog(RuntimeError):
     never spin: the 4-iteration review cap is the first guard, this is the last."""
 
 
-def run(graph: Any, state: dict[str, Any], approver: Callable[[dict[str, Any]], Any]) -> dict[str, Any]:
+def run(graph: Any, state: dict[str, Any], approver: Callable[[dict[str, Any]], Any],
+        record: bool = True) -> dict[str, Any]:
     """Execute with human-in-the-loop approval. Deterministic control flow;
     the only nondeterminism is the CEO's answers to interrupt() questions.
-    Recursively resumes through every interrupt; returns the final state."""
+    Recursively resumes through every interrupt; returns the final state.
+    `record=False` skips persisting the run to the knowledge repository
+    (used by the Agent Workspace's single-agent runs, which are partial)."""
     config = {"configurable": {"thread_id": uuid.uuid4().hex}}
     final: dict[str, Any] = {}
     budget = {"steps": 0, "max": 500}
@@ -194,5 +197,5 @@ def run(graph: Any, state: dict[str, Any], approver: Callable[[dict[str, Any]], 
     snapshot = graph.get_state(config)
     if snapshot and snapshot.values:
         final.update(snapshot.values)
-    final["knowledge_run"] = knowledge.record_run(final)
+    final["knowledge_run"] = knowledge.record_run(final) if record else None
     return final
