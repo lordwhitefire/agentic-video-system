@@ -9,8 +9,8 @@ Capgemini Web Developer role (LangGraph agents, human-in-the-loop, RAG, FastAPI 
 LLM integration via Zhipu/GLM). Commit + push + make repo public.
 
 **Repos:**
-- Remote: `https://github.com/lordwhitefire/agentic-video-system` (private → public)
-- Runtime: `langgraph-runtime/` (untracked until Phase 6)
+- Remote: `https://github.com/lordwhitefire/agentic-video-system` (now public)
+- Runtime: `langgraph-runtime/` — committed, pushed to `main`
 
 **LLM key:** Zhipu `GLM_API_KEY` (in the local shell profile). OpenAI-compatible
 endpoint: `https://open.bigmodel.cn/api/paas/v4`, model `glm-4.5-flash`
@@ -20,7 +20,7 @@ endpoint: `https://open.bigmodel.cn/api/paas/v4`, model `glm-4.5-flash`
 
 ## Phase 0 — Persist this plan
 - [x] Write `langgraph-runtime/PLAN.md` (this file)
-- [ ] Keep it updated after every phase
+- [x] Keep it updated after every phase
 
 ## Phase 1 — Verify & fix the pipeline
 - [x] Run full CLI pipeline end-to-end with Mbappé example (`ui.cli --yes`)
@@ -104,7 +104,7 @@ endpoint: `https://open.bigmodel.cn/api/paas/v4`, model `glm-4.5-flash`
    first, so graph tests ran the web approver (auto-approving everything). Fixed:
    `/api/run` worker now passes `_remote_approver` explicitly; patch deleted.
 
-## Phase 6 — Commit, push, make public ✅ DONE
+## Phase 6 — Commit, push, make public
 - [x] Secret/path scan clean (only GitHub URL references remain; .env.example empty;
       `runs/` + `.venv` + `__pycache__` + `.pytest_cache` ignored)
 - [x] Fixed `knowledge.RUNS_DIR` off-by-one (was writing to repo-root `runs/`, now
