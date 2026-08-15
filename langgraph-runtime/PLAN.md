@@ -104,13 +104,17 @@ endpoint: `https://open.bigmodel.cn/api/paas/v4`, model `glm-4.5-flash`
    first, so graph tests ran the web approver (auto-approving everything). Fixed:
    `/api/run` worker now passes `_remote_approver` explicitly; patch deleted.
 
-## Phase 6 — Commit, push, make public
-- [ ] Grep repo for secrets / absolute home paths — none may be committed
-- [ ] Commit all phases with clear messages, push to `main`
-- [ ] Flip repo to public
-- [ ] Add topics: langgraph, agents, rag, fastapi, ai, opencode
-- [ ] Acceptance: repo public, cloneable, README renders, fresh machine:
-      `pip install -r requirements.txt && python -m ui.cli --yes`
+## Phase 6 — Commit, push, make public ✅ DONE
+- [x] Secret/path scan clean (only GitHub URL references remain; .env.example empty;
+      `runs/` + `.venv` + `__pycache__` + `.pytest_cache` ignored)
+- [x] Fixed `knowledge.RUNS_DIR` off-by-one (was writing to repo-root `runs/`, now
+      `langgraph-runtime/runs/`); removed misplaced root `runs/` (had home paths)
+- [x] Committed `55736d3` (27 files, +4502) and pushed to `main`
+- [x] Repo flipped public: https://github.com/lordwhitefire/agentic-video-system
+- [x] Topics: langgraph, agentic-ai, llm-agents, rag, fastapi, human-in-the-loop,
+      ai-agents, python, opencode, mermaid
+- [x] Fresh-machine acceptance: clone → venv → `pip install -r requirements.txt` →
+      `python -m ui.cli --yes` → PASS, all 6 checks green, exit 0; uvicorn boots
 
 ---
 
