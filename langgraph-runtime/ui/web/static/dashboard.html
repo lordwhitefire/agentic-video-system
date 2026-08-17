@@ -1,1106 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AVIS — Agent Dashboard</title>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Dashboard</title>
 <style>
-:root{
-  --bg:#07090f;
-  --surface:#0d111a;
-  --surface2:#111722;
-  --surface3:#161d29;
-  --border:rgba(255,255,255,.08);
-  --text:#f4f5f8;
-  --muted:#8f98aa;
-  --muted2:#657083;
-  --purple:#8b5cf6;
-  --purpleSoft:rgba(139,92,246,.16);
-  --green:#35d07f;
-  --greenSoft:rgba(53,208,127,.14);
-  --blue:#4b8cff;
-  --blueSoft:rgba(75,140,255,.14);
-  --orange:#f59e0b;
-  --orangeSoft:rgba(245,158,11,.14);
-  --red:#ef5b6b;
-  --redSoft:rgba(239,91,107,.14);
-  --radius:16px;
-}
-
-*{box-sizing:border-box}
-
-html,body{
-  margin:0;
-  min-height:100%;
-  background:var(--bg);
-  color:var(--text);
-  font-family:Inter,ui-sans-serif,system-ui,-apple-system,
-  BlinkMacSystemFont,"Segoe UI",sans-serif;
-}
-
-body{min-height:100vh}
-
-button{font:inherit}
-
-.dashboard{
-  width:min(1800px,100%);
-  margin:auto;
-  padding:28px;
-}
-
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:24px;
-  margin-bottom:28px;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:14px;
-}
-
-.brand-mark{
-  width:38px;
-  height:38px;
-  display:grid;
-  place-items:center;
-  border-radius:12px;
-  background:var(--purpleSoft);
-  border:1px solid rgba(139,92,246,.25);
-  color:var(--purple);
-  font-weight:900;
-  box-shadow:0 0 28px rgba(139,92,246,.12);
-}
-
-.brand-title{
-  font-size:18px;
-  font-weight:800;
-}
-
-.brand-subtitle{
-  color:var(--muted);
-  font-size:12px;
-  margin-top:2px;
-}
-
-.header-right{
-  display:flex;
-  align-items:center;
-  gap:18px;
-}
-
-.clock{text-align:right}
-.clock-time{font-size:13px;font-weight:700}
-.clock-date{font-size:11px;color:var(--muted);margin-top:3px}
-
-.notification{
-  position:relative;
-  width:42px;
-  height:42px;
-  display:grid;
-  place-items:center;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:var(--surface);
-  color:var(--text);
-  cursor:pointer;
-}
-
-.notification-badge{
-  position:absolute;
-  top:-4px;
-  right:-4px;
-  min-width:18px;
-  height:18px;
-  padding:0 5px;
-  display:grid;
-  place-items:center;
-  border-radius:999px;
-  background:var(--purple);
-  color:white;
-  font-size:10px;
-  font-weight:800;
-}
-
-.health{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:11px 15px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:var(--surface);
-  font-size:12px;
-  font-weight:700;
-}
-
-.health-dot,.status-dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:var(--green);
-  box-shadow:0 0 12px currentColor;
-}
-
-.health.degraded .health-dot{background:var(--orange)}
-
-.dashboard-grid{
-  display:grid;
-  grid-template-columns:250px minmax(0,1fr) 300px;
-  gap:14px;
-  align-items:start;
-}
-
-.column{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  min-width:0;
-}
-
-.panel{
-  background:linear-gradient(
-    180deg,
-    rgba(255,255,255,.018),
-    rgba(255,255,255,.006)
-  ),var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  box-shadow:0 20px 60px rgba(0,0,0,.28);
-}
-
-.panel-header{padding:17px 18px 0}
-
-.panel-title{
-  font-size:13px;
-  font-weight:800;
-}
-
-.panel-subtitle{
-  margin-top:5px;
-  color:var(--muted);
-  font-size:11px;
-}
-
-.overview-list{padding:12px 10px 14px}
-
-.overview-item{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:11px 8px;
-  border-radius:10px;
-}
-
-.overview-item:hover{
-  background:rgba(255,255,255,.025);
-}
-
-.overview-left{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  color:var(--muted);
-  font-size:12px;
-}
-
-.overview-value{
-  font-size:14px;
-  font-weight:800;
-}
-
-.progress-panel{padding:18px}
-
-.progress-ring{
-  width:145px;
-  height:145px;
-  margin:18px auto;
-  display:grid;
-  place-items:center;
-  border-radius:50%;
-  background:
-    radial-gradient(
-      circle at center,
-      var(--surface) 58%,
-      transparent 59%
-    ),
-    conic-gradient(
-      var(--purple) 0deg,
-      var(--purple) 260deg,
-      #202b3d 260deg,
-      #202b3d 360deg
-    );
-}
-
-.progress-value{
-  font-size:31px;
-  font-weight:850;
-}
-
-.progress-label{
-  text-align:center;
-  color:var(--muted);
-  font-size:11px;
-}
-
-.activity-list{padding:12px}
-
-.activity-item{
-  display:flex;
-  gap:10px;
-  padding:11px 5px;
-  border-bottom:1px solid rgba(255,255,255,.05);
-  cursor:pointer;
-}
-
-.activity-item:last-child{border-bottom:0}
-
-.activity-icon{
-  width:30px;
-  height:30px;
-  flex:0 0 30px;
-  display:grid;
-  place-items:center;
-  border-radius:9px;
-  background:var(--purpleSoft);
-  color:var(--purple);
-  font-size:11px;
-  font-weight:800;
-}
-
-.activity-time{
-  color:var(--muted2);
-  font-size:10px;
-}
-
-.activity-agent{
-  margin-top:2px;
-  font-size:11px;
-  font-weight:750;
-}
-
-.activity-text{
-  margin-top:3px;
-  color:var(--muted);
-  font-size:10px;
-  line-height:1.4;
-}
-
-.agents-panel{padding:18px}
-
-.agents-heading{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-end;
-  margin-bottom:16px;
-}
-
-.agents-heading h1{
-  margin:0;
-  font-size:22px;
-  letter-spacing:-.035em;
-}
-
-.agents-heading p{
-  margin:5px 0 0;
-  color:var(--muted);
-  font-size:11px;
-}
-
-.agents-count{
-  color:var(--muted);
-  font-size:11px;
-}
-
-.agent-grid{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:12px;
-}
-
-.agent-card{
-  position:relative;
-  min-height:225px;
-  padding:16px;
-  border-radius:15px;
-  background:var(--surface2);
-  border:1px solid var(--border);
-  cursor:pointer;
-  transition:
-    transform .18s ease,
-    border-color .18s ease,
-    background .18s ease,
-    box-shadow .18s ease;
-}
-
-.agent-card:hover{
-  transform:translateY(-2px);
-  border-color:rgba(139,92,246,.32);
-  background:var(--surface3);
-}
-
-.agent-card:focus-visible{
-  outline:2px solid var(--purple);
-  outline-offset:2px;
-}
-
-.agent-card.attention{
-  border-color:rgba(139,92,246,.6);
-  box-shadow:
-    0 0 0 1px rgba(139,92,246,.08),
-    0 0 35px rgba(139,92,246,.1);
-  animation:attentionPulse 2.6s ease-in-out infinite;
-}
-
-@keyframes attentionPulse{
-  0%,100%{
-    box-shadow:
-      0 0 0 1px rgba(139,92,246,.08),
-      0 0 28px rgba(139,92,246,.07);
+  :root{
+    --bg:#07090f; --panel:#0e1219; --border:#1c2530; --text:#f4f5f8;
+    --dim:#7d8896; --accent:#58a6ff; --green:#3fb950; --red:#f85149;
+    --amber:#d29922; --purple:#a371f7; --panel2:#11161f;
   }
-  50%{
-    box-shadow:
-      0 0 0 1px rgba(139,92,246,.18),
-      0 0 42px rgba(139,92,246,.14);
-  }
-}
-
-.agent-top{
-  display:flex;
-  justify-content:space-between;
-}
-
-.agent-identity{
-  display:flex;
-  gap:10px;
-  min-width:0;
-}
-
-.agent-icon{
-  width:38px;
-  height:38px;
-  flex:0 0 38px;
-  display:grid;
-  place-items:center;
-  border-radius:11px;
-  background:var(--purpleSoft);
-  color:var(--purple);
-  font-weight:900;
-}
-
-.agent-name{
-  font-size:13px;
-  font-weight:850;
-}
-
-.agent-role{
-  margin-top:3px;
-  color:var(--muted);
-  font-size:10px;
-  line-height:1.3;
-}
-
-.status{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  margin-top:15px;
-  padding:5px 8px;
-  border-radius:999px;
-  background:var(--greenSoft);
-  color:var(--green);
-  font-size:9px;
-  font-weight:850;
-}
-
-.status.waiting{
-  background:var(--orangeSoft);
-  color:var(--orange);
-}
-
-.status.idle{
-  background:var(--blueSoft);
-  color:var(--blue);
-}
-
-.status.failed,.status.blocked{
-  background:var(--redSoft);
-  color:var(--red);
-}
-
-.status.offline{
-  background:rgba(255,255,255,.06);
-  color:var(--muted);
-}
-
-.status.completed{
-  background:var(--greenSoft);
-  color:var(--green);
-}
-
-.agent-task-label{
-  margin-top:17px;
-  color:var(--muted2);
-  font-size:9px;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-}
-
-.agent-task{
-  margin-top:5px;
-  min-height:30px;
-  font-size:11px;
-  line-height:1.4;
-}
-
-.progress-track{
-  height:5px;
-  margin-top:14px;
-  overflow:hidden;
-  border-radius:999px;
-  background:#202737;
-}
-
-.progress-bar{
-  height:100%;
-  border-radius:inherit;
-  background:linear-gradient(90deg,var(--purple),#a78bfa);
-}
-
-.agent-bottom{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-top:12px;
-}
-
-.agent-time{
-  color:var(--muted2);
-  font-size:9px;
-}
-
-.view-button{
-  padding:7px 10px;
-  border:1px solid rgba(139,92,246,.24);
-  border-radius:8px;
-  background:var(--purpleSoft);
-  color:#d7c9ff;
-  font-size:9px;
-  font-weight:800;
-  cursor:pointer;
-}
-
-.attention-badge{
-  position:absolute;
-  top:12px;
-  right:12px;
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:var(--orange);
-  box-shadow:0 0 14px rgba(245,158,11,.65);
-}
-
-.heatmap{padding:16px}
-
-.heatmap-grid{
-  display:grid;
-  grid-template-columns:repeat(12,1fr);
-  gap:4px;
-  margin-top:16px;
-}
-
-.heat-cell{
-  aspect-ratio:1;
-  border-radius:3px;
-  background:#111827;
-}
-
-.heat-cell.l1{background:#1c2340}
-.heat-cell.l2{background:#3a2b78}
-.heat-cell.l3{background:#6949b9}
-.heat-cell.l4{background:#9b75ff}
-
-.heat-labels{
-  display:flex;
-  justify-content:space-between;
-  margin-top:10px;
-  color:var(--muted2);
-  font-size:9px;
-}
-
-.heatmap-empty{
-  margin-top:16px;
-  color:var(--muted2);
-  font-size:10px;
-  text-align:center;
-  padding:14px 0;
-}
-
-.attention-list{padding:10px 12px 13px}
-
-.attention-item{
-  padding:12px 6px;
-  border-bottom:1px solid rgba(255,255,255,.05);
-}
-
-.attention-item:last-child{border-bottom:0}
-
-.attention-name{
-  font-size:11px;
-  font-weight:800;
-}
-
-.attention-reason{
-  margin-top:4px;
-  color:var(--muted);
-  font-size:10px;
-  line-height:1.4;
-}
-
-.attention-open{
-  margin-top:8px;
-  padding:6px 9px;
-  border:1px solid rgba(139,92,246,.25);
-  border-radius:7px;
-  background:transparent;
-  color:#cfc2ff;
-  font-size:9px;
-  font-weight:800;
-  cursor:pointer;
-}
-
-.production{
-  margin-top:14px;
-  padding:18px;
-}
-
-.stage-strip{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  overflow-x:auto;
-  padding:20px 4px 8px;
-}
-
-.stage{
-  min-width:105px;
-  text-align:center;
-}
-
-.stage-node{
-  width:32px;
-  height:32px;
-  margin:0 auto 8px;
-  display:grid;
-  place-items:center;
-  border-radius:50%;
-  background:var(--purpleSoft);
-  border:1px solid rgba(139,92,246,.28);
-  color:var(--purple);
-  font-size:10px;
-  font-weight:900;
-}
-
-.stage-name{
-  font-size:10px;
-  font-weight:800;
-}
-
-.stage-status{
-  margin-top:3px;
-  color:var(--muted);
-  font-size:9px;
-}
-
-.stage-line{
-  flex:1;
-  min-width:20px;
-  height:1px;
-  background:rgba(139,92,246,.25);
-}
-
-.loading-overlay{
-  position:fixed;
-  inset:0;
-  z-index:50;
-  display:grid;
-  place-items:center;
-  background:var(--bg);
-  transition:opacity .3s ease;
-}
-
-.loading-overlay.hidden{
-  opacity:0;
-  pointer-events:none;
-}
-
-.loading-box{
-  text-align:center;
-}
-
-.loading-mark{
-  width:52px;
-  height:52px;
-  margin:0 auto 16px;
-  display:grid;
-  place-items:center;
-  border-radius:14px;
-  background:var(--purpleSoft);
-  border:1px solid rgba(139,92,246,.25);
-  color:var(--purple);
-  font-size:22px;
-  font-weight:900;
-  animation:loadingPulse 1.6s ease-in-out infinite;
-}
-
-@keyframes loadingPulse{
-  0%,100%{box-shadow:0 0 18px rgba(139,92,246,.08)}
-  50%{box-shadow:0 0 34px rgba(139,92,246,.22)}
-}
-
-.loading-text{
-  color:var(--muted);
-  font-size:12px;
-  font-weight:700;
-}
-
-.connection-banner{
-  display:none;
-  margin-bottom:14px;
-  padding:10px 16px;
-  border-radius:12px;
-  border:1px solid rgba(245,158,11,.35);
-  background:var(--orangeSoft);
-  color:var(--orange);
-  font-size:12px;
-  font-weight:750;
-}
-
-.connection-banner.visible{display:block}
-
-@media(max-width:1350px){
-  .dashboard-grid{
-    grid-template-columns:220px minmax(0,1fr);
-  }
-
-  .right-column{
-    grid-column:1/-1;
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-  }
-
-  .agent-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-  }
-}
-
-@media(max-width:900px){
-  .dashboard{padding:18px}
-
-  .dashboard-grid{
-    grid-template-columns:1fr;
-  }
-
-  .right-column{
-    display:flex;
-  }
-
-  .agent-grid{
-    grid-template-columns:1fr;
-  }
-
-  .clock,.health{
-    display:none;
-  }
-}
-
-@media(max-width:600px){
-  .dashboard{padding:12px}
-  .brand-subtitle{display:none}
-}
-
-@media(prefers-reduced-motion:reduce){
-  *,
-  *::before,
-  *::after{
-    animation-duration:.01ms!important;
-    animation-iteration-count:1!important;
-    transition-duration:.01ms!important;
-  }
-}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       min-height:100vh;padding-bottom:40px}
+  a{color:var(--accent);text-decoration:none}
+  .topbar{display:flex;align-items:center;gap:14px;padding:10px 24px;
+          background:var(--panel);border-bottom:1px solid var(--border);
+          position:sticky;top:0;z-index:10}
+  .project{font-weight:800;letter-spacing:.12em;font-size:11px;color:var(--dim)}
+  .page-title{font-size:16px;font-weight:700}
+  .spacer{flex:1}
+  .pill{border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:11px;
+        color:var(--dim);display:flex;align-items:center;gap:6px}
+  .pill.warn{border-color:var(--amber);color:var(--amber)}
+  .pill.bad{border-color:var(--red);color:var(--red)}
+  .pill.ok{border-color:var(--green);color:var(--green)}
+  .wrap{max-width:1200px;margin:0 auto;padding:20px 24px}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+        padding:16px 18px}
+  .card .k{font-size:10px;letter-spacing:.14em;color:var(--dim);font-weight:800;margin-bottom:6px}
+  .card .v{font-size:26px;font-weight:800}
+  .card .v small{font-size:12px;color:var(--dim);font-weight:600}
+  .card p{margin:6px 0 0;color:var(--dim);font-size:12px}
+  .h2{font-size:12px;letter-spacing:.14em;color:var(--dim);font-weight:800;
+      margin:28px 0 12px;display:flex;align-items:center;gap:8px}
+  .h2 .count{background:var(--panel2);border:1px solid var(--border);border-radius:20px;
+             padding:1px 9px;font-size:11px;color:var(--text)}
+  .agents{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .agent{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+         padding:14px 16px;cursor:pointer;transition:border-color .15s}
+  .agent:hover{border-color:var(--accent)}
+  .agent .top{display:flex;align-items:center;gap:10px}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .dot.idle{background:#3a4453}
+  .dot.working{background:var(--accent);animation:pulse 1.2s infinite}
+  .dot.waiting{background:var(--amber);animation:pulse 1.2s infinite}
+  .dot.handed_off{background:var(--purple)}
+  @keyframes pulse{50%{opacity:.35}}
+  .agent .name{font-weight:700;font-size:14px}
+  .agent .status{font-size:11px;color:var(--dim)}
+  .agent .desc{color:var(--dim);font-size:12px;margin:8px 0}
+  .agent .tags{display:flex;flex-wrap:wrap;gap:6px}
+  .tag{background:var(--panel2);border:1px solid var(--border);border-radius:20px;
+       padding:2px 10px;font-size:10px;color:var(--dim)}
+  .tag.blue{border-color:#1f3d63;color:var(--accent)}
+  .tag.purple{border-color:#3a2a5c;color:var(--purple)}
+  .tag.green{border-color:#1c4530;color:var(--green)}
+  .tag.amber{border-color:#5c4a12;color:var(--amber)}
+  .agent .stats{display:flex;gap:16px;margin-top:10px;padding-top:10px;
+                border-top:1px solid var(--border);font-size:11px;color:var(--dim)}
+  .agent .stats b{color:var(--text)}
+  .feed{display:flex;flex-direction:column;gap:2px}
+  .feed-item{display:flex;gap:12px;padding:9px 4px;border-bottom:1px solid var(--border)}
+  .feed-item:last-child{border-bottom:0}
+  .feed-item .tm{color:#3a4453;font-size:11px;flex:0 0 auto;width:70px;padding-top:1px}
+  .feed-item .msg{font-size:12px;color:var(--dim);min-width:0;word-break:break-word}
+  .feed-item .msg b{color:var(--text)}
+  .empty{color:#3a4453;text-align:center;padding:40px 0;font-size:13px}
+  .banner{border:1px solid var(--amber);border-left:3px solid var(--amber);background:#171207;
+          border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--amber)}
+  .banner.bad{border-color:var(--red);border-left-color:var(--red);background:#1a0e0d;color:var(--red)}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#222c3a;border-radius:5px}
+  ::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
-
 <body>
-<main class="dashboard">
-
-<header class="header">
-  <div class="brand">
-    <div class="brand-mark">✦</div>
-    <div>
-      <div class="brand-title">AVIS</div>
-      <div class="brand-subtitle">Video Agentic System</div>
-    </div>
-  </div>
-
-  <div class="header-right">
-    <div class="clock">
-      <div class="clock-time" id="clockTime">--:--</div>
-      <div class="clock-date" id="clockDate">---</div>
-    </div>
-
-    <button class="notification" id="notificationButton" title="Agents needing your attention">
-      ♧
-      <span class="notification-badge" id="notificationBadge">0</span>
-    </button>
-
-    <div class="health" id="healthPill">
-      <span class="health-dot"></span>
-      <span id="healthLabel">System Healthy</span>
-    </div>
-  </div>
+<header class="topbar">
+  <span class="project">VIDEO GENERATION SYSTEM</span>
+  <span class="page-title">Agent Dashboard</span>
+  <span class="spacer"></span>
+  <span class="pill" id="modelPill" title="Conversational layer">model —</span>
+  <span class="pill" id="clock">—</span>
 </header>
 
-<div class="connection-banner" id="connectionBanner">
-  Live connection lost — reconnecting…
-</div>
+<div class="wrap">
+  <div class="banner" id="modelBanner" style="display:none"></div>
 
-<section class="dashboard-grid">
-
-<aside class="column">
-
-<section class="panel">
-  <div class="panel-header">
-    <div class="panel-title">System Overview</div>
+  <div class="row">
+    <div class="card"><div class="k">TOTAL AGENTS</div><div class="v" id="statAgents">—</div>
+      <p>The full organization chart, one workspace each.</p></div>
+    <div class="card"><div class="k">TOTAL SESSIONS</div><div class="v" id="statSessions">—</div>
+      <p>In-flight and past sessions across every agent.</p></div>
+    <div class="card"><div class="k">ATTENTION</div><div class="v" id="statAttention">—</div>
+      <p>Agents currently waiting on you: approvals or handoffs.</p></div>
   </div>
-  <div class="overview-list" id="systemOverview"></div>
-</section>
 
-<section class="panel progress-panel">
-  <div class="panel-title">Active Work</div>
-  <div class="panel-subtitle">Current agent activity</div>
+  <div class="h2">AGENTS <span class="count" id="agentsCount">—</span></div>
+  <div class="agents" id="agents">
+    <div class="empty">loading…</div>
+  </div>
 
-  <div class="progress-ring">
-    <div>
-      <div class="progress-value" id="overallProgress">--</div>
-      <div class="progress-label">Active progress</div>
+  <div class="h2">RECENT ACTIVITY</div>
+  <div class="card" style="padding:8px 14px">
+    <div class="feed" id="feed">
+      <div class="empty">loading…</div>
     </div>
-  </div>
-</section>
-
-<section class="panel">
-  <div class="panel-header">
-    <div class="panel-title">Recent Activity</div>
-    <div class="panel-subtitle">Live agent activity</div>
-  </div>
-  <div class="activity-list" id="recentActivity"></div>
-</section>
-
-</aside>
-
-<section class="column">
-
-<section class="panel agents-panel">
-
-<div class="agents-heading">
-  <div>
-    <h1>Agents at a Glance</h1>
-    <p>Real-time status of your video agents</p>
-  </div>
-  <div class="agents-count" id="agentsCount">0 agents</div>
-</div>
-
-<div class="agent-grid" id="agentGrid"></div>
-
-</section>
-
-<section class="panel production">
-  <div class="panel-title">Production Overview</div>
-  <div class="panel-subtitle">High-level project stages</div>
-  <div class="stage-strip" id="productionStages"></div>
-</section>
-
-</section>
-
-<aside class="column right-column">
-
-<section class="panel">
-  <div class="panel-header">
-    <div class="panel-title">Activity</div>
-    <div class="panel-subtitle">Agent activity over time</div>
-  </div>
-
-  <div class="heatmap">
-    <div class="heatmap-grid" id="heatmap"></div>
-    <div class="heat-labels" id="heatLabels">
-      <span>12 AM</span>
-      <span>6 AM</span>
-      <span>12 PM</span>
-      <span>6 PM</span>
-    </div>
-  </div>
-</section>
-
-<section class="panel">
-  <div class="panel-header">
-    <div class="panel-title">Needs Your Attention</div>
-    <div class="panel-subtitle">Agents waiting for you</div>
-  </div>
-
-  <div class="attention-list" id="attentionList"></div>
-</section>
-
-</aside>
-
-</section>
-</main>
-
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-box">
-    <div class="loading-mark">✦</div>
-    <div class="loading-text">Loading dashboard…</div>
   </div>
 </div>
 
 <script>
-const STATUS_META = {
-  idle: {label:"IDLE", className:"idle"},
-  working: {label:"WORKING", className:""},
-  waiting: {label:"WAITING", className:"waiting"},
-  needs_attention: {label:"NEEDS ATTENTION", className:"waiting"},
-  blocked: {label:"BLOCKED", className:"blocked"},
-  completed: {label:"COMPLETED", className:"completed"},
-  failed: {label:"FAILED", className:"failed"},
-  offline: {label:"OFFLINE", className:"offline"}
-};
+const $ = id => document.getElementById(id);
+const seenActivity = new Set();
 
-function escapeHtml(value){
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmt(ts){
+  if(!ts) return '';
+  const d = new Date(ts.endsWith('Z') || ts.includes('+') ? ts : ts + 'Z');
+  return isNaN(d) ? ts : d.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+function clock(){ $('clock').textContent = new Date().toLocaleTimeString(); }
+
+function niceStatus(st){
+  return ({idle:'Online', completed:'Online', stopped:'Online', failed:'Online',
+           handed_off:'Handed off', working:'Active',
+           waiting:'Needs your attention', stopping:'Active'}[st] || st || 'Online');
+}
+function dotClass(st){
+  return ({working:'working', waiting:'waiting', handed_off:'handed_off'}[st] || 'idle');
+}
+function tierTag(t){
+  const map = {ceo:['CEO', 'amber'], executive:['EXEC', 'green'],
+               specialist:['SPECIALIST', 'blue'], worker:['WORKER', '']};
+  const m = map[t] || [String(t || '').toUpperCase(), ''];
+  return '<span class="tag' + (m[1] ? ' ' + m[1] : '') + '">' + m[0] + '</span>';
 }
 
-function relativeTime(timestamp){
-  if(!timestamp) return "";
-  const seconds=Math.max(0,Math.floor((Date.now()-new Date(timestamp).getTime())/1000));
-  if(seconds<60) return `${seconds}s ago`;
-  const minutes=Math.floor(seconds/60);
-  if(minutes<60) return `${minutes}m ago`;
-  return `${Math.floor(minutes/60)}h ago`;
+function applySnapshot(snap){
+  const sys = snap.system || {};
+  const agents = snap.agents || [];
+  const activity = snap.recent_activity || [];
+
+  $('statAgents').textContent = sys.total_agents || 0;
+  $('statSessions').textContent = sys.total_sessions || 0;
+  $('statAttention').textContent = sys.attention_agents || 0;
+  $('agentsCount').textContent = agents.length;
+  $('statAttention').style.color = (sys.attention_agents || 0) > 0 ? 'var(--amber)' : '';
+
+  const modelOk = sys.model_configured !== false;
+  const pill = $('modelPill');
+  pill.textContent = modelOk ? 'model ready' : 'model missing';
+  pill.className = 'pill' + (modelOk ? ' ok' : ' bad');
+  const banner = $('modelBanner');
+  banner.style.display = modelOk ? 'none' : 'block';
+  banner.textContent = modelOk ? '' :
+    'The conversational layer is not configured — agents cannot reply. Add an LLM API key to continue working with them.';
+  banner.className = 'banner' + (modelOk ? '' : ' bad');
+
+  $('agents').innerHTML = agents.length ? agents.map(a =>
+    '<div class="agent" onclick="location=\'/workspace/' + encodeURIComponent(a.id) + '\'">' +
+      '<div class="top">' +
+        '<span class="dot ' + dotClass(a.status || 'idle') + '"></span>' +
+        '<span class="name">' + esc(a.name) + '</span>' +
+        '<span class="status">' + esc(niceStatus(a.status || 'idle')) + '</span>' +
+      '</div>' +
+      '<div class="desc">' + esc(a.description || '') + '</div>' +
+      '<div class="tags">' +
+        (a.department ? '<span class="tag">' + esc(a.department) + '</span>' : '') +
+        tierTag(a.tier) +
+        (a.handoff_pending ? '<span class="tag purple">handoff</span>' : '') +
+      '</div>' +
+      '<div class="stats">' +
+        '<span><b>' + (a.session_count || 0) + '</b> sessions</span>' +
+        (a.last_activity_at ? '<span>last activity ' + esc(fmt(a.last_activity_at)) + '</span>' : '') +
+      '</div>' +
+    '</div>').join('')
+    : '<div class="empty">no agents found</div>';
+
+  const list = activity.slice(0, 30);
+  $('feed').innerHTML = list.length ? list.map(ev => {
+    const k = ev.agent_id + '|' + ev.timestamp + '|' + ev.message;
+    seenActivity.add(k);
+    return '<div class="feed-item"><span class="tm">' + esc(fmt(ev.timestamp)) + '</span>' +
+           '<span class="msg"><b>' + esc(ev.agent_name) + '</b> — ' + esc(ev.message) + '</span></div>';
+  }).join('') : '<div class="empty">no activity yet</div>';
 }
 
-function openWorkspace(agentId){
-  window.location.href=`/workspace/${encodeURIComponent(agentId)}`;
-}
-
-function renderSystem(system){
-  const values=[
-    ["Total Agents",system.total_agents],
-    ["Active Now",system.active_agents],
-    ["Idle",system.idle_agents],
-    ["Waiting",system.waiting_agents],
-    ["Needs Attention",system.attention_agents],
-    ["Completed Today",system.completed_today]
-  ];
-  document.getElementById("systemOverview").innerHTML=values.map(([label,value])=>`
-    <div class="overview-item">
-      <div class="overview-left"><span>●</span><span>${escapeHtml(label)}</span></div>
-      <div class="overview-value">${escapeHtml(value)}</div>
-    </div>
-  `).join("");
-  const count=Number(system.attention_agents||0);
-  const badge=document.getElementById("notificationBadge");
-  badge.textContent=count;
-  badge.style.display=count>0?"grid":"none";
-  const healthy=system.status==="healthy";
-  document.getElementById("healthLabel").textContent=healthy?"System Healthy":"System Degraded";
-  document.getElementById("healthPill").classList.toggle("degraded",!healthy);
-}
-
-function renderAgents(agents){
-  const grid=document.getElementById("agentGrid");
-  grid.innerHTML=agents.map(agent=>{
-    const meta=STATUS_META[agent.status]||STATUS_META.idle;
-    const attention=Boolean(agent.attention)||agent.status==="needs_attention";
-    const progress=Math.max(0,Math.min(100,Number(agent.progress)||0));
-    return `
-      <article class="agent-card ${attention?"attention":""}"
-        data-agent-id="${escapeHtml(agent.id)}" tabindex="0" role="button"
-        aria-label="Open ${escapeHtml(agent.name)} workspace">
-        ${attention?'<span class="attention-badge"></span>':""}
-        <div class="agent-top">
-          <div class="agent-identity">
-            <div class="agent-icon">✦</div>
-            <div>
-              <div class="agent-name">${escapeHtml(agent.name)}</div>
-              <div class="agent-role">${escapeHtml(agent.description)}</div>
-            </div>
-          </div>
-        </div>
-        <div class="status ${meta.className}"><span class="status-dot"></span>${meta.label}</div>
-        <div class="agent-task-label">${agent.status==="idle"?"Next Task":"Current Task"}</div>
-        <div class="agent-task">${escapeHtml(agent.current_task||"No active task")}</div>
-        <div class="progress-track"><div class="progress-bar" style="width:${progress}%"></div></div>
-        <div class="agent-bottom">
-          <div class="agent-time">${relativeTime(agent.last_activity_at)}</div>
-          <button class="view-button" type="button">View Workspace</button>
-        </div>
-      </article>
-    `;
-  }).join("");
-  document.getElementById("agentsCount").textContent=`${agents.length} agents`;
-  grid.querySelectorAll(".agent-card").forEach(card=>{
-    const id=card.dataset.agentId;
-    card.addEventListener("click",()=>openWorkspace(id));
-    card.addEventListener("keydown",event=>{
-      if(event.key==="Enter"||event.key===" "){
-        event.preventDefault();
-        openWorkspace(id);
-      }
-    });
-  });
-}
-
-function renderRecentActivity(items){
-  const container=document.getElementById("recentActivity");
-  if(!items.length){
-    container.innerHTML=`
-      <div class="activity-item">
-        <div class="activity-icon">✦</div>
-        <div><div class="activity-text">No activity yet — start a run on the graph view or via the API.</div></div>
-      </div>`;
-    return;
-  }
-  container.innerHTML=items.map(item=>`
-    <div class="activity-item" data-agent-id="${escapeHtml(item.agent_id)}">
-      <div class="activity-icon">✦</div>
-      <div>
-        <div class="activity-time">${relativeTime(item.timestamp)}</div>
-        <div class="activity-agent">${escapeHtml(item.agent_name)}</div>
-        <div class="activity-text">${escapeHtml(item.message)}</div>
-      </div>
-    </div>
-  `).join("");
-  container.querySelectorAll(".activity-item").forEach(item=>{
-    item.addEventListener("click",()=>openWorkspace(item.dataset.agentId));
-  });
-}
-
-function renderAttention(items){
-  const container=document.getElementById("attentionList");
-  if(!items.length){
-    container.innerHTML=`
-      <div class="attention-item">
-        <div class="attention-name">Nothing requires your attention</div>
-        <div class="attention-reason">All agents are progressing normally.</div>
-      </div>`;
-    return;
-  }
-  container.innerHTML=items.map(item=>`
-    <div class="attention-item">
-      <div class="attention-name">${escapeHtml(item.name)}</div>
-      <div class="attention-reason">${escapeHtml(item.reason)}</div>
-      <button class="attention-open" data-agent-id="${escapeHtml(item.agent_id)}">Open Workspace</button>
-    </div>
-  `).join("");
-  container.querySelectorAll(".attention-open").forEach(button=>{
-    button.addEventListener("click",()=>openWorkspace(button.dataset.agentId));
-  });
-}
-
-function renderStages(stages=[]){
-  const container=document.getElementById("productionStages");
-  container.innerHTML=stages.map((stage,index)=>`
-    <div class="stage">
-      <div class="stage-node">${index+1}</div>
-      <div class="stage-name">${escapeHtml(stage.name)}</div>
-      <div class="stage-status">${escapeHtml(stage.status)}</div>
-    </div>
-    ${index<stages.length-1?'<div class="stage-line"></div>':''}
-  `).join("");
-}
-
-function renderHeatmap(data=[]){
-  const grid=document.getElementById("heatmap");
-  if(!data.length){
-    grid.innerHTML="";
-    document.getElementById("heatLabels").style.display="none";
-    grid.insertAdjacentHTML("afterend",
-      '<div class="heatmap-empty">No activity recorded yet</div>');
-    return;
-  }
-  grid.innerHTML=data.map(level=>`
-    <div class="heat-cell l${Math.max(0,Math.min(4,Number(level)))}"></div>
-  `).join("");
-}
-
-function activeProgress(agents){
-  const active=agents.filter(a=>["working","waiting","needs_attention"].includes(a.status));
-  if(!active.length) return 0;
-  return Math.round(active.reduce((sum,a)=>sum+(Number(a.progress)||0),0)/active.length);
-}
-
-async function loadDashboard(){
-  const response=await fetch("/api/studio/dashboard");
-  if(!response.ok) throw new Error(`Dashboard request failed: ${response.status}`);
-  const data=await response.json();
-  renderSystem(data.system);
-  renderAgents(data.agents||[]);
-  renderRecentActivity(data.recent_activity||[]);
-  renderAttention(data.attention||[]);
-  renderStages(data.production?.stages||[]);
-  renderHeatmap(data.heatmap||[]);
-  document.getElementById("overallProgress").textContent=`${activeProgress(data.agents||[])}%`;
-  document.getElementById("loadingOverlay").classList.add("hidden");
+async function load(){
+  try{
+    const r = await fetch('/api/studio/dashboard');
+    if(!r.ok) return;
+    applySnapshot(await r.json());
+  }catch(e){}
 }
 
 function connectEvents(){
-  if(!window.EventSource){
-    document.getElementById("connectionBanner").classList.add("visible");
-    document.getElementById("connectionBanner").textContent="Live updates not supported by this browser.";
-    return;
-  }
-  const source=new EventSource("/api/studio/events");
-  const refresh=()=>loadDashboard().catch(console.error);
-  ["agent_status_changed","agent_progress_changed","agent_attention_required",
-   "agent_completed","agent_failed","agent_handoff_ready","activity_created"
-  ].forEach(type=>{
-    source.addEventListener(type,refresh);
-  });
-  source.onopen=()=>document.getElementById("connectionBanner").classList.remove("visible");
-  source.onerror=()=>document.getElementById("connectionBanner").classList.add("visible");
+  const es = new EventSource('/api/studio/events');
+  es.addEventListener('error', () => { es.close(); setTimeout(connectEvents, 1500); });
+  es.addEventListener('activity_created', () => load());
 }
 
-function updateClock(){
-  const now=new Date();
-  document.getElementById("clockTime").textContent=now.toLocaleTimeString([],{
-    hour:"2-digit",minute:"2-digit"});
-  document.getElementById("clockDate").textContent=now.toLocaleDateString([],{
-    month:"short",day:"numeric",year:"numeric"});
-}
-
-document.getElementById("notificationButton").addEventListener("click",()=>{
-  document.querySelector(".agent-card.attention")?.scrollIntoView({
-    behavior:"smooth",block:"center"});
-});
-
-updateClock();
-setInterval(updateClock,30000);
-loadDashboard().catch(err=>{
-  document.getElementById("loadingOverlay").classList.add("hidden");
-  document.getElementById("connectionBanner").classList.add("visible");
-  document.getElementById("connectionBanner").textContent=`Failed to load dashboard: ${err.message}`;
-});
+clock(); setInterval(clock, 1000);
+load();
 connectEvents();
+setInterval(load, 5000);
 </script>
-
 </body>
 </html>

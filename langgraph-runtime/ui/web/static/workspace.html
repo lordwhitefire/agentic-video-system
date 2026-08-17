@@ -36,13 +36,39 @@
   .side.right{border-right:0;border-left:1px solid var(--border)}
   .side h3{font-size:10px;letter-spacing:.14em;color:var(--dim);margin:14px 0 8px}
   .side h3:first-child{margin-top:0}
+  .sessions-list{display:flex;flex-direction:column;gap:4px}
+  .session-item{display:flex;align-items:center;gap:8px;padding:8px 8px;border-radius:6px;
+                cursor:pointer;border:1px solid transparent;font-family:inherit}
+  .session-item:hover{background:var(--panel2);border-color:var(--border)}
+  .session-item.active{background:var(--panel2);border-color:var(--accent);
+                       box-shadow:inset 2px 0 0 var(--accent)}
+  .session-item .sdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .session-item .sdot.idle{background:#3a4453}
+  .session-item .sdot.working{background:var(--accent);animation:pulse 1.2s infinite}
+  .session-item .sdot.waiting{background:var(--amber)}
+  .session-item .sdot.handed_off{background:var(--purple)}
+  .session-item .sdot.failed{background:var(--red)}
+  @keyframes pulse{50%{opacity:.35}}
+  .session-item .stitle{flex:1;font-size:11px;font-weight:600;white-space:nowrap;
+                        overflow:hidden;text-overflow:ellipsis}
+  .session-item .sstatus{font-size:10px;color:var(--purple)}
+  .session-item .sactions{display:flex;gap:4px}
+  .session-item .sbtn{background:var(--panel2);border:1px solid var(--border);
+                      border-radius:4px;padding:2px 6px;font-size:9px;color:var(--dim);
+                      cursor:pointer;font-family:inherit}
+  .session-item .sbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .new-session{display:flex;gap:6px;margin:8px 0;padding:8px;background:var(--panel2);
+               border:1px dashed var(--border);border-radius:8px}
+  .new-session input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--border);
+                     border-radius:6px;padding:6px 8px;font:inherit;color:var(--text);font-size:12px}
+  .new-session button{background:var(--accent);color:#000;border:0;border-radius:6px;
+                      padding:0 12px;font-weight:700;cursor:pointer}
   .nav-agent{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer}
   .nav-agent:hover{background:var(--panel2)}
   .nav-agent.active{background:var(--panel2);box-shadow:inset 2px 0 0 var(--accent)}
   .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
   .dot.idle{background:#3a4453}.dot.working{background:var(--accent);animation:pulse 1.2s infinite}
-  .dot.waiting{background:var(--amber)}.dot.completed{background:var(--green)}.dot.failed{background:var(--red)}
-  @keyframes pulse{50%{opacity:.35}}
+  .dot.waiting{background:var(--amber)}.dot.handed_off{background:var(--purple)}
   .nav-agent .nm{flex:1;font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .nav-agent .st{font-size:10px;color:var(--dim)}
   .proj-links{display:flex;flex-direction:column;gap:2px}
@@ -58,6 +84,15 @@
   .badge.live{border-color:var(--accent);color:var(--accent);animation:pulse 1.4s infinite}
   .badge.plan{border-color:var(--purple);color:var(--purple)}
   .badge.build{border-color:var(--green);color:var(--green)}
+  .handoff-card{border:1px solid var(--purple);border-left:3px solid var(--purple);
+                background:#141024;border-radius:8px;padding:10px 12px;margin:8px 16px 0;
+                flex:0 0 auto}
+  .handoff-card .tag{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--purple);margin-bottom:4px}
+  .handoff-card p{margin:0 0 8px;font-size:12px;white-space:pre-wrap}
+  .handoff-card .folder{font-size:11px;color:var(--dim);margin-bottom:8px}
+  .handoff-card .actions{display:flex;gap:8px}
+  .handoff-card .inp{flex:1;border:1px solid var(--border);background:var(--panel2);color:var(--text);
+                     border-radius:6px;padding:6px 8px;font-size:11px}
   .thread{flex:1;overflow-y:auto;padding:16px 18px;min-height:0;scroll-behavior:smooth}
   .ev{margin:0 0 10px;max-width:780px}
   .row-user{display:flex;justify-content:flex-end}
@@ -70,10 +105,6 @@
   .bubble.user .author{color:var(--accent);text-align:right}
   .reason{color:var(--dim);font-style:italic;font-size:12px;padding-left:14px;
           border-left:2px solid #2a3442;margin-left:4px}
-  .intent{border:1px solid var(--border);border-left:3px solid var(--purple);
-          background:var(--panel);border-radius:8px;padding:8px 12px;margin-left:10px}
-  .intent .tag,.toolcard .tag{font-size:10px;font-weight:800;letter-spacing:.1em;
-                              color:var(--purple);margin-bottom:4px}
   .toolcard{border:1px solid var(--border);background:var(--panel);border-radius:8px;
             padding:8px 12px;margin-left:10px}
   .toolcard .tname{font-weight:700;font-size:12px;color:var(--accent)}
@@ -104,6 +135,14 @@
   .hint{font-size:11px;color:var(--dim);padding:4px 16px 0;background:var(--panel)}
   .cap{display:inline-block;border:1px solid var(--border);color:var(--dim);border-radius:20px;
        padding:2px 10px;font-size:11px;margin:0 6px 6px 0}
+  .cap.created{border-color:var(--green);color:var(--green)}
+  .addcap{background:var(--panel2);color:var(--accent);border:1px dashed var(--border);
+          border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;
+          font-family:inherit;margin-top:2px}
+  .addcap:hover{border-color:var(--accent)}
+  .nomodel{border:1px solid var(--amber);border-left:3px solid var(--amber);
+           background:#171207;border-radius:8px;padding:8px 12px;margin:0 16px 8px;
+           font-size:12px;color:var(--amber)}
   .mem{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px}
   .mem .lbl{flex:1}
   .mem .yes{color:var(--green)}.mem .no{color:#3a4453}
@@ -131,13 +170,17 @@
 
 <div class="layout">
   <aside class="side">
+    <h3>SESSIONS</h3>
+    <div class="sessions-list" id="sessionsList"><div class="empty" style="margin:8px 0">loading…</div></div>
+    <div class="new-session">
+      <input type="text" id="newSessionInput" placeholder="Task for new session…">
+      <button id="newSessionBtn">NEW</button>
+    </div>
     <h3>AGENT NETWORK</h3>
     <div id="agentNetwork"><div class="empty" style="margin:8px 0">loading…</div></div>
     <h3>PROJECT RESOURCES</h3>
     <nav class="proj-links">
       <a href="/">Agent Dashboard</a>
-      <a href="/graph">Pipeline Graph</a>
-      <a href="/workspace/strategist">Workspace</a>
     </nav>
   </aside>
 
@@ -148,10 +191,12 @@
       <span class="badge plan" id="modeBadge">PLAN MODE</span>
       <span class="badge" id="statusBadge">idle</span>
     </div>
+    <div class="handoff-card" id="handoffCard" style="display:none"></div>
     <div class="thread" id="thread">
       <div class="empty">connecting…</div>
     </div>
     <div class="hint" id="hint"></div>
+    <div class="nomodel" id="noModel" style="display:none"></div>
     <div class="composer">
       <textarea id="input" placeholder="Message the agent…" disabled></textarea>
       <button class="send" id="sendBtn" disabled>SEND</button>
@@ -163,6 +208,7 @@
     <div id="about" style="color:var(--dim);font-size:12px">…</div>
     <h3>CAPABILITIES</h3>
     <div id="caps"></div>
+    <button class="addcap" id="addCapBtn">+ Add Capability</button>
     <h3>MEMORY &amp; CONTEXT</h3>
     <div id="memory"></div>
     <h3>TOOLS &amp; RESOURCES</h3>
@@ -174,6 +220,7 @@
 const AGENT_ID = location.pathname.split('/').filter(Boolean).pop();
 const $ = id => document.getElementById(id);
 const seen = new Set();
+let currentSessionId = null;
 
 function esc(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g,
@@ -186,6 +233,14 @@ function fmt(ts){
 }
 function key(ev){ return ev.type + '|' + (ev.timestamp||'') + '|' + String(ev.content||'').slice(0,120); }
 
+function niceStatus(st){
+  return ({idle:'Online', completed:'Online', stopped:'Online', failed:'Online',
+           handed_off:'Handed off', working:'Active',
+           waiting:'Needs your approval', stopping:'Active'}[st] || st || 'Online');
+}
+function dotClass(st){
+  return ({working:'working', waiting:'waiting', handed_off:'handed_off'}[st] || 'idle');
+}
 function statusBadge(st){
   return '<span class="status ' + (st || 'running') + '">' + esc(st || 'running') + '</span>';
 }
@@ -208,10 +263,6 @@ function renderEvent(ev){
       break;
     case 'reasoning_summary':
       box.innerHTML = '<div class="reason">' + esc(ev.content) + '</div>';
-      break;
-    case 'intent':
-      box.innerHTML = '<div class="intent"><div class="tag">INTENT</div><div style="white-space:pre-wrap">' +
-                      esc(ev.content) + '</div></div>';
       break;
     case 'tool_call': {
       let args = '';
@@ -241,6 +292,13 @@ function renderEvent(ev){
       box.innerHTML = '<div class="meta-line">approval ' + esc(ev.approval && ev.approval.status) +
                       ' &middot; <span class="t">' + esc(t) + '</span></div>';
       break;
+    case 'handoff_request':
+      box.innerHTML = '<div class="handoff-card" style="margin:0 0 0 10px"><div class="tag">HANDOFF REQUESTED</div>' +
+                      '<p>' + esc(ev.handoff ? 'to ' + esc(ev.handoff.target) + ': ' + ev.handoff.prompt : ev.content) + '</p></div>';
+      break;
+    case 'handoff_result':
+      box.innerHTML = '<div class="meta-line">handoff ' + esc(ev.content) + ' &middot; <span class="t">' + esc(t) + '</span></div>';
+      break;
     case 'error':
       box.innerHTML = '<div class="errcard"><div class="tag">ERROR</div>' + esc(ev.content) + '</div>';
       break;
@@ -265,55 +323,124 @@ async function post(path, body){
   try{ data = await r.json(); }catch(e){}
   return {status:r.status, data};
 }
+async function del(path){
+  const r = await fetch(path, {method:'DELETE'});
+  let data = {};
+  try{ data = await r.json(); }catch(e){}
+  return {status:r.status, data};
+}
+
+function renderHandoffCard(snap){
+  const card = $('handoffCard');
+  const ho = snap.active_session && snap.active_session.pending_handoff;
+  if(!ho){ card.style.display = 'none'; card.innerHTML = ''; return; }
+  card.style.display = 'block';
+  card.innerHTML = '<div class="tag">HANDOFF AWAITING YOUR DECISION</div>' +
+    '<p><b>To ' + esc(ho.target) + ':</b> ' + esc(ho.prompt) + '</p>' +
+    '<div class="folder">package: data/runs/' + esc(ho.run_id) + '/</div>' +
+    '<input class="inp" id="handoffNote" placeholder="Redirect instructions (optional)…">' +
+    '<div class="actions" style="margin-top:8px">' +
+    '<button class="btn ok" onclick="resolveHandoff(\'accept\')">ACCEPT</button>' +
+    '<button class="btn" onclick="resolveHandoff(\'reject\')">REJECT</button>' +
+    '<button class="btn" onclick="resolveHandoff(\'redirect\')">REDIRECT</button></div>';
+}
 
 function applySnapshot(snap){
+  const active = snap.active_session;
   $('crumbName').textContent = snap.agent.name;
   $('agentName').textContent = snap.agent.name;
-  $('agentRole').textContent = (snap.agent.department || '') + ' · ' + (snap.agent.tier || '');
-  $('modeBadge').textContent = (snap.mode === 'build' ? 'BUILD MODE' : 'PLAN MODE');
-  $('modeBadge').className = 'badge ' + snap.mode;
-  const st = snap.agent.status || 'idle';
-  $('statusBadge').textContent = st;
+  $('agentRole').textContent = snap.agent.description || '';
+  const mode = active ? active.mode : 'plan';
+  $('modeBadge').textContent = (mode === 'build' ? 'BUILD MODE' : 'PLAN MODE');
+  $('modeBadge').className = 'badge ' + mode;
+  const st = active ? active.status : 'idle';
+  $('statusBadge').textContent = niceStatus(st);
   $('statusBadge').className = 'badge' + (st === 'working' || st === 'waiting' ? ' live' : '');
 
-  $('modePlan').classList.toggle('active', snap.mode === 'plan');
-  $('modeBuild').classList.toggle('active', snap.mode === 'build');
+  $('modePlan').classList.toggle('active', mode === 'plan');
+  $('modeBuild').classList.toggle('active', mode === 'build');
 
-  const running = !!snap.can_stop;
+  const running = !!(active && active.can_stop);
   $('stopBtn').disabled = !running;
   $('input').disabled = running;
   $('sendBtn').disabled = running;
   $('hint').textContent = running
-    ? 'The agent is working. Stop is a real cancellation of this run.'
-    : (snap.mode === 'plan'
-       ? 'Plan Mode: nothing is executed — the agent only reasons and proposes. Switch to Build Mode to let it work.'
-       : 'Build Mode: the agent can execute within permissions; approvals pause here for you.');
+    ? 'The agent is working. Stop is a real cancellation of this session.'
+    : (mode === 'plan'
+       ? 'Plan Mode: the agent talks and plans — actions pause for your approval. Switch to Build Mode to let it work autonomously.'
+       : 'Build Mode: the agent works autonomously within its permissions; you can stop it at any time.');
 
-  $('about').textContent = snap.agent.about || '';
+  $('noModel').style.display = snap.model_configured === false ? 'block' : 'none';
+  $('noModel').textContent = snap.model_configured === false
+    ? 'The conversational layer is not configured — the agent cannot reply until an API key is added.'
+    : '';
+
+  $('about').textContent = snap.agent.identity || '';
   $('caps').innerHTML = (snap.agent.capabilities || []).map(c =>
-    '<span class="cap">' + esc(c) + '</span>').join('');
-  $('memory').innerHTML = (snap.memory || []).map(m =>
+    '<span class="cap' + (c.created ? ' created' : '') + '">' +
+    (c.created ? '&#10003; ' : '') + esc(c.name) + '</span>').join('')
+    || '<div class="empty" style="margin:0">no capabilities yet</div>';
+  $('memory').innerHTML = (active && active.memory || []).map(m =>
     '<div class="mem"><span class="' + (m.available ? 'yes' : 'no') + '">' +
     (m.available ? '&#10003;' : '&#8226;') + '</span><span class="lbl">' + esc(m.label) +
     '</span></div>').join('') || '<div class="empty" style="margin:0">no project context yet</div>';
   $('toolsBox').innerHTML = (snap.agent.tools || []).map(t =>
     '<div class="tool"><div class="tn">' + esc(t.name) + '</div>' +
     (t.doc ? '<div class="td">' + esc(t.doc) + '</div>' : '') + '</div>').join('')
-    || '<div class="empty" style="margin:0">no tools used yet</div>';
+    || '<div class="empty" style="margin:0">no tools yet</div>';
+
+  renderSessions(snap);
+  renderHandoffCard(snap);
 
   seen.clear();
   $('thread').innerHTML = '';
-  (snap.conversation || []).forEach(renderEvent);
-  if(!snap.conversation || !snap.conversation.length)
-    $('thread').innerHTML = '<div class="empty">the conversation is empty</div>';
+  if(active && active.conversation && active.conversation.length){
+    (active.conversation).forEach(renderEvent);
+  } else {
+    $('thread').innerHTML = '<div class="empty">the conversation is empty — say hello</div>';
+  }
   $('thread').scrollTop = $('thread').scrollHeight;
+}
+
+function renderSessions(snap){
+  const list = snap.sessions || [];
+  $('sessionsList').innerHTML = list.length ? list.map(s =>
+    '<div class="session-item' + (s.id === snap.active_session_id ? ' active' : '') + '">' +
+    '<span class="sdot ' + dotClass(s.status) + '"></span>' +
+    '<span class="stitle" title="' + esc(s.title) + '">' + esc(s.title) + '</span>' +
+    (s.handoff_pending ? '<span class="sstatus">handoff</span>' : '') +
+    '<span class="sactions">' +
+    (s.id !== snap.active_session_id
+      ? '<button class="sbtn" onclick="activateSession(\'' + s.id + '\')">open</button>' +
+        '<button class="sbtn" onclick="deleteSession(\'' + s.id + '\')">del</button>'
+      : '') +
+    '</span></div>').join('')
+    : '<div class="empty" style="margin:8px 0">no sessions yet</div>';
+}
+
+async function activateSession(sid){
+  const {data} = await post('/api/studio/agents/' + AGENT_ID + '/sessions/' + sid + '/activate');
+  if(data.ok){ currentSessionId = sid; loadSnapshot(); }
+}
+async function deleteSession(sid){
+  const {data} = await del('/api/studio/agents/' + AGENT_ID + '/sessions/' + sid);
+  if(data.ok){ currentSessionId = null; loadSnapshot(); }
+}
+async function newSession(){
+  const input = $('newSessionInput');
+  const task = input.value.trim();
+  if(!task) return;
+  const {data} = await post('/api/studio/agents/' + AGENT_ID + '/sessions', {task, mode: 'plan'});
+  if(data.ok){ input.value = ''; currentSessionId = data.session_id; loadSnapshot(); }
 }
 
 async function loadSnapshot(){
   try{
-    const r = await fetch('/api/studio/agents/' + AGENT_ID);
+    const r = await fetch('/api/studio/agents/' + AGENT_ID + (currentSessionId ? '?session_id=' + currentSessionId : ''));
     if(!r.ok) return;
-    applySnapshot(await r.json());
+    const snap = await r.json();
+    if(!currentSessionId) currentSessionId = snap.active_session_id;
+    applySnapshot(snap);
   }catch(e){}
 }
 
@@ -324,9 +451,9 @@ async function loadNetwork(){
     $('agentNetwork').innerHTML = (snap.agents || []).map(a =>
       '<div class="nav-agent' + (a.id === AGENT_ID ? ' active' : '') +
       '" onclick="location=\'/workspace/' + encodeURIComponent(a.id) + '\'">' +
-      '<span class="dot ' + esc(a.status || 'idle') + '"></span>' +
+      '<span class="dot ' + dotClass(a.status || 'idle') + '"></span>' +
       '<span class="nm">' + esc(a.name) + '</span>' +
-      '<span class="st">' + esc(a.status || '') + '</span></div>').join('');
+      '<span class="st">' + esc(niceStatus(a.status || 'idle')) + '</span></div>').join('');
   }catch(e){}
 }
 
@@ -336,33 +463,42 @@ async function sendMessage(){
   if(!msg) return;
   input.value = '';
   input.disabled = true; $('sendBtn').disabled = true;
-  const {data} = await post('/api/studio/agents/' + AGENT_ID + '/messages', {message: msg});
+  const {data} = await post('/api/studio/agents/' + AGENT_ID + '/messages',
+                            {message: msg, session_id: currentSessionId});
   if(!data.ok) input.value = msg;
 }
 
 async function setMode(mode){
-  const {data} = await post('/api/studio/agents/' + AGENT_ID + '/mode', {mode});
+  const {data} = await post('/api/studio/agents/' + AGENT_ID + '/mode',
+                            {mode, session_id: currentSessionId});
   if(data.ok) loadSnapshot();
 }
 
 async function stopRun(){
   const {data} = await post('/api/studio/agents/' + AGENT_ID + '/stop',
-                            {run_id: currentRunId});
+                            {session_id: currentSessionId});
   if(!data.ok) return;
   $('stopBtn').disabled = true;
 }
-let currentRunId = null;
 
 async function answerApproval(answer){
-  const {data} = await post('/api/studio/agents/' + AGENT_ID + '/approval',
-                            {run_id: currentRunId, answer});
+  await post('/api/studio/agents/' + AGENT_ID + '/approval',
+             {session_id: currentSessionId, answer});
+}
+
+async function resolveHandoff(decision){
+  const note = $('handoffNote') ? $('handoffNote').value.trim() : '';
+  const {data} = await post('/api/studio/agents/' + AGENT_ID + '/handoff',
+                            {session_id: currentSessionId, decision, note});
+  if(data.ok) loadSnapshot();
 }
 
 function connectEvents(){
   const es = new EventSource('/api/studio/agents/' + AGENT_ID + '/events');
   es.addEventListener('error', () => { es.close(); setTimeout(connectEvents, 1500); });
-  ['user_message','assistant_message','reasoning_summary','intent','tool_call',
-   'tool_result','approval_request','approval_result','error','status'].forEach(t => {
+  ['user_message','assistant_message','reasoning_summary','tool_call',
+   'tool_result','approval_request','approval_result','handoff_request',
+   'handoff_result','error','status'].forEach(t => {
     es.addEventListener(t, ev => {
       try{ renderEvent(JSON.parse(ev.data)); scrollIfNeeded(); }catch(e){}
     });
@@ -370,22 +506,34 @@ function connectEvents(){
 }
 
 $('sendBtn').onclick = sendMessage;
+$('addCapBtn').onclick = () => {
+  const input = $('input');
+  input.focus();
+  input.value = 'I want you to be able to ';
+  const end = input.value.length;
+  input.setSelectionRange(end, end);
+};
 $('input').addEventListener('keydown', e => {
   if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
 });
 $('modePlan').onclick = () => setMode('plan');
 $('modeBuild').onclick = () => setMode('build');
 $('stopBtn').onclick = stopRun;
+$('newSessionBtn').onclick = newSession;
+$('newSessionInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); newSession(); }
+});
 
 let lastSig = '';
 setInterval(async () => {
   try{
-    const r = await fetch('/api/studio/agents/' + AGENT_ID);
+    const r = await fetch('/api/studio/agents/' + AGENT_ID + (currentSessionId ? '?session_id=' + currentSessionId : ''));
     const snap = await r.json();
-    currentRunId = snap.current_run ? snap.current_run.id : null;
-    const sig = JSON.stringify([snap.agent.status, snap.can_stop, snap.mode,
-                                (snap.conversation || []).length]);
-    if(sig !== lastSig){ lastSig = sig; loadSnapshot(); }
+    const active = snap.active_session || {};
+    const sig = JSON.stringify([active.status, active.can_stop, active.mode,
+                                (active.conversation || []).length,
+                                (snap.sessions || []).length, snap.active_session_id]);
+    if(sig !== lastSig){ lastSig = sig; applySnapshot(snap); }
   }catch(e){}
 }, 2500);
 

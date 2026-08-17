@@ -5,6 +5,15 @@ as a **deterministic LangGraph orchestrator**: 17 agents, 5 departments, 12 laws
 human-in-the-loop CEO approvals, an optional LLM "brain", and a persistent RAG
 knowledge repository — with a CLI and a live FastAPI + mermaid web dashboard.
 
+## Resume this development session
+
+The autonomous-agents migration is tracked in an opencode session. To relaunch
+this exact session (same context, same todo list):
+
+```bash
+opencode -s ses_ffb092e08ffe0dzcemf9FbWvKf
+```
+
 ```
 CEO (you) ──► 5 department heads ──► 12 workers
   │            Strategy · Audio · Production · Quality · Personnel

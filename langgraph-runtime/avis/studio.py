@@ -1,343 +1,67 @@
-"""Agent Studio — presentation layer over the real AVIS runtime.
+"""Agent Studio — the session engine and multi-session workspace store
+(AUTONOMOUS_AGENTS_PLAN §3, §6, §7, §8).
 
-Stage One: the Agent Dashboard backend adapter.
+One engine runs every session — primary and subagent alike:
 
-Everything reported here is derived from REAL runtime state: the event bus,
-the run state, and the knowledge repository. No fabricated statuses, no
-second agent implementation. An agent is "completed" only when its node
-actually produced a result event; "working" only while the run is live and
-its node is mid-flight; "waiting" only when a CEO interrupt is pending.
-"""
+    studio.run_session(agent_id, session_id, task, state, mode, role,
+                       should_stop, steps_cap=25)
+
+The LLM is the agent: we give it identity, capabilities (incl. created ones,
+dynamic), skills, the 12 laws, its tools, a state summary, and the task. It
+decides HOW. The runtime governs only permissions (Plan = read + ask,
+Build = fully autonomous), the laws, the steps cap, the stop signal, and
+honesty. There is no workflow engine, no division-of-labor graph, no
+predetermined handoff chain — work moves between primary agents only through
+a human-approved handoff, and the human walks to the next workspace."""
 
 from __future__ import annotations
 
 import json
+import os
+import re
+import threading
 import time
-from typing import Any, Optional
+import uuid
+from pathlib import Path
+from typing import Any, Callable, Optional
 
 import avis.agents as agents_mod
+import avis.brain as brain_mod
 import avis.events as events
 import avis.knowledge as knowledge
+import avis.laws as laws_mod
+import avis.tools as tools
 
 # --------------------------------------------------------------------------
-# canonical agent registry (single source of truth for the studio UI)
-# ids come from the runtime catalog; display metadata lives here
+# display metadata (single source of truth for the UI)
 # --------------------------------------------------------------------------
 
 NAMES: dict[str, str] = {
-    "strategist": "Strategist",
-    "analyzer": "Analyzer",
-    "planner": "Planner",
-    "researcher": "Researcher",
-    "audio-lead": "Audio Lead",
-    "tts": "TTS",
-    "editor": "Editor",
-    "graphics": "Graphics",
-    "animation": "Animation",
-    "animated-graphics": "Animated Graphics",
-    "video-effects": "Video Effects",
-    "clips": "Clips",
-    "images": "Images",
-    "reviewer": "Reviewer",
-    "watcher-blocker": "Watcher / Blocker",
-    "investigator": "Investigator",
+    "strategist": "Strategist", "analyzer": "Analyzer", "planner": "Planner",
+    "researcher": "Researcher", "audio-lead": "Audio Lead", "tts": "TTS",
+    "editor": "Editor", "graphics": "Graphics", "animation": "Animation",
+    "animated-graphics": "Animated Graphics", "video-effects": "Video Effects",
+    "clips": "Clips", "images": "Images", "reviewer": "Reviewer",
+    "watcher-blocker": "Watcher / Blocker", "investigator": "Investigator",
     "recruiter": "Recruiter",
 }
 
 DESCRIPTIONS: dict[str, str] = {
-    "strategist": "Strategy & direction",
-    "analyzer": "Analysis & evaluation",
-    "planner": "Planning & scripting",
-    "researcher": "Sourcing & asset research",
-    "audio-lead": "Audio direction & TTS planning",
-    "tts": "Voiceover & audio rendering",
-    "editor": "Cut & visual assembly",
-    "graphics": "Static graphic overlays",
-    "animation": "Motion design",
-    "animated-graphics": "Animated graphic overlays",
-    "video-effects": "Effect design & substitution",
-    "clips": "Video clip sourcing",
-    "images": "Image sourcing & overlays",
-    "reviewer": "Quality review & fidelity scoring",
-    "watcher-blocker": "Law watch & blocking",
-    "investigator": "Law violation investigation",
+    "strategist": "Strategy & direction", "analyzer": "Analysis & evaluation",
+    "planner": "Planning & scripting", "researcher": "Sourcing & asset research",
+    "audio-lead": "Audio direction & TTS planning", "tts": "Voiceover & audio rendering",
+    "editor": "Cut & visual assembly", "graphics": "Static graphic overlays",
+    "animation": "Motion design", "animated-graphics": "Animated graphic overlays",
+    "video-effects": "Effect design & substitution", "clips": "Video clip sourcing",
+    "images": "Image sourcing & overlays", "reviewer": "Quality review & fidelity scoring",
+    "watcher-blocker": "Law watch & blocking", "investigator": "Law violation investigation",
     "recruiter": "Personnel & recruitment",
 }
 
-# canonical pipeline order — mirrors the deterministic graph edges in graph.py
-# (watcher-blocker patrols at two watchpoints; recruiter is a registered node)
-PIPELINE_ORDER: list[str] = [
-    "strategist", "analyzer", "planner", "researcher", "watcher-blocker",
-    "audio-lead", "tts", "editor", "graphics", "animation",
-    "animated-graphics", "video-effects", "clips", "images", "reviewer",
-    "investigator", "recruiter",
-]
-
-# production stages: 5 departments in org-chart order (strip, NOT a graph)
-PRODUCTION_STAGES: list[dict[str, Any]] = [
-    {"name": dept, "agents": [a["id"] for a in agents_mod.AGENTS
-                              if a["department"] == dept]}
-    for dept in ["Strategy", "Audio", "Production", "Quality", "Personnel"]
-]
-
-
-def registry() -> list[dict[str, Any]]:
-    """Display registry: runtime id + studio display metadata."""
-    out = []
-    for a in agents_mod.AGENTS:
-        out.append({"id": a["id"],
-                    "name": NAMES.get(a["id"], a["id"]),
-                    "description": DESCRIPTIONS.get(a["id"], a["department"]),
-                    "department": a["department"],
-                    "tier": a["tier"]})
-    return out
-
-
-def _agent_events(agent_id: str) -> list[dict[str, Any]]:
-    return [e for e in events.bus.history() if e.get("agent") == agent_id]
-
-
-def _agent_last_ts(agent_id: str) -> float:
-    tss = [e["ts"] for e in _agent_events(agent_id)]
-    return max(tss) if tss else 0.0
-
-
-def _agent_before(ts: float) -> Optional[str]:
-    """The agent whose most recent activity is closest before ts
-    (used to attribute a CEO interrupt to the waiting agent)."""
-    best, best_ts = None, 0.0
-    for a in agents_mod.AGENTS:
-        t = _agent_last_ts(a["id"])
-        if 0.0 < t <= ts and t > best_ts:
-            best, best_ts = a["id"], t
-    return best
-
-
-def waiting_agent() -> Optional[str]:
-    """Agent currently blocked on a CEO interrupt, if any."""
-    for e in reversed(events.bus.history()):
-        if e.get("agent") == "CEO" and e.get("kind") == "interrupt":
-            return _agent_before(e["ts"])
-    return None
-
-
-def _has_result(agent_id: str) -> bool:
-    return any(e.get("kind") == "result" for e in _agent_events(agent_id))
-
-
-def _last_text(agent_id: str) -> str:
-    evs = _agent_events(agent_id)
-    return evs[-1].get("text", "") if evs else ""
-
-
-def agent_snapshot(agent_id: str, running: bool,
-                   waiting: Optional[str]) -> dict[str, Any]:
-    meta = {a["id"]: a for a in registry()}[agent_id]
-    invoked = bool(_agent_events(agent_id))
-    completed = _has_result(agent_id)
-    failed = any("stopped" in (e.get("text") or "").lower()
-                 or e.get("kind") == "error"
-                 for e in _agent_events(agent_id))
-
-    if waiting == agent_id:
-        status = "waiting"
-    elif running and invoked and not completed:
-        status = "working"
-    elif completed:
-        status = "completed" if not failed else "failed"
-    elif failed:
-        status = "failed"
-    else:
-        status = "idle"
-
-    if status == "idle":
-        task = "Awaiting your instruction"
-    elif status == "working":
-        task = _last_text(agent_id) or "Working"
-    else:
-        task = _last_text(agent_id) or "Completed"
-
-    # progress: real when meaningful — 100 done, 0 idle, in-flight agents
-    # get their canonical pipeline position (deterministic, derived, labeled)
-    if status in ("completed", "failed"):
-        progress = 100
-    elif status == "idle":
-        progress = 0
-    else:
-        idx = PIPELINE_ORDER.index(agent_id) if agent_id in PIPELINE_ORDER else 0
-        progress = round(100 * (idx + 1) / len(PIPELINE_ORDER))
-
-    last_ts = _agent_last_ts(agent_id)
-    return {
-        "id": agent_id,
-        "name": meta["name"],
-        "description": meta["description"],
-        "status": status,
-        "current_task": task,
-        "progress": progress,
-        "last_activity_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(last_ts))
-        if last_ts else None,
-        "attention": status == "waiting",
-    }
-
-
-def _attention_items(waiting: Optional[str]) -> list[dict[str, Any]]:
-    items: list[dict[str, Any]] = []
-    meta = {a["id"]: a for a in registry()}
-    if waiting:
-        items.append({"agent_id": waiting, "name": meta[waiting]["name"],
-                      "reason": "Awaiting your decision (approval required)"})
-    blocked: dict[str, float] = {}
-    for e in events.bus.history():
-        if e.get("kind") == "law_block" and e.get("agent") in meta:
-            t = e["ts"]
-            if e["agent"] not in blocked or t > blocked[e["agent"]]:
-                blocked[e["agent"]] = t
-    for agent_id in sorted(blocked, key=blocked.get):
-        if agent_id != waiting:
-            items.append({"agent_id": agent_id, "name": meta[agent_id]["name"],
-                          "reason": "Law violation flagged — review required"})
-    return items
-
-
-def _recent_activity(limit: int = 10) -> list[dict[str, Any]]:
-    meta = {a["id"]: a for a in registry()}
-    out = []
-    for e in reversed(events.bus.history()):
-        agent_id = e.get("agent", "")
-        if agent_id not in meta:
-            continue
-        text = e.get("text") or e.get("kind", "activity")
-        out.append({"agent_id": agent_id,
-                    "agent_name": meta[agent_id]["name"],
-                    "message": text[:160],
-                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(e["ts"]))})
-        if len(out) >= limit:
-            break
-    return out
-
-
-def _production_stages(running: bool) -> list[dict[str, Any]]:
-    stages = []
-    for st in PRODUCTION_STAGES:
-        ids = st["agents"]
-        any_invoked = any(_agent_events(i) for i in ids)
-        all_completed = all(_has_result(i) for i in ids)
-        any_working = any(_agent_events(i) and not _has_result(i)
-                          for i in ids) and running
-        if all_completed:
-            status = "Complete"
-        elif any_working:
-            status = "Active"
-        elif any_invoked:
-            status = "In Progress"
-        else:
-            status = "Upcoming"
-        stages.append({"name": st["name"], "status": status})
-    return stages
-
-
-def _heatmap() -> list[int]:
-    """Real activity per hour of the day (24 cells). Empty history -> empty
-    grid, never invented data."""
-    hours = [0] * 24
-    now = time.gmtime()
-    day_start = time.mktime((now.tm_year, now.tm_mon, now.tm_mday, 0, 0, 0, 0, 0, -1))
-    for e in events.bus.history():
-        if e["ts"] >= day_start:
-            hours[int(time.gmtime(e["ts"]).tm_hour)] += 1
-    if not any(hours):
-        return []
-    peak = max(hours)
-    return [min(4, max(0, round(4 * h / peak))) for h in hours]
-
-
-def build_dashboard_snapshot(run_state: dict[str, Any],
-                             pending_question: Optional[dict[str, Any]]) -> dict[str, Any]:
-    """The /api/studio/dashboard contract — all values derived from real state."""
-    running = bool(run_state.get("running", False))
-    waiting = waiting_agent() if (running and pending_question) else None
-
-    agents = [agent_snapshot(a["id"], running, waiting) for a in registry()]
-    working = [a for a in agents if a["status"] == "working"]
-    idle = [a for a in agents if a["status"] == "idle"]
-    waiting_list = [a for a in agents if a["status"] == "waiting"]
-    attention = _attention_items(waiting)
-
-    try:
-        completed_today = len(knowledge.list_runs())
-    except Exception:
-        completed_today = 0
-
-    degraded = any(e.get("agent") == "orchestrator" and e.get("kind") == "error"
-                   for e in events.bus.history())
-
-    return {
-        "system": {
-            "status": "degraded" if degraded else "healthy",
-            "total_agents": len(agents),
-            "active_agents": len(working),
-            "idle_agents": len(idle),
-            "waiting_agents": len(waiting_list),
-            "attention_agents": len(attention),
-            "completed_today": completed_today,
-        },
-        "agents": agents,
-        "recent_activity": _recent_activity(),
-        "attention": attention,
-        "production": {"stages": _production_stages(running)},
-        "heatmap": _heatmap(),
-    }
-
-
-# --------------------------------------------------------------------------
-# bus event -> studio SSE event mapping
-# --------------------------------------------------------------------------
-
-def map_studio_event(ev: dict[str, Any]) -> Optional[dict[str, Any]]:
-    """Translate a raw bus event into a studio dashboard event, or None if
-    the event carries no dashboard signal."""
-    kind = ev.get("kind", "")
-    agent = ev.get("agent", "")
-    ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ev.get("ts", 0.0)))
-    text = (ev.get("text") or "")[:160]
-
-    if agent == "CEO" and kind == "interrupt":
-        return {"type": "agent_attention_required", "agent_id": agent,
-                "reason": "approval_required", "timestamp": ts}
-    if agent == "CEO" and kind == "note":
-        return {"type": "activity_created", "agent_id": agent,
-                "message": text, "timestamp": ts}
-    if kind == "result":
-        return {"type": "agent_completed", "agent_id": agent, "timestamp": ts}
-    if kind == "error" or "stopped" in text.lower():
-        return {"type": "agent_failed", "agent_id": agent, "timestamp": ts}
-    if kind == "law_block":
-        return {"type": "activity_created", "agent_id": agent,
-                "message": text or "law block", "timestamp": ts}
-    if "invoked" in text:
-        return {"type": "agent_status_changed", "agent_id": agent,
-                "status": "working", "timestamp": ts}
-    if kind in ("note", "tool_call", "tool_result", "decision", "thinking", "route"):
-        return {"type": "activity_created", "agent_id": agent,
-                "message": text or kind, "timestamp": ts}
-    return None
-
-
-# --------------------------------------------------------------------------
-# Agent Workspace (Stage Two rebuild — conversation-first)
-# --------------------------------------------------------------------------
-# The workspace is ONE continuous conversation. All events — messages,
-# reasoning summaries, intent, tool calls/results, approvals, errors — are
-# normalized entries of a single chronological stream (spec §11). There is
-# NO separate activity feed, NO handoff chain, NO auto-routing: the human is
-# the governance layer, Plan Mode has zero execution authority (runtime
-# gate), and handoffs only happen through an explicit human decision.
-
 CONVERSATION_TYPES = [
-    "user_message", "assistant_message", "reasoning_summary", "intent",
+    "user_message", "assistant_message", "reasoning_summary",
     "tool_call", "tool_result", "approval_request", "approval_result",
-    "error", "status",
+    "handoff_request", "handoff_result", "error", "status",
 ]
 
 SENSITIVE_KEYS = {"api_key", "apikey", "authorization", "access_token",
@@ -354,368 +78,786 @@ def sanitize(value: Any) -> Any:
     return value
 
 
-def _capabilities(agent_id: str) -> list[str]:
-    a = agents_mod.BY_ID.get(agent_id, {})
-    caps = [a.get("department", ""), a.get("tier", "")]
-    if a.get("manages"):
-        caps += [NAMES.get(m, m) for m in a["manages"]]
-    if a.get("head"):
-        caps.append(f"Reports to {NAMES.get(a['head'], a['head'])}")
-    return [c for c in caps if c]
-
-
-def workspace_agent_snapshot(agent_id: str, running: bool,
-                             waiting: Optional[str]) -> dict[str, Any]:
-    """The workspace's agent header: identity + capabilities + live status."""
-    a = {x["id"]: x for x in registry()}.get(agent_id)
-    base = agent_snapshot(agent_id, running, waiting)
-    base["department"] = agents_mod.BY_ID[agent_id].get("department", "")
-    base["tier"] = agents_mod.BY_ID[agent_id].get("tier", "")
-    base["capabilities"] = _capabilities(agent_id)
-    base["tools"] = agent_tools(agent_id)
-    base["about"] = (f"You are interacting with the {base['name']}. "
-                     f"I am your {DESCRIPTIONS.get(agent_id, 'agent')}.")
-    return base
-
-
-def agent_tools(agent_id: str) -> list[dict[str, Any]]:
-    """The tools this agent has really used — from the event bus, with their
-    real descriptions from the tool registry. Never invented (spec §26)."""
-    import avis.tools as tools
-    seen: dict[str, dict[str, Any]] = {}
-    for e in events.bus.history():
-        if e.get("agent") != agent_id or e.get("kind") != "tool_call":
-            continue
-        name = e.get("tool", "")
-        if not name:
-            continue
-        seen.setdefault(name, {"name": name,
-                               "doc": (tools.REGISTRY.get(name) or {}).get("doc", ""),
-                               "status": "blocked" if e.get("blocked") else "available"})
-    return sorted(seen.values(), key=lambda t: t["name"])
-
-
-def project_memory(context: Optional[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Real project context available to the agent — labels only, from the
-    shared workspace context. Never invented (spec §25)."""
-    labels = {
-        "topic": "Project Brief", "blueprint": "Structural Blueprint",
-        "script": "Script & Segments", "manifest": "Resource Manifest",
-        "asset_bundle": "Asset Bundle", "cut_spec": "Cut Spec",
-        "voice_track": "Voice Track", "review_report": "Review Report",
-    }
+def registry() -> list[dict[str, Any]]:
+    """Display registry: runtime id + studio display metadata."""
     out = []
-    for key, label in labels.items():
-        value = (context or {}).get(key)
-        out.append({"label": label, "available": bool(value),
-                    "detail": label if value else "not produced yet"})
+    for a in agents_mod.AGENTS:
+        out.append({"id": a["id"], "name": NAMES.get(a["id"], a["id"]),
+                    "description": DESCRIPTIONS.get(a["id"], a["department"]),
+                    "department": a["department"], "tier": a["tier"]})
     return out
 
 
 # --------------------------------------------------------------------------
-# conversational behavior — derived from identity + real state, zero execution
+# multi-session workspace store (§7)
 # --------------------------------------------------------------------------
 
-def is_greeting(message: str) -> bool:
-    """A pure greeting (hello / hi / hey ...) — answered conversationally,
-    never triggering a plan, a project, routing, or any execution."""
-    m = message.strip().rstrip("!.,? ")
-    if not m:
-        return False
-    import re
-    words = [w for w in m.split() if w]
-    if len(words) > 3:
-        return False
-    first = re.sub(r"[^a-z']", "", words[0].lower())
-    return bool(re.fullmatch(r"(hi|hello|hey|yo|howdy|hola|greetings|"
-                             r"good(morning|afternoon|evening)|wazzup|sup|whatsup)", first))
+WORKSPACES: dict[str, dict[str, Any]] = {}
+_store_lock = threading.Lock()
 
 
-def greeting_reply(agent_id: str) -> str:
-    name = NAMES.get(agent_id, agent_id)
-    return (f"Hello. I'm the {name}. "
-            f"{DESCRIPTIONS.get(agent_id, 'How can I help?')} What are we working on today?")
+def _iso(ts: Optional[float] = None) -> str:
+    t = time.gmtime(ts) if ts is not None else time.gmtime()
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", t)
 
 
-def is_status_question(message: str) -> bool:
-    import re
-    m = re.sub(r"[^a-z ]", "", message.lower())
-    return bool(re.search(r"(what (have you been doing|did you do|happened)|"
-                          r"(your )?(status|progress))", m))
+def _workspace(agent_id: str) -> dict[str, Any]:
+    with _store_lock:
+        ws = WORKSPACES.setdefault(agent_id, {"sessions": {}, "active_session_id": None})
+        return ws
 
 
-def status_summary(agent_id: str, conversation: list[dict[str, Any]]) -> str:
-    """'What have you been doing?' — an honest summary derived from THIS
-    conversation's real events, never invented (spec §38)."""
-    name = NAMES.get(agent_id, agent_id)
-    tools_done = [e for e in conversation if e.get("type") == "tool_result"
-                  and e.get("tool", {}).get("status") == "completed"]
-    blocks = [e for e in conversation if e.get("type") == "error"]
-    results = [e for e in conversation if e.get("type") == "assistant_message"
-               and e.get("agent_id") != "you"]
-    if not conversation and not tools_done:
-        return f"I'm {name}. We haven't done anything yet in this workspace."
-    lines = [f"I'm {name}. Here's what we've done in this workspace:"]
-    for e in tools_done:
-        lines.append(f"- tool: {e['tool']['name']} — {e.get('content', '')[:90]}")
-    if results:
-        last = results[-1].get("content", "")
-        if last:
-            lines.append(f"- last result: {last[:140]}")
-    if blocks:
-        lines.append(f"- {len(blocks)} error(s) reported in this conversation")
-    lines.append("")
-    lines.append("No changes were made unless a tool result above confirms them.")
-    return "\n".join(lines)
+def _session_seed(task: str, run_id: Optional[str] = None) -> dict[str, Any]:
+    """Fresh session state: no artifacts (Law 12 read failures are honest),
+    default voice profile for tts_plan, and an empty evidence log."""
+    return {"topic": task, "events": [], "decisions": [], "edits": [],
+            "revocations": [], "substitutions": [], "sourcing_proposals": [],
+            "visual_assignments": [], "voice_profile": {
+                "default_engine": os.environ.get("AVIS_TTS_DEFAULT_ENGINE", "local"),
+                "authorized_engines": ["local"],
+                "loudness_target_lufs": -16},
+            "run_id": run_id}
 
 
-def intent_message(agent_id: str, message: str) -> str:
-    """Before ANY consequential execution, the agent says what it's going to
-    do and why (spec §16/§36). Derived from the agent's real role."""
-    steps = workspace_plan(agent_id, message)
-    lines = ["Understood. Before I do anything, here's what I'm going to do:",
-             ""]
-    lines += [f"{i}. {s}" for i, s in enumerate(steps, 1)]
-    lines += ["", "I won't take consequential actions without explaining them."]
-    return "\n".join(lines)
-
-
-def plan_response(agent_id: str, message: str) -> str:
-    """Plan Mode reply: conversational, proposes the approach, executes NOTHING.
-    The runtime gate (tools.set_execution_blocked) backs this up."""
-    name = NAMES.get(agent_id, agent_id)
-    steps = workspace_plan(agent_id, message)
-    lines = [f"Understood. I'm {name} — {DESCRIPTIONS.get(agent_id, 'your agent')}.",
-             "In Plan Mode I won't execute anything or change any files. "
-             "Here's how I'd approach this:", ""]
-    lines += [f"{i}. {s}" for i, s in enumerate(steps, 1)]
-    lines += ["",
-              "Nothing was executed. If this looks right, switch to Build Mode "
-              "and I'll carry it out."]
-    return "\n".join(lines)
-
-
-# --------------------------------------------------------------------------
-# the real run (Build Mode)
-# --------------------------------------------------------------------------
-
-def workspace_plan(agent_id: str, message: str) -> list[str]:
-    """Explicit pre-execution action rationale (spec §38) — derived from the
-    agent's real role, never claimed to be private model reasoning."""
-    role = DESCRIPTIONS.get(agent_id, "your task")
-    return [f"Receive task: {message.strip()[:80] or 'work request'}",
-            f"Apply {role}",
-            "Produce the result and report back"]
-
-
-def _default_reference() -> dict[str, Any]:
-    import os
-    p = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                     "..", "examples", "reference-analysis-mbappe.json")
-    try:
-        with open(p) as f:
-            data = json.load(f)
-        return data.get("reference_analysis") or data
-    except Exception:
-        return {}
-
-
-def _seed_workspace_state(agent_id: str, message: str,
-                          context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
-    """Real context transfer (spec §56/§57): seed from the shared workspace
-    context (previous agents' actual outputs), else the most recent recorded
-    pipeline run, else a fresh seed with the default project brief. The human
-    message becomes the topic. Never fabricates upstream inputs."""
-    import avis.graph as g
-    base = dict(context) if context else None
-    if base is None:
-        base = knowledge.latest_run_state() or {}
-    state = {k: v for k, v in base.items() if k not in ("running", "log", "mailboxes")}
-    if not state.get("topic"):
-        state = g.seed_state(message, **({"reference_analysis": state.get("reference_analysis")}
-                                         if state.get("reference_analysis") else {}))
-    state["topic"] = message
-    state.setdefault("voice_profile", {})
-    if not state.get("reference_analysis"):
-        state["reference_analysis"] = _default_reference()
-    return state
-
-
-def execute_agent_run(agent_id: str, message: str,
-                      context: Optional[dict[str, Any]] = None,
-                      approver: Optional[Callable[[dict[str, Any]], Any]] = None,
-                      should_stop: Optional[Callable[[], bool]] = None) -> dict[str, Any]:
-    """Run ONE agent's real node function through a single-node graph driven
-    by the tested g.run() loop. `approver` answers interrupt() questions
-    (default: auto-approve, recorded honestly as CEO notes); `should_stop`
-    cancels the run cooperatively."""
-    from langgraph.checkpoint.memory import InMemorySaver
-    from langgraph.graph import END, START, StateGraph
-    from avis.agents import build_node
-    from avis.state import AgentState
-    import avis.graph as g
-
-    state = _seed_workspace_state(agent_id, message, context)
-
-    def default_approver(question: dict[str, Any]) -> str:
-        events.bus.emit("CEO", "note",
-                        f"workspace auto-approve: {str(question.get('question', ''))[:60]}")
-        return "approve"
-
-    sg = StateGraph(AgentState)
-    sg.add_node(agent_id, build_node(agent_id))
-    sg.add_edge(START, agent_id)
-    sg.add_edge(agent_id, END)
-    graph = sg.compile(checkpointer=InMemorySaver())
-    return g.run(graph, state, approver or default_approver,
-                 record=False, should_stop=should_stop)
-
-
-def _artifacts_from_state(state: dict[str, Any],
-                          context: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
-    """Real artifacts THIS run produced — the node's actual new state keys,
-    rendered as cards. No invented files (spec §14/§71)."""
-    out: list[dict[str, Any]] = []
-    spec = {
-        "blueprint": ("Blueprint", "structural analysis"),
-        "script": ("Script", "markdown + segments"),
-        "manifest": ("Resource Manifest", "resource needs"),
-        "asset_bundle": ("Asset Bundle", "sourced assets"),
-        "cut_spec": ("Cut Spec", "edit timeline"),
-        "voice_track": ("Voice Track Spec", "TTS segments"),
+def new_session(agent_id: str, task: str, mode: str = "plan",
+                title: Optional[str] = None,
+                run_id: Optional[str] = None,
+                sender: Optional[str] = None) -> dict[str, Any]:
+    """Create a NEW independent session in the agent's workspace. The old
+    session is never replaced or touched — it stays in the workspace history."""
+    ws = _workspace(agent_id)
+    now = time.time()
+    sid = f"{agent_id}-{int(now * 1000)}"
+    if title is None:
+        title = (task.strip()[:60] or "new session")
+        if sender:
+            title = f"handoff: {sender} -> {agent_id}"
+    session: dict[str, Any] = {
+        "id": sid, "title": title, "created_at": _iso(now),
+        "last_activity_at": _iso(now), "mode": mode, "status": "idle",
+        "task": task, "run_id": run_id,
+        "conversation": [], "state": _session_seed(task, run_id),
+        "handoff": None, "approval": None,
+        "_approval_event": None, "stop_requested": False,
     }
-    for key, (name, meta) in spec.items():
-        if context is not None and key in context:
-            continue  # inherited from the shared project context, not this run
-        value = state.get(key)
-        if not value:
-            continue
-        if isinstance(value, dict):
-            count = len(value.get("segments", value.get("shots", [])))
-            size = f"{count} items" if count else meta
-        elif isinstance(value, list):
-            size = f"{len(value)} items"
+    with _store_lock:
+        ws["sessions"][sid] = session
+        ws["active_session_id"] = sid
+    return session
+
+
+def list_sessions(agent_id: str) -> list[dict[str, Any]]:
+    ws = _workspace(agent_id)
+    with _store_lock:
+        out = []
+        for s in ws["sessions"].values():
+            out.append({"id": s["id"], "title": s["title"], "status": s["status"],
+                        "mode": s["mode"], "last_activity_at": s["last_activity_at"],
+                        "handoff_pending": bool(s.get("handoff")),
+                        "run_id": s.get("run_id")})
+        out.sort(key=lambda s: s["last_activity_at"], reverse=True)
+        return out
+
+
+def get_session(agent_id: str, session_id: Optional[str] = None) -> Optional[dict[str, Any]]:
+    ws = _workspace(agent_id)
+    with _store_lock:
+        sid = session_id or ws.get("active_session_id")
+        return ws["sessions"].get(sid) if sid else None
+
+
+def activate_session(agent_id: str, session_id: str) -> bool:
+    ws = _workspace(agent_id)
+    with _store_lock:
+        if session_id not in ws["sessions"]:
+            return False
+        ws["active_session_id"] = session_id
+        return True
+
+
+def delete_session(agent_id: str, session_id: str) -> Optional[str]:
+    """Delete a session and its timeline. The ACTIVE session cannot be deleted
+    while it is active; a running/waiting session cannot be deleted."""
+    ws = _workspace(agent_id)
+    with _store_lock:
+        session = ws["sessions"].get(session_id)
+        if session is None:
+            return "no such session"
+        if session["status"] in ("working", "waiting", "stopping"):
+            return "session is active — stop it first"
+        if ws.get("active_session_id") == session_id:
+            return "the active session cannot be deleted"
+        del ws["sessions"][session_id]
+        return None
+
+
+def touch(session: dict[str, Any]) -> None:
+    session["last_activity_at"] = _iso()
+
+
+# --------------------------------------------------------------------------
+# the session engine (§3)
+# --------------------------------------------------------------------------
+
+class _Engine:
+    """One session's runtime: prompt building, the tool loop, permission
+    enforcement, law checks, evidence scans, approvals, handoffs, subagents.
+    One human message = one session turn (the same-path principle)."""
+
+    def __init__(self, agent_id: str, session: Optional[dict[str, Any]],
+                 task: str, state: dict[str, Any], mode: str, role: str = "primary",
+                 should_stop: Optional[Callable[[], bool]] = None,
+                 steps_cap: int = 25, parent_depth: int = 0) -> None:
+        self.agent_id = agent_id
+        self.session = session
+        self.task = task
+        self.state = state
+        self.mode = mode
+        self.role = role
+        self.should_stop = should_stop
+        self.steps_cap = steps_cap
+        self.parent_depth = parent_depth
+
+    # --- events ----------------------------------------------------------
+    def emit(self, type_: str, **data: Any) -> None:
+        ev = {"type": type_, "timestamp": _iso(), "agent_id": self.agent_id, **data}
+        if self.session is not None:
+            self.session["conversation"].append(ev)
+        kind = {"user_message": "user_message", "assistant_message": "note",
+                "reasoning_summary": "thinking", "tool_call": "tool_call",
+                "tool_result": "tool_result", "approval_request": "approval_request",
+                "approval_result": "approval_result", "handoff_request": "handoff_request",
+                "handoff_result": "handoff_result", "error": "error",
+                "status": "status"}.get(type_, "note")
+        events.bus.emit(self.agent_id, kind, str(data.get("content", "")), **{
+            k: sanitize(v) for k, v in data.items() if k not in ("content",)})
+
+    # --- the loop ----------------------------------------------------------
+    def run(self) -> dict[str, Any]:
+        prev = tools.current_engine()
+        tools.set_engine(self)
+        try:
+            return self._run()
+        finally:
+            tools.set_engine(prev)
+
+    def _run(self) -> dict[str, Any]:
+        system = self._build_system_prompt()
+        user = self._build_user_prompt()
+        defs = tools.definitions(self.agent_id, self.role)
+        steps = 0
+
+        while True:
+            if self.should_stop and self.should_stop():
+                self.emit("status", content="stopped")
+                return {"status": "stopped"}
+            if steps >= self.steps_cap:
+                self.emit("status",
+                          content=f"stopped at the step cap ({self.steps_cap})")
+                return {"status": "stopped_cap"}
+            steps += 1
+
+            try:
+                text, calls = brain_mod.get_brain().converse_with_tools(
+                    system, user, defs)
+            except brain_mod.ModelUnreachable:
+                self.emit("error", content="I couldn't reach the model right "
+                          "now. Please try again in a moment.")
+                return {"status": "failed"}
+
+            if text:
+                self.emit("reasoning_summary" if calls else "assistant_message",
+                          content=text)
+            if not calls:
+                return {"status": "completed", "final_text": text}
+
+            for tc in calls:
+                name = str(tc.get("name", ""))
+                args = tc.get("arguments") or {}
+                self.state.setdefault("events", []).append(
+                    {"agent": self.agent_id, "kind": "tool_call", "tool": name,
+                     "args": args, "ts": time.time()})
+                self.emit("tool_call", content=f"{name} called",
+                          tool={"name": name, "args": sanitize(args),
+                                "status": "running"})
+
+                result = tools.call(
+                    self.state, self.agent_id, name, args, self.mode,
+                    ask=self._ask if self.mode == "plan" else None,
+                    on_block=lambda b: self.emit(
+                        "error",
+                        content=f"[Law {b['law']}] {b['law_name']} — {b.get('reason', '')}"))
+
+                ok = "error" not in result
+                self.emit("tool_result",
+                          content=str(result.get("note") or result.get("error") or "ok")[:240],
+                          tool={"name": name,
+                                "status": "completed" if ok else "failed",
+                                "blocked": not ok})
+                self.state.setdefault("events", []).append(
+                    {"agent": self.agent_id, "kind": "tool_result", "tool": name,
+                     "error": not ok, "text": str(result.get("note") or result.get("error") or ""),
+                     "ts": time.time()})
+
+                if result.get("_handoff"):
+                    return {"status": "handed_off", "handoff": result["handoff"]}
+                if self.should_stop and self.should_stop():
+                    self.emit("status", content="stopped")
+                    return {"status": "stopped"}
+
+            if self.should_stop and self.should_stop():
+                self.emit("status", content="stopped")
+                return {"status": "stopped"}
+
+    # --- Plan-Mode ask gate -----------------------------------------------
+    def _ask(self, name: str, args: dict[str, Any]) -> bool:
+        """A mutating tool call in Plan Mode pauses here with an
+        approval_request; the human answers via the API. Rejected or stopped
+        → False: the tool is blocked, nothing is applied."""
+        session = self.session
+        if session is None:
+            return False
+        pending = {"id": f"approval-{uuid.uuid4().hex[:8]}",
+                   "question": f"Approve calling {name} with {json.dumps(args, default=str)[:200]}?",
+                   "event": threading.Event(), "answer": None}
+        session["approval"] = pending
+        session["status"] = "waiting"
+        self.emit("approval_request", content=pending["question"],
+                  approval={"title": "Approval required",
+                            "description": pending["question"],
+                            "action": "approve", "status": "required"})
+        while not pending["event"].wait(0.2):
+            if (self.should_stop and self.should_stop()) or session.get("stop_requested"):
+                pending["answer"] = "rejected"
+                break
+        answer = pending["answer"] or "rejected"
+        status = "approved" if answer == "approve" else "rejected"
+        session["approval"] = None
+        self.emit("approval_result", content=status,
+                  approval={"title": name, "status": status})
+        if session.get("stop_requested"):
+            session["stop_requested"] = False
+        return answer == "approve"
+
+    # --- prompt building ----------------------------------------------------
+    def _build_system_prompt(self) -> str:
+        a = agents_mod.BY_ID.get(self.agent_id, {})
+        if self.role in ("explore", "scout", "general"):
+            name = {"explore": "Explore", "scout": "Scout",
+                    "general": "General"}[self.role]
+            role_line = (f"You are {name}, a transient {self.role} subagent "
+                         f"working for {NAMES.get(self.agent_id, self.agent_id)}. "
+                         "You exist for one task, return your findings, and vanish.")
+            caps = ""
         else:
-            size = meta
-        out.append({"type": "DOCUMENT", "name": name, "filename": key,
-                    "meta": size, "key": key})
+            name = NAMES.get(self.agent_id, self.agent_id)
+            role = DESCRIPTIONS.get(self.agent_id, "an agent")
+            identity = a.get("identity", f"I'm the {name} — {role}.")
+            role_line = f"You are {name} — {role}. {identity}"
+            caps = (f"Your capabilities: "
+                    + ", ".join(c["name"] for c in self._capabilities()) + ".")
+
+        mode_line = {
+            "plan": ("You are in PLAN MODE. You may read and analyze freely, but "
+                     "every action that changes anything is paused for the human's "
+                     "approval. Propose, investigate, and prepare — then the human "
+                     "decides."),
+            "build": ("You are in BUILD MODE. You may carry out work with your "
+                      "tools autonomously. The human can stop you at any time; "
+                      "you can also stop and ask."),
+        }.get(self.mode, "You are in PLAN MODE.")
+
+        created = tools.capability_context(self.agent_id) if self.role == "primary" else ""
+        return "\n".join([
+            role_line,
+            "",
+            mode_line,
+            "",
+            caps if caps else "",
+            "Your skills: " + (", ".join(a.get("skills") or []) or "none yet") + ".",
+            created,
+            "",
+            "The 12 laws of this system are runtime-enforced guards, not "
+            "suggestions. Violating them blocks the action and is recorded:",
+            laws_text(),
+            "",
+            "How to work: you decide how. Produce artifacts with "
+            "write_artifact (YOU generate the payload content yourself — it is "
+            "the work you just did, never left empty). When your current work is "
+            "finished and the next step belongs to another primary agent, call "
+            "handoff — the runtime packages your work and the human decides. "
+            "Create capabilities with create_capability only when the human has "
+            "explicitly approved doing so in this conversation. Never spawn a "
+            "primary agent as a subagent. If you lack an ability, say so "
+            "honestly and offer to create it.",
+            "",
+            "Before a consequential action, say in your own words what you are "
+            "about to do and why. Be conversational, natural, honest, and never "
+            "invent facts (Law 1).",
+        ])
+
+    def _build_user_prompt(self) -> str:
+        mem_lines = "\n".join(
+            f"- {label}: {'available' if value else 'not produced yet'}"
+            for label, value in _memory_labels(self.state))
+        history = "\n".join(self._history_lines())
+        extra = ""
+        if self.role == "primary" and self.session and self.session.get("run_id"):
+            extra = (f"\n\nYou have received a handoff package in the folder "
+                     f"data/runs/{self.session['run_id']}/ — examine it with "
+                     "list_run / read_run_file and decide.")
+        return "\n".join([
+            f"task: {self.task}",
+            "",
+            "current project state:",
+            mem_lines,
+            extra,
+            "",
+            "conversation so far:",
+            history or "(this is the start of the session)",
+        ])
+
+    def _history_lines(self) -> list[str]:
+        out = []
+        for e in (self.session or {}).get("conversation", [])[-16:]:
+            t = e.get("type")
+            if t == "user_message":
+                out.append(f"human: {e.get('content', '')}")
+            elif t == "assistant_message":
+                out.append(f"you: {e.get('content', '')}")
+            elif t == "reasoning_summary":
+                out.append(f"(you are working: {e.get('content', '')[:120]})")
+            elif t == "tool_result":
+                out.append(f"tool {e.get('tool', {}).get('name', '')} -> "
+                           f"{e.get('content', '')[:120]}")
+            elif t in ("approval_result",):
+                out.append(f"approval: {e.get('content', '')}")
+        return out
+
+    def _capabilities(self) -> list[dict[str, Any]]:
+        a = agents_mod.BY_ID.get(self.agent_id, {})
+        out = [{"name": c, "created": False} for c in (a.get("capabilities") or [])]
+        out += [{"name": c.get("name", "Unnamed capability"), "created": True}
+                for c in tools.load_capabilities(self.agent_id)]
+        return out
+
+
+def laws_text() -> str:
+    return "\n".join(f"  L{law['id']:>2} — {law['name']}: {law['rule']}"
+                     for law in laws_mod.LAWS)
+
+
+def _memory_labels(state: dict[str, Any]) -> list[tuple[str, bool]]:
+    labels = [("blueprint", "Structural Blueprint"), ("script", "Script & Segments"),
+              ("manifest", "Resource Manifest"), ("asset_bundle", "Asset Bundle"),
+              ("cut_spec", "Cut Spec"), ("voice_track", "Voice Track"),
+              ("review_report", "Review Report")]
+    return [(label, bool(state.get(key))) for key, label in labels]
+
+
+def run_session(agent_id: str, session_id: str, task: str, state: dict[str, Any],
+                mode: str, role: str = "primary",
+                should_stop: Optional[Callable[[], bool]] = None,
+                steps_cap: int = 25, parent_depth: int = 0,
+                session: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """One engine for everything (§3): one human message = one session turn.
+    Termination is always one of: the model stops, the steps cap, the stop
+    signal, a handoff, or a real error."""
+    engine = _Engine(agent_id, session, task, state, mode, role=role,
+                     should_stop=should_stop, steps_cap=steps_cap,
+                     parent_depth=parent_depth)
+    outcome = engine.run()
+
+    if session is not None:
+        touch(session)
+        if outcome.get("status") == "handed_off":
+            ho = outcome["handoff"]
+            session["handoff"] = {"run_id": ho["run_id"], "target": ho["target"],
+                                  "prompt": ho["prompt"], "decision": None}
+            session["status"] = "handed_off"
+        elif outcome.get("status") in ("stopped", "stopped_cap"):
+            session["status"] = "idle"
+        elif outcome.get("status") == "failed":
+            session["status"] = "failed"
+        else:
+            session["status"] = "idle"
+
+    if role == "primary" and mode == "build" and session is not None:
+        produced = [k for k in tools.ARTIFACT_KEYS if state.get(k)]
+        if produced:
+            knowledge.record_run(state,
+                                 run_id=f"session-{session_id.replace(':', '-')}")
+    return outcome
+
+
+# --------------------------------------------------------------------------
+# engine-bound tools — registered at import (the runtime writes files; the
+# model proposes, the human approves; never the reverse)
+# --------------------------------------------------------------------------
+
+def _engine_subagent(state: dict[str, Any], agent_id: str,
+                     args: list[Any]) -> dict[str, Any]:
+    eng = tools.current_engine()
+    cls = str(args[0]) if args else ""
+    task = str(args[1]) if len(args) > 1 else ""
+    toolset = args[2] if len(args) > 2 and isinstance(args[2], list) else None
+    if cls not in tools.SUBAGENT_CLASSES:
+        return {"error": f"subagent class must be one of "
+                         f"{sorted(tools.SUBAGENT_CLASSES)}"}
+    if cls in agents_mod.BY_ID:
+        return {"error": f"'{cls}' is a primary agent — never a subagent"}
+    if eng.parent_depth >= 3:
+        return {"error": "subagent depth cap reached (3)"}
+    child = _Engine(cls, None, task, state, eng.mode, role=cls,
+                    should_stop=eng.should_stop, steps_cap=eng.steps_cap,
+                    parent_depth=eng.parent_depth + 1)
+    outcome = child.run()
+    if outcome.get("status") != "completed":
+        return {"error": f"subagent {cls} failed: {outcome.get('status')}"}
+    text = outcome.get("final_text") or "done"
+    return {"subagent_result": text,
+            "note": f"subagent {cls} finished — {text[:120]}"}
+
+
+def _engine_handoff(state: dict[str, Any], agent_id: str,
+                    args: list[Any]) -> dict[str, Any]:
+    target = str(args[0]) if args else ""
+    prompt = str(args[1]) if len(args) > 1 else ""
+    if target not in agents_mod.BY_ID:
+        return {"error": f"unknown target agent '{target}'"}
+    if not prompt.strip():
+        return {"error": "handoff prompt must not be empty"}
+    run_id = f"{agent_id}-{target}-{int(time.time() * 1000)}"
+    folder = tools.HANDOFF_DIR / run_id
+    folder.mkdir(parents=True, exist_ok=True)
+
+    wrote: list[str] = []
+    for key in tools.ARTIFACT_KEYS:
+        if state.get(key) is not None:
+            (folder / f"{key}.json").write_text(
+                json.dumps(state[key], indent=2, ensure_ascii=False, default=str))
+            wrote.append(f"{key}.json")
+    decisions = "\n".join(f"- {d.get('agent', '?')}: {d.get('text', '')}"
+                          for d in state.get("decisions", []))
+    (folder / "decisions.md").write_text(
+        f"# Decisions\n\n{decisions or '(none recorded)'}\n")
+    (folder / "context.json").write_text(json.dumps({
+        "run_id": run_id, "sender": agent_id, "target": target,
+        "topic": state.get("topic"), "mode": eng.mode,
+        "exists": {k: state.get(k) is not None for k in tools.ARTIFACT_KEYS},
+        "missing": [k for k in tools.ARTIFACT_KEYS if state.get(k) is None],
+    }, indent=2))
+    (folder / "HANDOFF.md").write_text(
+        f"# Handoff — {NAMES.get(agent_id, agent_id)} to "
+        f"{NAMES.get(target, target)}\n\n{prompt}\n")
+    return {"_handoff": True,
+            "handoff": {"run_id": run_id, "target": target, "prompt": prompt,
+                        "folder": str(folder), "files": wrote}}
+
+
+def _engine_create_capability(state: dict[str, Any], agent_id: str,
+                              args: list[Any]) -> dict[str, Any]:
+    eng = tools.current_engine()
+    (name, description, knowledge_txt, skills, tools_list,
+     resources, guidance) = args[:7]
+    name = str(name or "").strip()
+    if not name:
+        return {"error": "capability needs a name"}
+    if eng.mode != "build":
+        return {"error": "capability creation requires BUILD MODE — the runtime "
+                         "only persists in Build Mode with explicit human approval"}
+    if not _human_approved(eng.session, name):
+        return {"error": "not persisted — the human must explicitly approve "
+                         "creating this capability in the conversation first"}
+    record = tools.save_capability(agent_id, {
+        "name": name, "description": str(description or ""),
+        "knowledge": str(knowledge_txt or ""),
+        "skills": [str(s) for s in (skills or [])],
+        "tools": [str(t) for t in (tools_list or [])],
+        "resources": str(resources or ""), "guidance": str(guidance or "")})
+    return {"capability": record,
+            "note": f"capability '{record['name']}' created — it is now part of "
+                    "my identity in future sessions"}
+
+
+def _human_approved(session: Optional[dict[str, Any]], name: str) -> bool:
+    """Deterministic check: the most recent user messages explicitly approve
+    creating THIS capability. The model judges the words; the runtime persists."""
+    if session is None:
+        return False
+    seen = 0
+    name_low = name.lower()
+    for ev in reversed(session.get("conversation", [])):
+        if ev.get("type") != "user_message":
+            continue
+        seen += 1
+        text = (ev.get("content") or "").lower()
+        approved = any(w in text for w in ("approve", "yes", "create it",
+                                           "go ahead", "go ahead and", "okay", "ok "))
+        if approved and (name_low in text or "capability" in text):
+            return True
+        if seen >= 4:
+            break
+    return False
+
+
+def _register_engine_tools() -> None:
+    specs = {
+        "subagent": (tools._SCHEMAS["subagent"], _engine_subagent,
+                     "Spawn a TRANSIENT subagent (explore/scout/general) and return "
+                     "its final message. Never a primary agent."),
+        "handoff": (tools._SCHEMAS["handoff"], _engine_handoff,
+                    "Finish your current work and hand off to another primary "
+                    "agent. The runtime packages your artifacts and prompt; the "
+                    "human decides."),
+        "create_capability": (tools._SCHEMAS["create_capability"], _engine_create_capability,
+                              "Create a new capability for yourself (real knowledge, "
+                              "skills, tools). Persisted only with explicit human approval."),
+    }
+    for name, (schema, fn, doc) in specs.items():
+        tools.REGISTRY[name] = {"fn": fn, "doc": doc, "schema": schema,
+                                "permission": "mutate"}
+
+
+_register_engine_tools()
+
+# --------------------------------------------------------------------------
+# handoff resolution — the human decides (§6)
+# --------------------------------------------------------------------------
+
+def resolve_handoff(agent_id: str, session_id: str, decision: str,
+                    target_agent_id: Optional[str] = None,
+                    note: Optional[str] = None) -> dict[str, Any]:
+    """The three human outcomes for a pending handoff. Accept: seed a NEW
+    session in the target workspace (existing sessions untouched) with the
+    package. Reject: nothing moves; the sender's session keeps its history.
+    Redirect: append the human's note to HANDOFF.md, then seed (possibly to a
+    different target)."""
+    sender = get_session(agent_id, session_id)
+    if sender is None:
+        return {"ok": False, "error": "no such session"}
+    ho = sender.get("handoff")
+    if not ho:
+        return {"ok": False, "error": "no pending handoff on that session"}
+    decision = str(decision or "").lower()
+    if decision not in ("accept", "reject", "redirect"):
+        return {"ok": False, "error": "decision must be accept|reject|redirect"}
+
+    if decision == "reject":
+        sender["conversation"].append({"type": "handoff_result",
+                                       "agent_id": agent_id, "timestamp": _iso(),
+                                       "content": "rejected",
+                                       "handoff": {"status": "rejected",
+                                                   "target": ho["target"],
+                                                   "run_id": ho["run_id"]}})
+        sender["handoff"] = None
+        sender["status"] = "idle"
+        touch(sender)
+        return {"ok": True, "decision": "reject", "target": ho["target"],
+                "run_id": ho["run_id"]}
+
+    target = target_agent_id or ho["target"]
+    if target not in agents_mod.BY_ID:
+        return {"ok": False, "error": f"invalid target agent: {target}"}
+
+    if decision == "redirect" and note and note.strip():
+        folder = tools.HANDOFF_DIR / ho["run_id"]
+        handoff_md = folder / "HANDOFF.md"
+        if handoff_md.is_file():
+            with open(handoff_md, "a") as f:
+                f.write(f"\n\n## Human note (redirect)\n{note.strip()}\n")
+
+    task = (f"You received a handoff from {NAMES.get(agent_id, agent_id)} "
+            f"({ho['run_id']}). Examine the folder and decide: what do you "
+            "need, and what is your plan?")
+    seeded = new_session(target, task, mode="plan",
+                         sender=NAMES.get(agent_id, agent_id),
+                         run_id=ho["run_id"])
+
+    sender["conversation"].append({"type": "handoff_result",
+                                   "agent_id": agent_id, "timestamp": _iso(),
+                                   "content": "accepted",
+                                   "handoff": {"status": "accepted",
+                                               "target": target,
+                                               "run_id": ho["run_id"],
+                                               "session_id": seeded["id"]}})
+    sender["handoff"] = None
+    sender["status"] = "idle"
+    touch(sender)
+    return {"ok": True, "decision": "accept" if decision == "accept" else "redirect",
+            "target": target, "run_id": ho["run_id"],
+            "session_id": seeded["id"], "title": seeded["title"]}
+
+
+# --------------------------------------------------------------------------
+# snapshots
+# --------------------------------------------------------------------------
+
+def _agent_header(agent_id: str) -> dict[str, Any]:
+    a = agents_mod.BY_ID.get(agent_id, {})
+    return {
+        "id": agent_id,
+        "name": NAMES.get(agent_id, agent_id),
+        "description": DESCRIPTIONS.get(agent_id, a.get("department", "")),
+        "department": a.get("department", ""),
+        "tier": a.get("tier", ""),
+        "identity": a.get("identity", f"I'm the {NAMES.get(agent_id, agent_id)}."),
+        "capabilities": _capabilities(agent_id),
+        "skills": a.get("skills", []),
+        "tools": _agent_tools(agent_id),
+        "manages": a.get("manages", []),
+        "head": a.get("head"),
+    }
+
+
+def _capabilities(agent_id: str) -> list[dict[str, Any]]:
+    a = agents_mod.BY_ID.get(agent_id, {})
+    out = [{"name": c, "created": False} for c in (a.get("capabilities") or [])]
+    out += [{"name": c.get("name", "Unnamed capability"), "created": True}
+            for c in tools.load_capabilities(agent_id)]
     return out
 
 
-# --------------------------------------------------------------------------
-# bus event -> normalized conversation event (spec §11)
-# --------------------------------------------------------------------------
-
-def workspace_event(ev: dict[str, Any]) -> Optional[dict[str, Any]]:
-    """Raw bus event -> one normalized conversation event, or None if it
-    carries no workspace signal. Everything stays in the SAME timeline."""
-    kind = ev.get("kind", "")
-    agent = ev.get("agent", "")
-    ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ev.get("ts", 0.0)))
-    text = (ev.get("text") or "")
-    if not text:
-        text = kind
-
-    if agent == "CEO":
-        if kind == "interrupt":
-            return {"type": "status", "agent_id": agent, "timestamp": ts,
-                    "content": f"Waiting for your approval: {text[:240]}"}
-        return {"type": "status", "agent_id": agent, "timestamp": ts,
-                "content": text[:240]}
-
-    if kind == "thinking":
-        return {"type": "reasoning_summary", "agent_id": agent, "timestamp": ts,
-                "content": text[:240]}
-    if kind == "tool_call":
-        return {"type": "tool_call", "agent_id": agent, "timestamp": ts,
-                "tool": {"name": ev.get("tool", ""), "args": sanitize(ev.get("args", [])),
-                         "status": "running", "blocked": bool(ev.get("blocked"))},
-                "content": text[:240]}
-    if kind == "tool_result":
-        return {"type": "tool_result", "agent_id": agent, "timestamp": ts,
-                "tool": {"name": ev.get("tool", ""),
-                         "status": "failed" if ev.get("error") else "completed",
-                         "blocked": bool(ev.get("blocked"))},
-                "content": text[:240]}
-    if kind == "note":
-        low = text.lower()
-        if "stopped" in low:
-            return {"type": "error", "agent_id": agent, "timestamp": ts,
-                    "content": text[:240]}
-        return {"type": "status", "agent_id": agent, "timestamp": ts,
-                "content": text[:240]}
-    if kind == "law_block":
-        return {"type": "error", "agent_id": agent, "timestamp": ts,
-                "content": text[:240]}
-    if kind in ("route", "result"):
-        # result becomes the agent's assistant message via the workspace store;
-        # mapping it here would duplicate the final message.
-        return None
-    if kind == "error":
-        return {"type": "error", "agent_id": agent, "timestamp": ts,
-                "content": text[:240]}
-    return None
-
-
-def workspace_events(agent_id: str, limit: int = 100) -> list[dict[str, Any]]:
-    """This agent's real events from the bus, normalized to conversation
-    events (spec §11). CEO decision events are excluded from per-agent
-    timelines — they only appear as approvals the human explicitly sees."""
-    out: list[dict[str, Any]] = []
-    for ev in events.bus.history():
-        if ev.get("agent") != agent_id:
-            continue
-        mapped = workspace_event(ev)
-        if mapped:
-            out.append(mapped)
-    return out[-limit:]
+def _agent_tools(agent_id: str) -> list[dict[str, Any]]:
+    out = []
+    for name in tools.tool_names(agent_id, "primary"):
+        entry = tools.REGISTRY.get(name)
+        if entry:
+            out.append({"name": name, "doc": entry["doc"],
+                        "permission": entry["permission"]})
+    return sorted(out, key=lambda t: t["name"])
 
 
 def build_workspace_snapshot(agent_id: str,
-                             store: dict[str, Any],
-                             run_state: dict[str, Any],
-                             pending_question: Optional[dict[str, Any]],
-                             context: Optional[dict[str, Any]] = None) -> dict[str, Any]:
-    """The workspace contract: agent + mode + current run + ONE conversation.
-    The conversation is the chronological merge of persisted store events and
-    this agent's real bus events — everything the human needs to know is in
-    that one timeline."""
-    running = bool(run_state.get("running", False))
-    waiting = waiting_agent() if (running and pending_question) else None
-    status = store.get("status", "idle")
+                             session_id: Optional[str] = None) -> dict[str, Any]:
+    """The workspace contract: agent + session list + the active session's
+    conversation (one timeline)."""
+    session = get_session(agent_id, session_id)
+    sessions = list_sessions(agent_id)
 
-    agent = workspace_agent_snapshot(agent_id, running, waiting)
-    agent["status"] = status if store.get("run_id") else agent["status"]
-    if status in ("working", "waiting", "stopped", "failed"):
-        agent["progress"] = 50 if status == "working" else 100
-        agent["current_task"] = ({"waiting": "Waiting for your approval",
-                                  "working": "Working", "stopped": "Stopped",
-                                  "failed": "Failed"}.get(status, status))
+    active = None
+    if session is not None:
+        active = {
+            "id": session["id"], "title": session["title"],
+            "status": session["status"], "mode": session["mode"],
+            "task": session["task"], "run_id": session.get("run_id"),
+            "conversation": session["conversation"][-200:],
+            "pending_approval": None if not session.get("approval") else {
+                "id": session["approval"]["id"],
+                "question": session["approval"]["question"]},
+            "pending_handoff": None if not session.get("handoff") else {
+                "run_id": session["handoff"]["run_id"],
+                "target": session["handoff"]["target"],
+                "prompt": session["handoff"]["prompt"][:300],
+                "decision": session["handoff"]["decision"]},
+            "can_stop": session["status"] in ("working", "waiting"),
+            "memory": [{"label": label, "available": bool(session["state"].get(key))}
+                       for key, label in _memory_labels(session["state"])],
+        }
+    return {"agent": _agent_header(agent_id),
+            "sessions": sessions,
+            "active_session_id": session["id"] if session else None,
+            "active_session": active,
+            "model_configured": brain_mod.model_configured()}
 
-    merged = list(store.get("conversation", [])) + workspace_events(agent_id)
-    seen: set[tuple] = set()
-    conversation: list[dict[str, Any]] = []
-    for e in sorted(merged, key=lambda x: x.get("timestamp", "")):
-        key = (e.get("type"), e.get("timestamp"), str(e.get("content", ""))[:120],
-               str((e.get("approval") or {}).get("status", "")),
-               str((e.get("tool") or {}).get("name", "")))
-        if key in seen:
-            continue
-        seen.add(key)
-        conversation.append(e)
 
-    run = store.get("current_run")
-    pending = store.get("approval_pending")
-    pending_out: Optional[dict[str, Any]] = None
-    if pending:
-        pending_out = {"id": pending.get("id"), "run_id": pending.get("run_id"),
-                       "question": pending.get("question", "")}
+def _session_status(agent_id: str) -> str:
+    ws = _workspace(agent_id)
+    with _store_lock:
+        sid = ws.get("active_session_id")
+        s = ws["sessions"].get(sid) if sid else None
+        return s["status"] if s else "idle"
+
+
+def build_dashboard_snapshot() -> dict[str, Any]:
+    """Org overview (§8): every agent's workspace, sessions, and live
+    activity. There is no Run flow and no graph — only the human drives work."""
+    agents = []
+    for a in agents_mod.AGENTS:
+        agent_id = a["id"]
+        sessions = list_sessions(agent_id)
+        active = get_session(agent_id)
+        handoffs = [s for s in sessions if s["handoff_pending"]]
+        last_ts = max((s["last_activity_at"] for s in sessions), default=None)
+        agents.append({
+            "id": agent_id, "name": NAMES.get(agent_id, agent_id),
+            "description": DESCRIPTIONS.get(agent_id, a.get("department", "")),
+            "department": a["department"], "tier": a["tier"],
+            "status": active["status"] if active else "idle",
+            "session_count": len(sessions),
+            "handoff_pending": len(handoffs),
+            "last_activity_at": last_ts,
+            "active_session_id": active["id"] if active else None,
+        })
     return {
-        "agent": agent,
-        "mode": store.get("mode", "plan"),
-        "current_run": run,
-        "conversation": conversation[-200:],
-        "can_stop": bool(run and run.get("status") in ("working", "waiting")),
-        "pending_approval": pending_out,
-        "memory": project_memory(context),
+        "system": {
+            "total_agents": len(agents),
+            "total_sessions": sum(a["session_count"] for a in agents),
+            "attention_agents": sum(1 for a in agents
+                                    if a["handoff_pending"] or a["status"] == "waiting"),
+            "model_configured": brain_mod.model_configured(),
+        },
+        "agents": agents,
+        "recent_activity": _recent_activity(),
     }
+
+
+def _recent_activity(limit: int = 12) -> list[dict[str, Any]]:
+    out = []
+    meta = {a["id"]: a for a in registry()}
+    for e in reversed(events.bus.history()):
+        agent_id = e.get("agent", "")
+        if agent_id not in meta and not str(agent_id).startswith(("explore", "scout", "general")):
+            continue
+        name = (NAMES.get(agent_id, agent_id) if agent_id in meta
+                else f"subagent:{agent_id}")
+        kind = e.get("kind", "note")
+        text = e.get("text") or kind
+        if kind in ("tool_call", "tool_result"):
+            text = f"{kind}: {text[:120]}"
+        out.append({"agent_id": agent_id, "agent_name": name, "message": text[:160],
+                    "timestamp": _iso(e.get("ts", 0.0))})
+        if len(out) >= limit:
+            break
+    return out
+
+
+def no_model_notice() -> str:
+    return ("The conversational layer is not configured. Add an API key "
+            "(GLM_API_KEY or OPENAI_API_KEY) to talk to me.")
+
+
+def model_failed_line() -> str:
+    return ("I couldn't reach the model right now. Please try again in a "
+            "moment.")
+
+
+def map_studio_event(ev: dict[str, Any]) -> Optional[dict[str, Any]]:
+    """Map a raw bus event to a studio dashboard event (SSE)."""
+    kind = ev.get("kind", "")
+    agent = ev.get("agent", "")
+    ts = _iso(ev.get("ts", 0.0))
+    text = (ev.get("text") or "")[:160]
+
+    if kind == "approval_request":
+        return {"type": "agent_attention_required", "agent_id": agent,
+                "reason": "approval_required", "timestamp": ts}
+    if kind == "note":
+        return {"type": "activity_created", "agent_id": agent,
+                "message": text, "timestamp": ts}
+    if kind == "result":
+        return {"type": "agent_completed", "agent_id": agent, "timestamp": ts}
+    if kind == "error" or "stopped" in text.lower():
+        return {"type": "agent_failed", "agent_id": agent, "timestamp": ts}
+    if kind == "law_block":
+        return {"type": "activity_created", "agent_id": agent,
+                "message": text or "law block", "timestamp": ts}
+    if kind in ("tool_call", "tool_result", "handoff_request", "handoff_result",
+                "approval_result"):
+        return {"type": "activity_created", "agent_id": agent,
+                "message": text or kind, "timestamp": ts}
+    return None
+
+
+# keep the strict conversation whitelist visible for source sweeps
+_CONVERSATION_WHITELIST = set(CONVERSATION_TYPES)

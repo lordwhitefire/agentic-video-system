@@ -73,3 +73,7 @@ package-lock.json
 
 # AgenticSign local config (user-specific, not tracked)
 .agentic-sign.local.json
+
+# Plan working documents (not for public repo)
+langgraph-runtime/*PLAN*.md
+langgraph-runtime/PLAN.md

@@ -1,8 +1,9 @@
-"""UI 1 — opencode-style streaming console.
+"""UI 1 — terminal console over the new session engine.
 
-Prints everything the system does, exactly as it happens: agent thinking,
-tool calls and results, law checks, watchpoint scans, routes, and CEO
-approval prompts. ANSI colors; safe when piped (colors auto-off)."""
+Prints everything the runtime does, exactly as it happens: agent reasoning,
+tool calls and results, law checks, approvals. Then an interactive REPL:
+talk to one primary agent through the same session engine the web UI uses
+(one human message = one session turn). ANSI colors; safe when piped."""
 
 from __future__ import annotations
 
@@ -10,6 +11,8 @@ import sys
 from typing import Any
 
 import avis.events as events
+import avis.studio as studio
+from avis.brain import model_configured
 from avis.laws import describe
 
 COLOR = {
@@ -18,9 +21,8 @@ COLOR = {
     "tool_call": "\033[33m",  # yellow
     "tool_result": "\033[37m",  # white
     "law_block": "\033[31m",  # red
-    "route": "\033[35m",     # magenta
-    "interrupt": "\033[1;34m",  # bold blue
-    "result": "\033[32m",    # green
+    "approval_request": "\033[1;34m",  # bold blue
+    "error": "\033[31m",     # red
     "reset": "\033[0m",
 }
 
@@ -34,78 +36,72 @@ class Console:
         c = COLOR.get(kind, "")
         tag = f"{agent:<16}"
         prefix = {"note": "·", "thinking": "…", "tool_call": "→", "tool_result": "←",
-                  "law_block": "✗", "route": "►", "interrupt": "?", "result": "✓"}.get(kind, " ")
+                  "law_block": "✗", "approval_request": "?", "error": "!"}.get(kind, " ")
         line = f"{prefix} {tag} {text}"
         if self.use_color:
             line = f"{c}{line}\033[0m"
-        print(line, flush=True)
-
-    def banner(self, mermaid: str = "") -> None:
-        print("\n" + "=" * 70)
-        print("  AGENTIC VIDEO SYSTEM — LangGraph runtime")
-        print("  17 agents · 5 departments · 12 laws · deterministic orchestrator")
-        print("=" * 70)
-        print("THE 12 LAWS (enforced at every step):")
-        print(describe())
-        if mermaid:
-            print("\nNOTE: run `uvicorn ui.web.server:app` for the graph view UI.")
-
-    def show_final(self, state: dict[str, Any]) -> None:
-        print("\n" + "=" * 70)
-        print("  FINAL STATE SUMMARY")
-        print("=" * 70)
-        report = state.get("review_report") or {}
-        print(f"  review decision : {report.get('decision')}")
-        print(f"  checks          : {report.get('checks')}")
-        print(f"  iterations      : {state.get('iterations')}")
-        print(f"  revocations     : {len(state.get('revocations', []))}")
-        print(f"  decisions       : {len(state.get('decisions', []))}")
-        print(f"  visual assigns  : {len(state.get('visual_assignments', []))}")
-        tts = state.get("voice_track") or {}
-        print(f"  tts segments    : {len(tts.get('segments', []))} ({tts.get('engine')})")
-        print("=" * 70)
-
-
-def approvals(question: dict[str, Any]) -> Any:
-    """Default CEO: prompts on stdin. 'yes/y' approves, anything else rejects."""
-    q = question.get("question", "Approve?")
-    if "script" in question:
-        print(f"\n--- SCRIPT DRAFT ---\n{question['script']}\n--------------------\n")
-    if "proposals" in question:
-        print(f"\n--- PROPOSED SOURCES ({len(question['proposals'])}) ---")
-        for i, p in enumerate(question["proposals"]):
-            print(f"  [{i}] {p.get('kind')}: {p.get('description')} ({p.get('url')})")
-        print("----------------------\n")
-    answer = input(f"{q} (y/n): ").strip().lower()
-    return "approve" if answer in ("y", "yes", "approve") else f"rejected: {answer}"
+        print(line)
 
 
 def main() -> None:
     import argparse
 
-    from avis.graph import build_graph, run, seed_state
-
-    ap = argparse.ArgumentParser(description="Agentic Video System console UI")
-    ap.add_argument("--topic", default="Why Mbappé shines on the biggest stage", help="video topic")
-    ap.add_argument("--reference-analysis", default=None, help="path to reference-analysis JSON")
-    ap.add_argument("--yes", action="store_true", help="auto-approve all CEO prompts")
+    ap = argparse.ArgumentParser(description="Agentic Video System console")
+    ap.add_argument("--agent", default="strategist",
+                    help="which primary agent to talk to")
+    ap.add_argument("--mode", default="plan", choices=["plan", "build"])
     ap.add_argument("--list-agents", action="store_true")
     args = ap.parse_args()
 
     if args.list_agents:
-        from avis.agents import AGENTS
-        for a in AGENTS:
+        for a in studio.registry():
             print(f"  {a['id']:<18} {a['department']:<10} {a['tier']}")
         return
 
-    console = Console()
-    graph, mermaid = build_graph()
-    console.banner(mermaid)
-    events.bus.subscribe(console.listen)
-    state = seed_state(args.topic, reference_file=args.reference_analysis)
-    approver = (lambda q: "approve") if args.yes else approvals
-    final = run(graph, state, approver)
-    console.show_final(final)
+    if args.agent not in studio.NAMES:
+        print(f"unknown agent: {args.agent}")
+        return
+
+    print("=" * 70)
+    print(f"  {studio.NAMES[args.agent]} — {studio.DESCRIPTIONS[args.agent]}")
+    print("  the 12 laws:")
+    print(describe())
+    print("=" * 70)
+
+    events.bus.subscribe(Console().listen)
+    if not model_configured():
+        print("note: no model key configured — sessions will surface that "
+              "honestly (no scripted replies).")
+
+    session = studio.new_session(args.agent, "console session", mode=args.mode)
+    while True:
+        try:
+            message = input(f"\nyou ({args.mode}): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            break
+        if not message:
+            continue
+        if message in ("exit", "quit"):
+            break
+        if message == "build":
+            session["mode"] = "build"
+            args.mode = "build"
+            print("-> build mode")
+            continue
+        if message == "plan":
+            session["mode"] = "plan"
+            args.mode = "plan"
+            print("-> plan mode")
+            continue
+        session["conversation"].append(
+            {"type": "user_message", "agent_id": "you",
+             "timestamp": studio._iso(), "content": message})
+        session["status"] = "working"
+        outcome = studio.run_session(
+            args.agent, session["id"], message, session["state"],
+            session["mode"], session=session,
+            should_stop=lambda: False)
+        print(f"\n[{outcome.get('status')}]")
 
 
 if __name__ == "__main__":

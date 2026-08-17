@@ -1,131 +1,76 @@
-"""UI 2 — Agent Studio Dashboard + live activity (FastAPI).
+"""UI 2 — Agent Studio Dashboard + Workspaces (FastAPI).
 
-Serves:
-  GET  /                        the Agent Dashboard (presentation view)
-  GET  /workspace/{agent_id}    agent workspace (Stage Two: full workspace UI)
-  GET  /graph                   the LangGraph technical view (mermaid)
-  GET  /api/graph               the LangGraph state graph as mermaid text
-  GET  /api/agents              the 17 agents and departments
-  GET  /api/agents/{agent_id}   one agent + live status
-  GET  /api/examples            reference-analysis JSON files in examples/
-  GET  /api/events              Server-Sent Events: raw runtime events
-  GET  /api/studio/dashboard    Agent Dashboard snapshot (real state)
-  GET  /api/studio/events       Server-Sent Events: studio-mapped events
-  GET  /api/studio/agents/{id}      workspace snapshot (spec §32)
-  POST /api/studio/agents/{id}/messages  send the agent a message (Plan or Build mode)
-  POST /api/studio/agents/{id}/mode      switch Plan/Build interaction mode
-  POST /api/studio/agents/{id}/approval  human answer to an inline approval_request
-  POST /api/studio/agents/{id}/stop      real runtime cancellation (cooperative)
-  POST /api/studio/agents/{id}/handoff   human-governed switch (requires explicit decision)
-  GET  /api/studio/agents/{id}/events    workspace Server-Sent Events
-  GET  /api/state               latest run state snapshot
-  GET  /api/pending             the pending CEO approval question (script / proposals)
-  POST /api/run                 start a run (JSON: topic, reference_analysis?, llm?, auto_approve?)
-  POST /api/answer              answer the pending CEO approval question (JSON: resume)
+Serves (AUTONOMOUS_AGENTS_PLAN §8, §12):
+  GET  /                         the Agent Dashboard (org overview)
+  GET  /workspace/{agent_id}     agent workspace page (conversation-first)
+  GET  /api/agents               the 17 agents + departments
+  GET  /api/agents/{agent_id}    one agent display metadata
+  GET  /api/examples             reference-analysis JSON files in examples/
+  GET  /api/events               Server-Sent Events: raw runtime events
+  GET  /api/studio/dashboard     Agent Dashboard snapshot (org overview)
+  GET  /api/studio/events        Server-Sent Events: studio-mapped events
+  GET  /api/studio/agents/{id}   workspace snapshot (one agent + session list)
+  GET  /api/studio/agents/{id}/sessions/{sid}  single session details
+  POST /api/studio/agents/{id}/sessions        new session
+  POST /api/studio/agents/{id}/sessions/{sid}/activate
+  DELETE /api/studio/agents/{id}/sessions/{sid}
+  POST /api/studio/agents/{id}/messages   send a message (one turn)
+  POST /api/studio/agents/{id}/mode       switch Plan/Build mode
+  POST /api/studio/agents/{id}/approval   answer inline approval_request
+  POST /api/studio/agents/{id}/stop       cooperative stop
+  POST /api/studio/agents/{id}/handoff    resolve handoff (accept/reject/redirect)
+  GET  /api/studio/agents/{id}/events   workspace SSE (conversation)
+  GET  /api/knowledge             knowledge base (recorded sessions)
 
-The orchestrator stays deterministic; this server only observes and streams."""
+No workflow engine, no /api/run, no /api/answer, no graph — the human drives
+work via conversations and handoffs."""
 
 from __future__ import annotations
 
 import asyncio
-import calendar
 import json
 import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, StreamingResponse
 
-import avis.brain as brain
+import avis.brain as brain_mod
 import avis.events as events
-import avis.graph as g
+import avis.knowledge as knowledge
 import avis.studio as studio
-import avis.tools as tools
 
 STATIC = Path(__file__).parent / "static"
 EXAMPLES = Path(__file__).resolve().parent.parent.parent / "examples"
 
 app = FastAPI(title="AVIS — Agent Studio")
 
-_state: dict[str, Any] = {}
-_graph = None
-_mermaid = ""
-_graph_lock = threading.Lock()
+# --- SSE queues -----------------------------------------------------------
+
 _sse_queues: list[asyncio.Queue] = []
 _studio_sse_queues: list[asyncio.Queue] = []
-_loop: asyncio.AbstractEventLoop | None = None
-_pending_resume: list[Any] = []
-_pending_question: dict[str, Any] = {}
-_auto_approve = False
-
-# --- Agent Workspace (conversation-first) state ----------------------------
-# shared project context: real outputs produced across workspace runs so the
-# next agent genuinely inherits the previous agent's work (spec §56/§57)
-_workspace_context: dict[str, Any] = {}
-# per-agent workspace store: ONE conversation stream + mode + run state. The
-# human is the governance layer; nothing is routed or handoff-recommended.
-_workspace_store: dict[str, dict[str, Any]] = {}
 _workspace_queues: list[asyncio.Queue] = []
+_loop: asyncio.AbstractEventLoop | None = None
 
 
-def _iso(ts: float | None = None) -> str:
+def _iso(ts: Optional[float] = None) -> str:
     t = time.gmtime(ts) if ts is not None else time.gmtime()
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", t)
 
 
-def _fresh_ws_store() -> dict[str, Any]:
-    """A fresh per-agent workspace: empty conversation, Plan Mode by default,
-    no running process. Greeting is seeded on first snapshot."""
-    return {"conversation": [], "current_run": None,
-            "status": "idle", "run_id": None,
-            "mode": "plan", "stop_requested": False,
-            "approval_pending": None}
-
-
-def _push_ws_event(agent_id: str, event: dict[str, Any]) -> None:
-    """Persist ONE normalized conversation event (spec §11) and broadcast it
-    to every open workspace stream. This is the only place conversation
-    entries are created besides the worker's assistant messages."""
-    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    store["conversation"].append(event)
-    if _loop is not None:
-        _loop.call_soon_threadsafe(
-            lambda: [q.put_nowait(event) for q in list(_workspace_queues)])
-
-
-@app.on_event("startup")
-def _startup() -> None:
-    global _graph, _mermaid, _loop
-    _loop = asyncio.get_event_loop()
-    _graph, _mermaid = g.build_graph()
-    events.bus.subscribe(_pump)
-    events.bus.subscribe(_pump_studio)
-    events.bus.subscribe(_pump_workspace)
-
-
-def _pump_workspace(ev: dict[str, Any]) -> None:
-    """Bus listener → normalized conversation events → workspace SSE streams.
-    Live events are broadcast (not persisted — the snapshot merge rebuilds the
-    timeline from the bus, spec §66), so nothing is double-recorded."""
-    if _loop is None:
-        return
-    mapped = studio.workspace_event(ev)
-    if mapped is not None:
-        _loop.call_soon_threadsafe(
-            lambda: [q.put_nowait(mapped) for q in list(_workspace_queues)])
-
+# --- bus pumps ------------------------------------------------------------
 
 def _pump(ev: dict[str, Any]) -> None:
-    """Bus listener (runs on the run thread) → pushes to SSE consumers."""
     if _loop is None:
         return
-    _loop.call_soon_threadsafe(lambda: [q.put_nowait(ev) for q in list(_sse_queues)])
+    _loop.call_soon_threadsafe(
+        lambda: [q.put_nowait(ev) for q in list(_sse_queues)])
 
 
 def _pump_studio(ev: dict[str, Any]) -> None:
-    """Bus listener → mapped studio events → studio SSE consumers."""
     if _loop is None:
         return
     mapped = studio.map_studio_event(ev)
@@ -134,70 +79,66 @@ def _pump_studio(ev: dict[str, Any]) -> None:
             lambda: [q.put_nowait(mapped) for q in list(_studio_sse_queues)])
 
 
+def _pump_workspace(ev: dict[str, Any]) -> None:
+    if _loop is None:
+        return
+    # Workspace SSE only shows events for the current agent + "you"
+    # The filtering happens in the endpoint.
+    _loop.call_soon_threadsafe(
+        lambda: [q.put_nowait(ev) for q in list(_workspace_queues)])
+
+
+@app.on_event("startup")
+def _startup() -> None:
+    global _loop
+    _loop = asyncio.get_event_loop()
+    events.bus.subscribe(_pump)
+    events.bus.subscribe(_pump_studio)
+    events.bus.subscribe(_pump_workspace)
+
+
+# --- static pages ---------------------------------------------------------
+
+def _static(name: str) -> HTMLResponse:
+    return HTMLResponse((STATIC / name).read_text())
+
+
 @app.get("/")
-def index() -> Any:
+def index() -> HTMLResponse:
     return _static("dashboard.html")
 
 
-@app.get("/graph")
-def graph_view() -> Any:
-    return _static("index.html")
-
-
 @app.get("/workspace/{agent_id}")
-def workspace_view(agent_id: str) -> Any:
-    from fastapi import HTTPException
-    from avis.agents import BY_ID
-    if agent_id not in BY_ID:
+def workspace_view(agent_id: str) -> HTMLResponse:
+    if agent_id not in studio.NAMES:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     return _static("workspace.html")
 
 
-def _static(name: str) -> Any:
-    from fastapi.responses import HTMLResponse
-    return HTMLResponse((STATIC / name).read_text())
-
-
-@app.get("/api/graph")
-def api_graph() -> dict[str, Any]:
-    from importlib.metadata import version
-    try:
-        v = version("langgraph")
-    except Exception:
-        v = "?"
-    return {"mermaid": _mermaid, "engine": "langgraph " + v}
-
+# --- registry & agents ----------------------------------------------------
 
 @app.get("/api/agents")
 def api_agents() -> dict[str, Any]:
-    from avis.agents import AGENTS
-    return {"agents": AGENTS}
+    return {"agents": studio.registry()}
 
 
 @app.get("/api/agents/{agent_id}")
 def api_agent(agent_id: str) -> dict[str, Any]:
-    from fastapi import HTTPException
-    from avis.agents import BY_ID
-    if agent_id not in BY_ID:
+    if agent_id not in studio.NAMES:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
-    snap = studio.agent_snapshot(agent_id,
-                                  bool(_state.get("running", False)),
-                                  studio.waiting_agent())
-    return {"agent": snap,
-            "department": BY_ID[agent_id]["department"],
-            "tier": BY_ID[agent_id]["tier"]}
+    meta = {a["id"]: a for a in studio.registry()}[agent_id]
+    return {"agent": meta, "department": meta["department"], "tier": meta["tier"]}
 
+
+# --- dashboard ------------------------------------------------------------
 
 @app.get("/api/studio/dashboard")
 def api_studio_dashboard() -> dict[str, Any]:
-    with _graph_lock:
-        return studio.build_dashboard_snapshot(_state, _pending_question)
+    return studio.build_dashboard_snapshot()
 
 
 @app.get("/api/studio/events")
 async def api_studio_events(request: Request):
-    from fastapi.responses import StreamingResponse
-
     queue: asyncio.Queue = asyncio.Queue()
     for ev in events.bus.history():
         mapped = studio.map_studio_event(ev)
@@ -220,278 +161,160 @@ async def api_studio_events(request: Request):
             _studio_sse_queues.remove(queue)
 
     return StreamingResponse(gen(), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+                             headers={"Cache-Control": "no-cache",
+                                      "X-Accel-Buffering": "no"})
 
+
+# --- workspace API --------------------------------------------------------
 
 @app.get("/api/studio/agents/{agent_id}")
-def api_workspace_snapshot(agent_id: str) -> dict[str, Any]:
-    from fastapi import HTTPException
-    from avis.agents import BY_ID
-    if agent_id not in BY_ID:
+def api_workspace_snapshot(agent_id: str,
+                           session_id: Optional[str] = None) -> dict[str, Any]:
+    if agent_id not in studio.NAMES:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
-    with _graph_lock:
-        store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-        if not store["conversation"]:
-            _push_ws_event(agent_id, {"type": "assistant_message", "agent_id": agent_id,
-                                      "timestamp": _iso(),
-                                      "content": studio.greeting_reply(agent_id)})
-        return studio.build_workspace_snapshot(agent_id, store, _state,
-                                               _pending_question, _workspace_context)
+    return studio.build_workspace_snapshot(agent_id, session_id)
+
+
+@app.get("/api/studio/agents/{agent_id}/sessions/{session_id}")
+def api_session_detail(agent_id: str, session_id: str) -> dict[str, Any]:
+    if agent_id not in studio.NAMES:
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    sess = studio.get_session(agent_id, session_id)
+    if sess is None:
+        raise HTTPException(status_code=404, detail=f"no such session: {session_id}")
+    return {"id": sess["id"], "title": sess["title"],
+            "status": sess["status"], "mode": sess["mode"],
+            "task": sess["task"], "run_id": sess.get("run_id"),
+            "created_at": sess["created_at"],
+            "last_activity_at": sess["last_activity_at"],
+            "conversation": sess["conversation"][-200:],
+            "state_artifacts": {k: sess["state"].get(k) is not None
+                                for k in studio._memory_labels({})}}
+
+
+@app.post("/api/studio/agents/{agent_id}/sessions")
+async def api_new_session(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    if agent_id not in studio.NAMES:
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    task = str(payload.get("task", "")).strip()
+    if not task:
+        return {"ok": False, "error": "task is empty"}
+    mode = str(payload.get("mode", "plan")).lower()
+    if mode not in ("plan", "build"):
+        return {"ok": False, "error": "mode must be 'plan' or 'build'"}
+    sess = studio.new_session(agent_id, task, mode=mode)
+    return {"ok": True, "session_id": sess["id"], "title": sess["title"]}
+
+
+@app.post("/api/studio/agents/{agent_id}/sessions/{session_id}/activate")
+async def api_activate_session(agent_id: str, session_id: str) -> dict[str, Any]:
+    if agent_id not in studio.NAMES:
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    if not studio.activate_session(agent_id, session_id):
+        raise HTTPException(status_code=404, detail=f"no such session: {session_id}")
+    return {"ok": True, "active_session_id": session_id}
+
+
+@app.delete("/api/studio/agents/{agent_id}/sessions/{session_id}")
+async def api_delete_session(agent_id: str, session_id: str) -> dict[str, Any]:
+    if agent_id not in studio.NAMES:
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    err = studio.delete_session(agent_id, session_id)
+    if err:
+        return {"ok": False, "error": err}
+    return {"ok": True}
 
 
 @app.post("/api/studio/agents/{agent_id}/messages")
 async def api_workspace_message(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    from fastapi import HTTPException
-    from avis.agents import BY_ID
-    if agent_id not in BY_ID:
+    if agent_id not in studio.NAMES:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     message = str(payload.get("message", "")).strip()
     if not message:
         return {"ok": False, "error": "message is empty"}
-    llm = bool(payload.get("llm", False))
-    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    if store["status"] in ("working", "waiting"):
+    session_id = payload.get("session_id")
+    session = studio.get_session(agent_id, session_id) if session_id else None
+    if session is None:
+        # no session specified → active or new
+        session = studio.get_session(agent_id) or studio.new_session(
+            agent_id, message, mode="plan")
+    if session["status"] in ("working", "waiting", "stopping"):
         return {"ok": False, "error": "agent is already running — wait or stop it"}
-    _push_ws_event(agent_id, {"type": "user_message", "agent_id": "you",
-                              "timestamp": _iso(), "content": message})
-    threading.Thread(target=_run_agent_worker, args=(agent_id, message, llm),
+
+    # append user message
+    session["conversation"].append({"type": "user_message", "agent_id": "you",
+                                     "timestamp": _iso(), "content": message})
+
+    threading.Thread(target=_run_session_worker,
+                     args=(agent_id, session["id"], message),
                      daemon=True).start()
-    return {"ok": True, "accepted": True}
+    return {"ok": True, "session_id": session["id"]}
 
 
-def _run_agent_worker(agent_id: str, message: str, llm: bool = False) -> None:
-    """One human message → one conversational turn, driven by real state:
-      - greetings and status questions are answered conversationally, zero execution
-      - Plan Mode: real reasoning + plan response only — the node never runs and
-        the execution gate is ON (blocked, enforced by the runtime, spec §8)
-      - Build Mode: the agent's REAL node runs with inline human approval and
-        cooperative stop. Outcomes derive from real bus events, never invented.
-    The human message is part of the same conversation stream (spec §18)."""
-    os.environ["AVIS_LLM_ENABLED"] = "1" if llm else "0"
-    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    now = time.time()
-    run_id = f"run-ws-{int(time.time() * 1000)}-{agent_id}"
-    started = _iso(now)
-    mode = store.get("mode", "plan")
+def _run_session_worker(agent_id: str, session_id: str, message: str) -> None:
+    session = studio.get_session(agent_id, session_id)
+    if session is None:
+        return
+    session["status"] = "working"
+    session["stop_requested"] = False
 
-    store["current_run"] = {"id": run_id, "status": "working", "started_at": started,
-                            "mode": mode, "message": message}
-    store["status"] = "working"
-    store["run_id"] = run_id
-    store["stop_requested"] = False
-
-    _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
-                              "run_id": run_id, "timestamp": started,
-                              "content": f"{mode.capitalize()} Mode turn started"})
-
-    if studio.is_greeting(message):
-        _finish_ws_turn(agent_id, run_id, "completed",
-                        studio.greeting_reply(agent_id), started)
+    if not brain_mod.model_configured():
+        session["conversation"].append({
+            "type": "status", "agent_id": agent_id,
+            "timestamp": _iso(),
+            "content": studio.no_model_notice()})
+        session["status"] = "idle"
         return
 
-    if studio.is_status_question(message):
-        _finish_ws_turn(agent_id, run_id, "completed",
-                        studio.status_summary(agent_id, store["conversation"]), started)
-        return
+    def should_stop() -> bool:
+        return session.get("stop_requested", False)
 
-    # Before ANY consequential execution the agent says what it will do (spec §16)
-    _push_ws_event(agent_id, {"type": "intent", "agent_id": agent_id,
-                              "run_id": run_id, "timestamp": _iso(),
-                              "content": studio.intent_message(agent_id, message)})
+    outcome = studio.run_session(
+        agent_id, session_id, message, session["state"],
+        session["mode"], session=session,
+        should_stop=should_stop)
 
-    if mode == "plan":
-        # Plan Mode has zero execution authority: the gate is set defensively
-        # AND the node is never invoked — only the real think stream runs, so
-        # reasoning_summary events are genuine.
-        tools.set_execution_blocked(True)
-        try:
-            brain.think_stream(agent_id, {"topic": message})
-        finally:
-            tools.set_execution_blocked(False)
-        _finish_ws_turn(agent_id, run_id, "completed",
-                        studio.plan_response(agent_id, message), started)
-        return
+    # knowledge recording happens inside run_session for Build Mode
 
-    ctx_before = dict(_workspace_context)
-    since = time.time()
-    try:
-        final = studio.execute_agent_run(
-            agent_id, message, ctx_before,
-            approver=_make_approver(agent_id, run_id, store),
-            should_stop=lambda: bool(store.get("stop_requested")))
-    except Exception as e:  # noqa: BLE001 — surface any failure honestly
-        _finish_ws_turn(agent_id, run_id, "failed", f"Execution failed — {e}", started)
-        return
-
-    with _graph_lock:
-        _workspace_context.update({k: v for k, v in final.items()
-                                   if k not in ("log", "mailboxes")})
-
-    if final.get("stopped"):
-        _finish_ws_turn(agent_id, run_id, "stopped",
-                        _stopped_message(agent_id, since), started)
-        return
-
-    scoped = [e for e in events.bus.history(since) if e.get("agent") == agent_id]
-    error_log = [l for l in final.get("log", []) if l.get("level") == "error"]
-    if error_log:
-        _finish_ws_turn(agent_id, run_id, "failed",
-                        f"Execution failed — {str(error_log[-1]['text'])}", started)
-        return
-
-    result_ev = [e for e in scoped if e.get("kind") == "result"]
-    result_text = ""
-    if result_ev:
-        result_text = str(result_ev[-1]["text"]).split(" -> ", 1)[-1]
-    for art in studio._artifacts_from_state(final, context=ctx_before):
-        _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
-                                  "run_id": run_id, "timestamp": _iso(),
-                                  "content": f"Produced artifact: {art['name']} — {art['meta']}"})
-    _finish_ws_turn(agent_id, run_id, "completed", result_text, started)
-
-
-def _make_approver(agent_id: str, run_id: str,
-                   store: dict[str, Any]) -> Callable[[dict[str, Any]], str]:
-    """The inline human approval flow (spec §4/§5): the run PAUSES while the
-    approval_request is visible in the conversation; the human answers via
-    POST /approval. Stop also releases the approval as rejected."""
-    import threading as _threading
-    import uuid as _uuid
-
-    def approver(question: dict[str, Any]) -> str:
-        pending = {"id": f"approval-{_uuid.uuid4().hex[:8]}",
-                   "run_id": run_id,
-                   "question": str(question.get("question", ""))[:300],
-                   "event": _threading.Event(), "answer": None}
-        store["approval_pending"] = pending
-        store["status"] = "waiting"
-        if store.get("current_run"):
-            store["current_run"]["status"] = "waiting"
-        _push_ws_event(agent_id, {"type": "approval_request", "agent_id": agent_id,
-                                  "run_id": run_id, "timestamp": _iso(),
-                                  "approval": {"title": "Approval required",
-                                               "description": pending["question"],
-                                               "action": "approve",
-                                               "status": "required"}})
-        while not pending["event"].wait(0.2):
-            if store.get("stop_requested"):
-                break
-        answer = pending["answer"] or "rejected"
-        status = "approved" if answer == "approve" else "rejected"
-        _push_ws_event(agent_id, {"type": "approval_result", "agent_id": agent_id,
-                                  "run_id": run_id, "timestamp": _iso(),
-                                  "approval": {"title": pending["question"][:80],
-                                               "status": status}})
-        store["approval_pending"] = None
-        if store.get("current_run"):
-            store["current_run"]["status"] = "working"
-        return answer
-
-    return approver
-
-
-def _stopped_message(agent_id: str, since: float) -> str:
-    """The honest post-stop report, derived from this run's real events
-    (spec §6/§42). 'Stopped' is a real runtime cancellation, not a notice."""
-    scoped = [e for e in events.bus.history(since) if e.get("agent") == agent_id]
-    completed = [e for e in scoped if e.get("kind") == "tool_result"
-                 and not e.get("error")]
-    parts = ["Stopped — the run was cancelled.",
-             f"Before the stop request, {len(completed)} tool call(s) had completed."]
-    if not completed:
-        parts.append("No tool call had completed yet.")
-    parts.append("No further actions were taken after the stop request.")
-    return "\n".join(parts)
-
-
-def _finish_ws_turn(agent_id: str, run_id: str, status: str,
-                    reply: str, started: str) -> None:
-    """Close a conversational turn: persist the assistant message and the run
-    status as conversation events — the ONLY assistant_message in the stream
-    comes from here (bus result events are not mapped, so nothing duplicates).
-    No handoff is recommended, no next agent is routed: the human governs.
-    Events are pushed BEFORE the terminal status becomes visible so a client
-    that observes the finished run always sees its final message."""
-    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    ended = _iso()
-
-    if status == "failed":
-        _push_ws_event(agent_id, {"type": "error", "agent_id": agent_id,
-                                  "run_id": run_id, "timestamp": ended,
-                                  "content": reply})
+    if outcome.get("status") == "handed_off":
+        ho = outcome["handoff"]
+        session["handoff"] = {"run_id": ho["run_id"], "target": ho["target"],
+                              "prompt": ho["prompt"], "decision": None}
+        session["status"] = "handed_off"
+    elif outcome.get("status") in ("stopped", "stopped_cap"):
+        session["status"] = "idle"
+    elif outcome.get("status") == "failed":
+        session["status"] = "failed"
     else:
-        _push_ws_event(agent_id, {"type": "assistant_message", "agent_id": agent_id,
-                                  "run_id": run_id, "timestamp": ended,
-                                  "content": reply})
-        _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
-                                  "run_id": run_id, "timestamp": ended,
-                                  "content": f"Turn {status} ({time.time() - calendar.timegm(time.strptime(started, '%Y-%m-%dT%H:%M:%SZ')):.1f}s)"})
-
-    store["status"] = status
-    store["run_id"] = None
-    if store.get("current_run"):
-        store["current_run"]["status"] = status
-        store["current_run"]["ended_at"] = ended
-
-
-@app.post("/api/studio/agents/{agent_id}/handoff")
-async def api_workspace_handoff(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    """Human-governed agent switch (spec §6/§7): there is NO auto-routing and
-    NO handoff recommendation. This only carries out an EXPLICIT human
-    decision — without one the runtime refuses (400, tested)."""
-    from fastapi import HTTPException
-    from avis.agents import BY_ID
-    if agent_id not in BY_ID:
-        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
-    decision = str(payload.get("decision", "")).strip().lower()
-    if not decision:
-        raise HTTPException(status_code=400,
-                            detail="unauthorized handoff: an explicit human decision is required")
-    if decision not in ("approve", "redirect"):
-        raise HTTPException(status_code=400, detail=f"invalid handoff decision: {decision}")
-    target = payload.get("target_agent_id")
-    if not target or target not in BY_ID:
-        raise HTTPException(status_code=400, detail=f"invalid target agent: {target}")
-    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
-                              "timestamp": _iso(),
-                              "content": f"Human decision: {decision} → "
-                                         f"{studio.NAMES.get(target, target)}"})
-    return {"approved": True, "decision": decision, "source_agent_id": agent_id,
-            "target_agent_id": target, "workspace_url": f"/workspace/{target}"}
+        session["status"] = "idle"
 
 
 @app.post("/api/studio/agents/{agent_id}/mode")
 async def api_workspace_mode(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    """Switch this agent between Plan and Build interaction modes (spec §2).
-    Explicit only — never automatic; refused while a run is active."""
-    from fastapi import HTTPException
-    from avis.agents import BY_ID
-    if agent_id not in BY_ID:
+    if agent_id not in studio.NAMES:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     mode = str(payload.get("mode", "")).strip().lower()
     if mode not in ("plan", "build"):
-        raise HTTPException(status_code=400, detail="mode must be 'plan' or 'build'")
-    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    if store.get("status") in ("working", "waiting"):
+        return {"ok": False, "error": "mode must be 'plan' or 'build'"}
+    session_id = payload.get("session_id")
+    session = studio.get_session(agent_id, session_id)
+    if session is None:
+        return {"ok": False, "error": "no active session"}
+    if session["status"] in ("working", "waiting", "stopping"):
         return {"ok": False, "error": "agent is running — stop it first"}
-    store["mode"] = mode
-    _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
-                              "timestamp": _iso(),
-                              "content": f"Switched to {mode.capitalize()} Mode"})
+    session["mode"] = mode
     return {"ok": True, "mode": mode}
 
 
 @app.post("/api/studio/agents/{agent_id}/approval")
 async def api_workspace_approval(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    """The human answers an inline approval_request. The paused run resumes
-    only from this real answer (spec §4/§5)."""
-    from fastapi import HTTPException
-    from avis.agents import BY_ID
-    if agent_id not in BY_ID:
+    if agent_id not in studio.NAMES:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
-    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    pending = store.get("approval_pending")
+    session_id = payload.get("session_id")
+    session = studio.get_session(agent_id, session_id)
+    if session is None:
+        return {"ok": False, "error": "no such session"}
+    pending = session.get("approval")
     if not pending:
         return {"ok": False, "error": "no approval is pending"}
     answer = str(payload.get("answer", "")).strip().lower()
@@ -500,7 +323,7 @@ async def api_workspace_approval(agent_id: str, payload: dict[str, Any]) -> dict
     if answer in ("reject", "deny"):
         answer = "rejected"
     run_id = payload.get("run_id")
-    if run_id and str(run_id) != str(pending["run_id"]):
+    if run_id and str(run_id) != str(pending.get("run_id", "")):
         return {"ok": False, "error": "stale approval: that run has ended"}
     pending["answer"] = answer
     pending["event"].set()
@@ -509,46 +332,73 @@ async def api_workspace_approval(agent_id: str, payload: dict[str, Any]) -> dict
 
 @app.post("/api/studio/agents/{agent_id}/stop")
 async def api_workspace_stop(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    """Real runtime cancellation (spec §6/§42): cooperative — the run is asked
-    to stop at its next checkpoint; a pending approval is released as rejected."""
-    from fastapi import HTTPException
-    from avis.agents import BY_ID
-    if agent_id not in BY_ID:
+    if agent_id not in studio.NAMES:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
-    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    run = store.get("current_run")
-    run_id = payload.get("run_id")
-    if not run or run.get("status") not in ("working", "waiting"):
+    session_id = payload.get("session_id")
+    session = studio.get_session(agent_id, session_id)
+    if session is None:
+        return {"ok": False, "error": "no such session"}
+    if session["status"] not in ("working", "waiting"):
         return {"ok": False, "error": "no active run to stop"}
-    if run_id and str(run_id) != str(run["id"]):
-        return {"ok": False, "error": "stale run id"}
-    store["stop_requested"] = True
-    store["status"] = "stopping"
-    pending = store.get("approval_pending")
+    session["stop_requested"] = True
+    session["status"] = "stopping"
+    pending = session.get("approval")
     if pending:
         pending["answer"] = "rejected"
         pending["event"].set()
-    _push_ws_event(agent_id, {"type": "status", "agent_id": agent_id,
-                              "run_id": run["id"], "timestamp": _iso(),
-                              "content": "Stop requested — cancelling the run"})
     return {"ok": True, "stopping": True}
 
 
+@app.post("/api/studio/agents/{agent_id}/handoff")
+async def api_workspace_handoff(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    if agent_id not in studio.NAMES:
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    decision = str(payload.get("decision", "")).strip().lower()
+    if decision not in ("accept", "reject", "redirect"):
+        return {"ok": False, "error": "decision must be accept|reject|redirect"}
+    session_id = payload.get("session_id")
+    session = studio.get_session(agent_id, session_id)
+    if session is None:
+        return {"ok": False, "error": "no such session"}
+    ho = session.get("handoff")
+    if not ho:
+        return {"ok": False, "error": "no pending handoff on that session"}
+    target = payload.get("target_agent_id") or ho["target"]
+    note = payload.get("note")
+
+    result = studio.resolve_handoff(agent_id, session_id, decision,
+                                    target_agent_id=target, note=note)
+    if not result.get("ok"):
+        return result
+
+    # On accept/redirect: auto-run the seeded session in the target workspace
+    if result.get("decision") in ("accept", "redirect"):
+        target = result["target"]
+        seeded_id = result["session_id"]
+        seeded = studio.get_session(target, seeded_id)
+        if seeded:
+            threading.Thread(target=_run_session_worker,
+                             args=(target, seeded_id, seeded["task"]),
+                             daemon=True).start()
+
+    return result
+
+
+# --- workspace SSE --------------------------------------------------------
+
 @app.get("/api/studio/agents/{agent_id}/events")
 async def api_workspace_events(agent_id: str, request: Request):
-    from fastapi import HTTPException
-    from fastapi.responses import StreamingResponse
-    from avis.agents import BY_ID
-    if agent_id not in BY_ID:
+    if agent_id not in studio.NAMES:
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    session_id = request.query_params.get("session_id")
+    session = studio.get_session(agent_id, session_id)
+    if session is None:
+        session = studio.get_session(agent_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="no session for this agent")
 
     queue: asyncio.Queue = asyncio.Queue()
-    store = _workspace_store.setdefault(agent_id, _fresh_ws_store())
-    if not store["conversation"]:
-        _push_ws_event(agent_id, {"type": "assistant_message", "agent_id": agent_id,
-                                  "timestamp": _iso(),
-                                  "content": studio.greeting_reply(agent_id)})
-    for ev in store["conversation"]:
+    for ev in session["conversation"]:
         queue.put_nowait(ev)
     _workspace_queues.append(queue)
 
@@ -569,39 +419,14 @@ async def api_workspace_events(agent_id: str, request: Request):
             _workspace_queues.remove(queue)
 
     return StreamingResponse(gen(), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+                             headers={"Cache-Control": "no-cache",
+                                      "X-Accel-Buffering": "no"})
 
 
-@app.get("/api/state")
-def api_state() -> dict[str, Any]:
-    with _graph_lock:
-        report = _state.get("review_report") or {}
-        return {"running": _state.get("running", False),
-                "topic": _state.get("topic"),
-                "review_decision": report.get("decision"),
-                "checks": report.get("checks"),
-                "iterations": _state.get("iterations"),
-                "revocations": len(_state.get("revocations", [])),
-                "visual_assignments": len(_state.get("visual_assignments", [])),
-                "llm_enabled": os.environ.get("AVIS_LLM_ENABLED", "1") == "1",
-                "auto_approve": _auto_approve}
-
-
-@app.get("/api/examples")
-def api_examples() -> dict[str, Any]:
-    files = sorted(p.name for p in EXAMPLES.glob("*.json")) if EXAMPLES.exists() else []
-    return {"examples": files}
-
-
-@app.get("/api/pending")
-def api_pending() -> dict[str, Any]:
-    with _graph_lock:
-        return {"question": _pending_question, "resume": bool(_pending_resume)}
-
+# --- knowledge / raw events ----------------------------------------------
 
 @app.get("/api/knowledge")
 def api_knowledge() -> dict[str, Any]:
-    import avis.knowledge as knowledge
     return {"runs": knowledge.list_runs(),
             "corpus": knowledge.load_corpus()[:300],
             "corpus_total": len(knowledge.load_corpus())}
@@ -609,15 +434,12 @@ def api_knowledge() -> dict[str, Any]:
 
 @app.post("/api/knowledge/retrieve")
 def api_knowledge_retrieve(payload: dict[str, Any]) -> dict[str, Any]:
-    import avis.knowledge as knowledge
     query = str(payload.get("query", ""))[:200]
     return {"query": query, "results": knowledge.retrieve(query)}
 
 
 @app.get("/api/events")
 async def api_events(request: Request):
-    from fastapi.responses import StreamingResponse
-
     queue: asyncio.Queue = asyncio.Queue()
     for ev in events.bus.history():
         queue.put_nowait(ev)
@@ -638,90 +460,24 @@ async def api_events(request: Request):
             _sse_queues.remove(queue)
 
     return StreamingResponse(gen(), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+                             headers={"Cache-Control": "no-cache",
+                                      "X-Accel-Buffering": "no"})
 
 
-@app.post("/api/run")
-async def api_run(payload: dict[str, Any]) -> dict[str, Any]:
-    global _state, _auto_approve
-    topic = payload.get("topic", "Default topic")
-    ref = payload.get("reference_analysis")
-    if ref:
-        p = Path(ref)
-        if p.is_absolute() or ".." in p.parts or p.suffix != ".json":
-            return {"ok": False, "error": "reference_analysis must be a filename inside examples/"}
-        candidate = (EXAMPLES / p.name).resolve()
-        if not str(candidate).startswith(str(EXAMPLES.resolve())):
-            return {"ok": False, "error": "reference_analysis must live in examples/"}
-        ref = str(candidate)
-    os.environ["AVIS_LLM_ENABLED"] = "1" if payload.get("llm", False) else "0"
-    with _graph_lock:
-        _auto_approve = bool(payload.get("auto_approve", False))
-        _state = g.seed_state(topic, reference_file=ref)
-        _state["running"] = True
-
-    def _worker() -> None:
-        try:
-            final = g.run(_graph, {k: v for k, v in _state.items() if k != "running"},
-                          _remote_approver)
-            with _graph_lock:
-                _state.update(final)
-                _state["running"] = False
-        except Exception as e:
-            events.bus.emit("server", "error", f"run failed: {e}")
-            with _graph_lock:
-                _state["running"] = False
-
-    threading.Thread(target=_worker, daemon=True).start()
-    return {"ok": True, "topic": topic}
+@app.get("/api/examples")
+def api_examples() -> dict[str, Any]:
+    files = sorted(p.name for p in EXAMPLES.glob("*.json")) if EXAMPLES.exists() else []
+    return {"examples": files}
 
 
-@app.post("/api/answer")
-async def api_answer(payload: dict[str, Any]) -> dict[str, Any]:
-    """Resume the pending interrupt with the CEO's answer ('approve' to pass)."""
-    global _pending_question
-    if not _pending_resume:
-        return {"ok": False, "error": "no pending interrupt"}
-    fn = _pending_resume.pop()
-    _pending_question = {}
-    fn(payload.get("resume", "rejected"))
-    return {"ok": True}
+# keep for backward-compat (returns empty - no run flow)
+@app.get("/api/state")
+def api_state() -> dict[str, Any]:
+    return {"running": False, "topic": None, "review_decision": None,
+            "iterations": 0, "revocations": 0, "visual_assignments": 0,
+            "llm_enabled": brain_mod.model_configured(), "auto_approve": False}
 
 
-def _remote_approver(question: dict[str, Any]) -> Any:
-    global _pending_question
-    if _auto_approve:
-        events.bus.emit("CEO", "note", "auto-approve (demo mode)")
-        return "approve"
-    events.bus.emit("CEO", "interrupt", "web approval pending — answer in the browser")
-    _pending_question = question
-    ev = threading.Event()
-    result: list[Any] = []
-
-    def _set(v: Any) -> None:
-        result.append(v)
-        try:
-            _pending_resume.remove(_set)
-        except ValueError:
-            pass
-        ev.set()
-
-    _pending_resume.append(_set)
-    ev.wait(timeout=600)
-    return result[0] if result else "rejected: timeout"
-
-
-@app.get("/api/js/mermaid.min.js")
-def mermaid_js() -> Any:
-    """Offline fallback — fetch and save mermaid.min.js next to static/index.html
-    to view the graph without internet."""
-    return _static_jslib()
-
-
-def _static_jslib() -> Any:
-    from fastapi.responses import PlainTextResponse
-    p = STATIC / "mermaid.min.js"
-    if p.exists():
-        return PlainTextResponse(p.read_text(), media_type="application/javascript")
-    return PlainTextResponse("console.error('mermaid.min.js not downloaded — view needs internet');",
-                             media_type="application/javascript")
+@app.get("/api/pending")
+def api_pending() -> dict[str, Any]:
+    return {"question": None, "resume": False}
