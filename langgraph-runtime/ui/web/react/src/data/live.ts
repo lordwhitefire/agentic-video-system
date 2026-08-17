@@ -233,6 +233,25 @@ export function compactSession(
   return postStudio(agentId, "/compact", { session_id: sessionId, answer });
 }
 
+// --- W7: notifications -----------------------------------------------------
+
+export type LiveNotification = {
+  id: string;
+  title: string;
+  time: string;
+  read: boolean;
+  kind: string;
+};
+
+export async function fetchNotifications(
+  limit: number = 20,
+): Promise<LiveNotification[] | null> {
+  const data = await fetchJson<{ notifications: LiveNotification[] }>(
+    `/api/notifications?limit=${limit}`,
+  );
+  return data?.notifications ?? null;
+}
+
 // --- W2: agent creation -----------------------------------------------------
 
 export type CreateAgentPayload = {

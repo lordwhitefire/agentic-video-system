@@ -41,5 +41,10 @@ class _Bus:
         with self._lock:
             return [e for e in self._history if e["ts"] >= since]
 
+    def recent(self, limit: int = 50) -> list[dict[str, Any]]:
+        """Get the most recent events (for notifications)."""
+        with self._lock:
+            return self._history[-limit:]
+
 
 bus = _Bus()

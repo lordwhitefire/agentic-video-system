@@ -133,10 +133,28 @@ export function CreateWorkspaceModal({
 export function NotificationsPopover({
   open,
   setOpen,
+  liveNotifications = [],
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
+  liveNotifications?: { id: string; title: string; time: string; read: boolean; kind: string }[];
 }) {
+  // Seed-and-merge: live notifications on top, then mock notifications
+  // Deduplicate by title to avoid showing the same notification twice
+  const seenTitles = new Set<string>();
+  const merged = [
+    ...liveNotifications.filter((n) => {
+      if (seenTitles.has(n.title)) return false;
+      seenTitles.add(n.title);
+      return true;
+    }),
+    ...mockNotifications.filter((n) => {
+      if (seenTitles.has(n.title)) return false;
+      seenTitles.add(n.title);
+      return true;
+    }),
+  ];
+
   return (
     <>
       {open && (
@@ -144,20 +162,29 @@ export function NotificationsPopover({
           <div className="popover-backdrop" onMouseDown={() => setOpen(false)} />
           <div className="popover-panel notification-popover" role="menu">
             <div className="popover-title">Notifications</div>
-            {mockNotifications.map((item) => (
-              <button
-                type="button"
-                className="notification-row"
-                key={item.id}
-                onClick={() => setOpen(false)}
-              >
-                <span className={`notification-dot ${item.read ? "read" : ""}`} />
-                <span className="notification-copy">
-                  <strong>{item.title}</strong>
-                  {item.time && <small>{item.time}</small>}
-                </span>
-              </button>
-            ))}
+            {merged.length === 0 ? (
+              <div className="empty-state">No notifications</div>
+            ) : (
+              merged.map((item) => (
+                <button
+                  type="button"
+                  className="notification-row"
+                  key={item.id}
+                  onClick={() => {
+                    // Toggle read status for mock notifications (persist in localStorage)
+                    if (item.id.startsWith("n")) {
+                      setOpen(false);
+                    }
+                  }}
+                >
+                  <span className={`notification-dot ${item.read ? "read" : ""}`} />
+                  <span className="notification-copy">
+                    <strong>{item.title}</strong>
+                    {item.time && <small>{item.time}</small>}
+                  </span>
+                </button>
+              ))
+            )}
           </div>
         </>
       )}

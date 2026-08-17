@@ -51,6 +51,7 @@ import {
   createAgent,
   createProject,
   eventsToMessages,
+  fetchNotifications,
   fetchProjects,
   fetchRegistry,
   fetchSnapshot,
@@ -68,6 +69,7 @@ import {
   uploadResource,
   type CapabilityRow,
   type LiveMemorySlot,
+  type LiveNotification,
   type LiveProject,
   type LiveSnapshot,
   type ToolRow,
@@ -203,9 +205,22 @@ export default function AvisWorkspace() {
         setSnapshotCache((current) => ({ ...current, [snap.agent.id]: snap }));
       }
     });
+    fetchNotifications().then((notifs) => {
+      if (!cancelled && notifs) setLiveNotifications(notifs);
+    });
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // Poll for live notifications (W7)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchNotifications().then((notifs) => {
+        if (notifs) setLiveNotifications(notifs);
+      });
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -216,6 +231,7 @@ export default function AvisWorkspace() {
   const [drawer, setDrawer] = useState<DrawerName | null>(null);
   const [popover, setPopover] = useState<PopoverName | null>(null);
   const [railOpen, setRailOpen] = useState(false);
+  const [liveNotifications, setLiveNotifications] = useState<LiveNotification[]>([]);
 
   const [resourceDetail, setResourceDetail] = useState<{ category: string; item: string } | null>(null);
   const [addResourceCategory, setAddResourceCategory] = useState<string | null>(null);
@@ -1101,6 +1117,7 @@ export default function AvisWorkspace() {
       <NotificationsPopover
         open={popover === "notifications"}
         setOpen={(open) => setPopover(open ? "notifications" : null)}
+        liveNotifications={liveNotifications}
       />
 
       <ProfileMenu

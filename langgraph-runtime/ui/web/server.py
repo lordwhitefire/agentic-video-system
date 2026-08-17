@@ -594,6 +594,46 @@ async def api_workspace_subagent_spawn(agent_id: str, payload: dict[str, Any]) -
     return studio.spawn_subagent(agent_id, session_id, subagent_id, task)
 
 
+@app.get("/api/notifications")
+async def api_notifications(limit: int = 20) -> dict[str, Any]:
+    """Get recent events as notifications (W7: seed + live merge).
+    Returns events from the bus that are relevant for human attention:
+    handoff requests, approval asks, session completions, errors."""
+    import avis.events as events
+    recent = events.bus.recent(limit)
+    notifications = []
+    for ev in reversed(recent):  # newest first
+        kind = ev.get("kind")
+        agent = ev.get("agent", "")
+        text = ev.get("text", "")
+        ts = ev.get("ts", 0)
+        # Map event kinds to human-readable notifications
+        title = ""
+        if kind == "handoff_request":
+            target = ev.get("target", "")
+            title = f"Handoff requested → {target}"
+        elif kind == "approval_request":
+            title = f"Approval required: {text[:80]}"
+        elif kind == "error":
+            title = f"Error: {text[:80]}"
+        elif kind == "status" and "completed" in text.lower():
+            title = f"Session completed: {agent}"
+        elif kind == "tool_result" and ev.get("error"):
+            title = f"Tool failed: {ev.get('tool', {}).get('name', 'unknown')}"
+        elif kind == "handoff_result":
+            title = f"Handoff {text}: {ev.get('handoff', {}).get('target', '')}"
+        else:
+            continue
+        notifications.append({
+            "id": f"evt-{int(ts * 1000)}",
+            "title": title,
+            "time": time.strftime("%H:%M", time.localtime(ts)),
+            "read": False,
+            "kind": kind,
+        })
+    return {"notifications": notifications}
+
+
 # --- workspace SSE --------------------------------------------------------
 
 @app.get("/api/studio/agents/{agent_id}/events")
