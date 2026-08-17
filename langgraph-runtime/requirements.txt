@@ -2,3 +2,4 @@ langgraph>=1.1
 fastapi>=0.110
 uvicorn[standard]>=0.29
 httpx
+python-multipart>=0.0.9

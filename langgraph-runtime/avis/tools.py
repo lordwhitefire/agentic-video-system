@@ -208,10 +208,11 @@ _s("retrieve_knowledge", "Retrieve the system's persisted knowledge base "
   "recorded runs.",
   {"query": {"type": "string"}}, ["query"])
 _s("subagent", "Spawn a TRANSIENT subagent to do work for you and return its "
-  "final message. Class must be explore (read-only investigation), scout "
-  "(read-only external research), or general (full toolset helper). NEVER "
-  "spawn a primary agent — refused. Depth is capped by the runtime.",
-  {"class": {"type": "string", "enum": ["explore", "scout", "general"]},
+  "final message. Class is one of the named sub-agents (e.g. audience-analyzer, "
+  "clip-cutter), or explore (read-only investigation), scout (read-only external "
+  "research), or general (full toolset helper). NEVER spawn a primary agent — "
+  "refused. Depth is capped by the runtime.",
+  {"class": {"type": "string", "enum": ["explore", "scout", "general"] + agents_mod.SUBAGENT_IDS},
    "task": {"type": "string", "description": "the investigation task, with everything it needs"},
    "toolset": {"type": "array", "items": {"type": "string"},
                "description": "optional extra tool names"}},
@@ -562,10 +563,15 @@ def read_run_file(state: dict[str, Any], args: list[Any]) -> dict[str, Any]:
 # --------------------------------------------------------------------------
 
 def tool_names(agent_id: str, role: str = "primary") -> list[str]:
-    if role in SUBAGENT_CLASSES:
+    if role in SUBAGENT_CLASSES or role in agents_mod.SUBAGENT_IDS:
         table = {"explore": EXPLORE_TOOLS, "scout": SCOUT_TOOLS,
                  "general": GENERAL_TOOLS}
-        return list(table[role])
+        if role in table:
+            return list(table[role])
+        # a named sub-agent: transient toolset (never handoff / capability
+        # creation) plus its own listed tools
+        own = list(agents_mod.BY_ID.get(agent_id, {}).get("tools") or [])
+        return [t for t in GENERAL_TOOLS if t not in own] + own
     names = list(CORE_TOOLS)
     names += list(agents_mod.BY_ID.get(agent_id, {}).get("tools") or [])
     for cap in load_capabilities(agent_id):

@@ -1,13 +1,15 @@
-"""Web API smoke tests — graph view, run flow (interactive + auto), RAG endpoints."""
+"""Web API smoke tests — registry, workspace, examples, knowledge, and the
+backward-compat stubs. The old Run flow (/api/run, /api/graph, /api/state
+run polling) is gone: only the human drives work now."""
 
 from __future__ import annotations
 
-import os
 import time
 
 import pytest
 from fastapi.testclient import TestClient
 
+import avis.agents as agents
 import avis.knowledge as knowledge
 from ui.web import server
 
@@ -25,77 +27,50 @@ def client(tmp_path, monkeypatch):
         yield c
 
 
-def test_index_and_graph(client) -> None:
+def test_index_serves_dashboard(client) -> None:
     r = client.get("/")
-    assert r.status_code == 200 and "Agents at a Glance" in r.text
-    g = client.get("/api/graph").json()
-    assert "mermaid" in g and "strategist" in g["mermaid"]
+    assert r.status_code == 200
+    assert "Agent Dashboard" in r.text
 
 
-def test_agents_and_examples(client) -> None:
-    agents = client.get("/api/agents").json()["agents"]
-    assert len(agents) == 17
+def test_registry_endpoint(client) -> None:
+    reg = client.get("/api/agents").json()["agents"]
+    assert len(reg) == 14
+    assert {a["id"] for a in reg} == set(agents.BY_ID)
+    primaries = [a for a in reg if a["tier"] == "primary"]
+    assert len(primaries) == 8
+
+
+def test_examples_endpoint(client) -> None:
     examples = client.get("/api/examples").json()["examples"]
     assert any("mbappe" in e for e in examples)
 
 
-def test_auto_approve_run_passes(client) -> None:
-    r = client.post("/api/run", json={
-        "topic": "Why Mbappé shines on the biggest stage",
-        "reference_analysis": "examples/reference-analysis-mbappe.json",
-        "llm": False, "auto_approve": True})
+def test_workspace_api_roundtrip(client) -> None:
+    r = client.post("/api/studio/agents/video-strategy/messages",
+                    json={"message": "Hello."})
     assert r.json()["ok"] is True
-    for _ in range(60):
-        st = client.get("/api/state").json()
-        if not st["running"]:
+    snap = None
+    for _ in range(80):
+        snap = client.get("/api/studio/agents/video-strategy").json()
+        if snap["active_session"]["status"] != "working":
             break
-        time.sleep(0.25)
-    assert st["review_decision"] == "pass"
-    assert st["visual_assignments"] == 60
-    assert len(client.get("/api/knowledge").json()["runs"]) >= 1
+        time.sleep(0.1)
+    assert snap["active_session"]["status"] == "idle"
+    assert snap["agent"]["id"] == "video-strategy"
 
 
-def test_interactive_approval_flow(client) -> None:
-    client.post("/api/run", json={
-        "topic": "t", "reference_analysis": "examples/reference-analysis-mbappe.json",
-        "llm": False, "auto_approve": False})
-    for _ in range(40):
-        p = client.get("/api/pending").json()
-        if p["resume"]:
-            break
-        time.sleep(0.25)
-    assert p["resume"] is True
-    assert "script" in p["question"] or "proposals" in p["question"]
-    client.post("/api/answer", json={"resume": "approve"})
-    for _ in range(40):
-        p = client.get("/api/pending").json()
-        if p["resume"]:
-            break
-        time.sleep(0.25)
-    client.post("/api/answer", json={"resume": "approve"})
-    for _ in range(60):
-        st = client.get("/api/state").json()
-        if not st["running"]:
-            break
-        time.sleep(0.25)
-    assert st["review_decision"] == "pass"
+def test_run_flow_endpoints_are_backward_compat_stubs(client) -> None:
+    st = client.get("/api/state").json()
+    assert st["running"] is False and st["review_decision"] is None
+    p = client.get("/api/pending").json()
+    assert p["resume"] is False
 
 
 def test_knowledge_retrieval_endpoint(client) -> None:
-    client.post("/api/run", json={"topic": "t",
-        "reference_analysis": "examples/reference-analysis-mbappe.json",
-        "auto_approve": True, "llm": False})
-    for _ in range(60):
-        st = client.get("/api/state").json()
-        if not st["running"]:
-            break
-        time.sleep(0.25)
+    knowledge.record_run({"topic": "t", "decisions": [
+        {"agent": "video-strategy", "text": "asset bundle confirmed for the film"}]},
+        run_id="run-0001")
     r = client.post("/api/knowledge/retrieve", json={"query": "asset bundle"}).json()
     assert isinstance(r["results"], list)
     assert any("bundle" in h["text"] for h in r["results"])
-
-
-def test_run_rejects_path_escape(client) -> None:
-    r = client.post("/api/run", json={"topic": "t",
-        "reference_analysis": "../../etc/passwd"})
-    assert r.json()["ok"] is False

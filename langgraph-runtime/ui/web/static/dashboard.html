@@ -59,6 +59,9 @@
   .tag.purple{border-color:#3a2a5c;color:var(--purple)}
   .tag.green{border-color:#1c4530;color:var(--green)}
   .tag.amber{border-color:#5c4a12;color:var(--amber)}
+  .tag.dim{border-color:transparent;background:transparent;color:var(--dim);
+           font-style:italic;padding:2px 6px;font-size:9px}
+  .subs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
   .agent .stats{display:flex;gap:16px;margin-top:10px;padding-top:10px;
                 border-top:1px solid var(--border);font-size:11px;color:var(--dim)}
   .agent .stats b{color:var(--text)}
@@ -175,6 +178,11 @@ function applySnapshot(snap){
         tierTag(a.tier) +
         (a.handoff_pending ? '<span class="tag purple">handoff</span>' : '') +
       '</div>' +
+      (a.sub_agents && a.sub_agents.length
+        ? '<div class="subs">' + a.sub_agents.map(function (s) {
+            return '<span class="tag dim">' + esc(s) + '</span>';
+          }).join('') + '</div>'
+        : '') +
       '<div class="stats">' +
         '<span><b>' + (a.session_count || 0) + '</b> sessions</span>' +
         (a.last_activity_at ? '<span>last activity ' + esc(fmt(a.last_activity_at)) + '</span>' : '') +

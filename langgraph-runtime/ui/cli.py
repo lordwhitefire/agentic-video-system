@@ -47,7 +47,7 @@ def main() -> None:
     import argparse
 
     ap = argparse.ArgumentParser(description="Agentic Video System console")
-    ap.add_argument("--agent", default="strategist",
+    ap.add_argument("--agent", default="video-strategy",
                     help="which primary agent to talk to")
     ap.add_argument("--mode", default="plan", choices=["plan", "build"])
     ap.add_argument("--list-agents", action="store_true")

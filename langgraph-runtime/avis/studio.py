@@ -37,32 +37,37 @@ import avis.tools as tools
 # --------------------------------------------------------------------------
 
 NAMES: dict[str, str] = {
-    "strategist": "Strategist", "analyzer": "Analyzer", "planner": "Planner",
-    "researcher": "Researcher", "audio-lead": "Audio Lead", "tts": "TTS",
-    "editor": "Editor", "graphics": "Graphics", "animation": "Animation",
-    "animated-graphics": "Animated Graphics", "video-effects": "Video Effects",
-    "clips": "Clips", "images": "Images", "reviewer": "Reviewer",
-    "watcher-blocker": "Watcher / Blocker", "investigator": "Investigator",
-    "recruiter": "Recruiter",
+    "video-strategy": "Video Strategy Agent", "creative-director": "Creative Director Agent",
+    "script-narrative": "Script & Narrative Agent", "visual-design": "Visual Design Agent",
+    "scene-planning": "Scene Planning Agent", "asset-media": "Asset & Media Agent",
+    "review-feedback": "Review & Feedback Agent", "delivery-export": "Delivery & Export Agent",
+    "audience-analyzer": "Audience Analyzer", "competitor-analyzer": "Competitor Analyzer",
+    "market-research-analyzer": "Market Research Analyzer", "shot-analyzer": "Shot Analyzer",
+    "clip-cutter": "Clip Cutter", "continuity-checker": "Continuity Checker",
 }
 
 DESCRIPTIONS: dict[str, str] = {
-    "strategist": "Strategy & direction", "analyzer": "Analysis & evaluation",
-    "planner": "Planning & scripting", "researcher": "Sourcing & asset research",
-    "audio-lead": "Audio direction & TTS planning", "tts": "Voiceover & audio rendering",
-    "editor": "Cut & visual assembly", "graphics": "Static graphic overlays",
-    "animation": "Motion design", "animated-graphics": "Animated graphic overlays",
-    "video-effects": "Effect design & substitution", "clips": "Video clip sourcing",
-    "images": "Image sourcing & overlays", "reviewer": "Quality review & fidelity scoring",
-    "watcher-blocker": "Law watch & blocking", "investigator": "Law violation investigation",
-    "recruiter": "Personnel & recruitment",
+    "video-strategy": "Strategy & direction", "creative-director": "Creative direction",
+    "script-narrative": "Story & scripting", "visual-design": "Visual language & design",
+    "scene-planning": "Shot-by-shot planning", "asset-media": "Sourcing & asset management",
+    "review-feedback": "Quality review & feedback", "delivery-export": "Export & delivery",
+    "audience-analyzer": "Audience research specialist", "competitor-analyzer": "Competitor research specialist",
+    "market-research-analyzer": "Market research specialist", "shot-analyzer": "Shot analysis specialist",
+    "clip-cutter": "Footage selection specialist", "continuity-checker": "Continuity checking specialist",
 }
 
 CONVERSATION_TYPES = [
     "user_message", "assistant_message", "reasoning_summary",
     "tool_call", "tool_result", "approval_request", "approval_result",
-    "handoff_request", "handoff_result", "error", "status",
+    "handoff_request", "handoff_result", "compact_request", "compact_result",
+    "error", "status",
 ]
+
+# Compaction (opencode-style): suggest when ~COMPACT_EVERY user messages have
+# passed since the last compaction; re-suggest REASK_EVERY messages after a "no".
+COMPACT_EVERY = 20
+REASK_EVERY = 10
+COMPACT_KEEP_RECENT = 16
 
 SENSITIVE_KEYS = {"api_key", "apikey", "authorization", "access_token",
                   "refresh_token", "password", "secret", "cookie"}
@@ -79,12 +84,21 @@ def sanitize(value: Any) -> Any:
 
 
 def registry() -> list[dict[str, Any]]:
-    """Display registry: runtime id + studio display metadata."""
+    """Display registry: runtime id + studio display metadata. Includes the
+    named sub-agents (with their parent) and any created agents (W2) — the
+    whole org chart."""
     out = []
-    for a in agents_mod.AGENTS:
-        out.append({"id": a["id"], "name": NAMES.get(a["id"], a["id"]),
-                    "description": DESCRIPTIONS.get(a["id"], a["department"]),
-                    "department": a["department"], "tier": a["tier"]})
+    for a in agents_mod.ALL_AGENTS:
+        entry = {"id": a["id"],
+                 "name": a.get("name") or NAMES.get(a["id"], a["id"]),
+                 "description": a.get("description")
+                 or DESCRIPTIONS.get(a["id"], a["department"]),
+                 "department": a["department"], "tier": a["tier"]}
+        if a["tier"] == "subagent":
+            entry["parent"] = a.get("parent")
+        if a.get("created"):
+            entry["created"] = True
+        out.append(entry)
     return out
 
 
@@ -109,22 +123,27 @@ def _workspace(agent_id: str) -> dict[str, Any]:
 
 def _session_seed(task: str, run_id: Optional[str] = None) -> dict[str, Any]:
     """Fresh session state: no artifacts (Law 12 read failures are honest),
-    default voice profile for tts_plan, and an empty evidence log."""
+    default voice profile for tts_plan, an empty evidence log, and an empty
+    workspace-memory block (the editor slots: brief / audience / brand)."""
     return {"topic": task, "events": [], "decisions": [], "edits": [],
             "revocations": [], "substitutions": [], "sourcing_proposals": [],
             "visual_assignments": [], "voice_profile": {
                 "default_engine": os.environ.get("AVIS_TTS_DEFAULT_ENGINE", "local"),
                 "authorized_engines": ["local"],
                 "loudness_target_lufs": -16},
+            "memory": {"brief": "", "audience": "", "brand": ""},
             "run_id": run_id}
 
 
 def new_session(agent_id: str, task: str, mode: str = "plan",
                 title: Optional[str] = None,
                 run_id: Optional[str] = None,
-                sender: Optional[str] = None) -> dict[str, Any]:
+                sender: Optional[str] = None,
+                project: Optional[str] = None) -> dict[str, Any]:
     """Create a NEW independent session in the agent's workspace. The old
-    session is never replaced or touched — it stays in the workspace history."""
+    session is never replaced or touched — it stays in the workspace history.
+    A session may be tagged with a project (W3); the engine reads it for the
+    workspace-context seed on every turn."""
     ws = _workspace(agent_id)
     now = time.time()
     sid = f"{agent_id}-{int(now * 1000)}"
@@ -135,9 +154,11 @@ def new_session(agent_id: str, task: str, mode: str = "plan",
     session: dict[str, Any] = {
         "id": sid, "title": title, "created_at": _iso(now),
         "last_activity_at": _iso(now), "mode": mode, "status": "idle",
-        "task": task, "run_id": run_id,
+        "task": task, "run_id": run_id, "project": project or None,
         "conversation": [], "state": _session_seed(task, run_id),
         "handoff": None, "approval": None,
+        "summary": "", "compact_last_count": 0, "compact_last_no": None,
+        "pending_compact": False,
         "_approval_event": None, "stop_requested": False,
     }
     with _store_lock:
@@ -146,17 +167,30 @@ def new_session(agent_id: str, task: str, mode: str = "plan",
     return session
 
 
-def list_sessions(agent_id: str) -> list[dict[str, Any]]:
+def list_sessions(agent_id: str, project: Optional[str] = None) -> list[dict[str, Any]]:
+    """Sessions of the agent, optionally scoped to one project (W6.7: a
+    session belongs to exactly one project; the UI shows the project's list)."""
     ws = _workspace(agent_id)
     with _store_lock:
         out = []
         for s in ws["sessions"].values():
+            if project is not None and s.get("project") != project:
+                continue
             out.append({"id": s["id"], "title": s["title"], "status": s["status"],
                         "mode": s["mode"], "last_activity_at": s["last_activity_at"],
                         "handoff_pending": bool(s.get("handoff")),
-                        "run_id": s.get("run_id")})
+                        "run_id": s.get("run_id"), "project": s.get("project")})
         out.sort(key=lambda s: s["last_activity_at"], reverse=True)
         return out
+
+
+def get_project_session(agent_id: str, project: Optional[str]) -> Optional[dict[str, Any]]:
+    """The most recent session of a project (or None). Landing on a project
+    shows its latest conversation (W6.7)."""
+    if not project:
+        return None
+    sessions = list_sessions(agent_id, project)
+    return get_session(agent_id, sessions[0]["id"]) if sessions else None
 
 
 def get_session(agent_id: str, session_id: Optional[str] = None) -> Optional[dict[str, Any]]:
@@ -173,6 +207,85 @@ def activate_session(agent_id: str, session_id: str) -> bool:
             return False
         ws["active_session_id"] = session_id
         return True
+
+
+# --- compaction (W6.7) ----------------------------------------------------
+
+def _user_message_count(session: dict[str, Any]) -> int:
+    return sum(1 for e in session["conversation"]
+               if e.get("type") == "user_message")
+
+
+def _summarize(events: list[dict[str, Any]], prior: str) -> str:
+    """Summarize older conversation events via the model (incremental: folds
+    the previous summary in). Returns "" when no model is configured."""
+    if not brain_mod.model_configured():
+        return ""
+    lines = []
+    for e in events[-40:]:
+        t = e.get("type")
+        if t == "user_message":
+            lines.append(f"human: {e.get('content', '')}")
+        elif t == "assistant_message":
+            lines.append(f"agent: {e.get('content', '')}")
+        elif t == "tool_result":
+            lines.append(f"tool {e.get('tool', {}).get('name', '')}: "
+                         f"{e.get('content', '')[:80]}")
+    if not lines:
+        return prior
+    if prior:
+        lines = [f"previous summary: {prior}"] + lines
+    try:
+        text, _calls = brain_mod.get_brain().converse_with_tools(
+            "You summarize conversations concisely.",
+            "Summarize in 2-4 sentences, keeping decisions, outcomes, and "
+            "open items:\n\n" + "\n".join(lines), [])
+        return (text or "").strip()
+    except brain_mod.ModelUnreachable:
+        return prior
+
+
+def compact_session(agent_id: str, session_id: str) -> dict[str, Any]:
+    """Summarize everything before the last COMPACT_KEEP_RECENT events into
+    session['summary'] (which the prompt reads as the conversation summary).
+    Without a model, trims honestly with a placeholder note."""
+    session = get_session(agent_id, session_id)
+    if session is None:
+        return {"ok": False, "error": "no such session"}
+    if session["status"] in ("working", "waiting", "stopping"):
+        return {"ok": False, "error": "agent is running — wait or stop it"}
+    conv = session["conversation"]
+    older = conv[:max(0, len(conv) - COMPACT_KEEP_RECENT)]
+    session["summary"] = _summarize(older, session.get("summary") or "")
+    if not session.get("summary"):
+        session["summary"] = "(earlier messages were trimmed)"
+    session["compact_last_count"] = _user_message_count(session)
+    session["compact_last_no"] = None
+    session["pending_compact"] = False
+    session["conversation"].append({
+        "type": "compact_result", "agent_id": "system", "timestamp": _iso(),
+        "content": "The conversation was compacted — earlier messages were "
+                   "summarized." if older else
+                   "The conversation is still short — nothing to compact."})
+    return {"ok": True, "compacted": bool(older)}
+
+
+def answer_compact(agent_id: str, session_id: str, answer: str) -> dict[str, Any]:
+    """'yes' compacts now (also the manual Compact button); 'no' postpones
+    and re-arms the suggestion after REASK_EVERY more user messages."""
+    session = get_session(agent_id, session_id)
+    if session is None:
+        return {"ok": False, "error": "no such session"}
+    if answer == "yes":
+        return compact_session(agent_id, session_id)
+    if answer == "no":
+        session["compact_last_no"] = _user_message_count(session)
+        session["pending_compact"] = False
+        session["conversation"].append({
+            "type": "compact_result", "agent_id": "system", "timestamp": _iso(),
+            "content": "Kept the conversation as is — I'll suggest again later."})
+        return {"ok": True, "accepted": False}
+    return {"ok": False, "error": "answer must be 'yes' or 'no'"}
 
 
 def delete_session(agent_id: str, session_id: str) -> Optional[str]:
@@ -193,6 +306,144 @@ def delete_session(agent_id: str, session_id: str) -> Optional[str]:
 
 def touch(session: dict[str, Any]) -> None:
     session["last_activity_at"] = _iso()
+
+
+# workspace memory — the editor slots shown in the right rail. Empty slot =
+# "no real data yet" (the red X in the UI); real content updates the slot in
+# place and is included in the agent's context on every turn.
+MEMORY_SLOTS: list[tuple[str, str]] = [
+    ("brief", "Project Brief"),
+    ("audience", "Audience Insights"),
+    ("brand", "Brand Information"),
+]
+
+
+def set_session_memory(agent_id: str, session_id: str,
+                       memory: dict[str, Any]) -> Optional[str]:
+    session = get_session(agent_id, session_id)
+    if session is None:
+        return "no such session"
+    bad = set(memory) - {k for k, _ in MEMORY_SLOTS}
+    if bad:
+        return f"unknown memory keys: {', '.join(sorted(bad))}"
+    if not all(isinstance(v, str) for v in memory.values()):
+        return "memory values must be strings"
+    with _store_lock:
+        block = session["state"].setdefault("memory", {})
+        for k, v in memory.items():
+            block[k] = v.strip()[:2000]
+        touch(session)
+    return None
+
+
+# --------------------------------------------------------------------------
+# projects & resources (W3/W4 — real scopes, real files)
+# --------------------------------------------------------------------------
+
+PROJECTS_DIR = Path(__file__).resolve().parent.parent / "data" / "projects"
+RESOURCE_CATEGORIES = ["Knowledge Base", "Brand Kit", "Media Library",
+                       "Templates", "References"]
+_PROJECTS_LOCK = threading.Lock()
+
+
+def _project_slug(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-")
+
+
+def load_projects() -> dict[str, dict[str, Any]]:
+    """Persisted project meta from data/projects/*.json. The front-end's mock
+    project list is the seed; this store holds only REAL projects (W3)."""
+    with _PROJECTS_LOCK:
+        out: dict[str, dict[str, Any]] = {}
+        if PROJECTS_DIR.is_dir():
+            for f in sorted(PROJECTS_DIR.glob("*.json")):
+                try:
+                    p = json.loads(f.read_text())
+                    if isinstance(p, dict) and p.get("id"):
+                        out[str(p["id"])] = p
+                except (OSError, ValueError):
+                    continue
+        return out
+
+
+def get_project(project_id: str) -> Optional[dict[str, Any]]:
+    return load_projects().get(project_id)
+
+
+def list_resources(project_id: str) -> dict[str, list[dict[str, Any]]]:
+    """Real files per category under data/projects/<project>/resources/."""
+    root = PROJECTS_DIR / project_id / "resources"
+    out: dict[str, list[dict[str, Any]]] = {c: [] for c in RESOURCE_CATEGORIES}
+    if not root.is_dir():
+        return out
+    for cat in RESOURCE_CATEGORIES:
+        folder = root / cat
+        if not folder.is_dir():
+            continue
+        for f in sorted(folder.iterdir()):
+            if f.is_file():
+                out[cat].append({
+                    "name": f.name,
+                    "size": f.stat().st_size,
+                    "date": _iso(f.stat().st_mtime),
+                    "type": f.suffix.lstrip(".").lower() or "file",
+                })
+    return out
+
+
+def add_resource(project_id: str, category: str, filename: str,
+                 data: bytes) -> Optional[str]:
+    """Write one uploaded file. Returns an error message or None on success."""
+    if not get_project(project_id):
+        return f"unknown project: {project_id}"
+    if category not in RESOURCE_CATEGORIES:
+        return f"unknown category: {category}"
+    name = Path(filename).name.strip()
+    if not name or name in (".", ".."):
+        return "invalid filename"
+    folder = PROJECTS_DIR / project_id / "resources" / category
+    with _PROJECTS_LOCK:
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / name).write_bytes(data)
+    return None
+
+
+def get_resource_path(project_id: str, category: str,
+                      filename: str) -> Optional[Path]:
+    if category not in RESOURCE_CATEGORIES:
+        return None
+    p = (PROJECTS_DIR / project_id / "resources" / category
+         / Path(filename).name)
+    if not p.is_file():
+        return None
+    return p
+
+
+def projects_list() -> list[dict[str, Any]]:
+    """All real projects with their resource lists, newest first."""
+    out = []
+    for p in sorted(load_projects().values(),
+                    key=lambda x: x.get("created_at", ""), reverse=True):
+        out.append({**p, "resources": list_resources(p["id"])})
+    return out
+
+
+def create_project(name: str) -> tuple[Optional[dict[str, Any]], Optional[str]]:
+    """Create and persist a project. Returns (summary, error)."""
+    clean = name.strip()
+    if not clean:
+        return None, "a project name is required"
+    slug = _project_slug(clean)
+    if not slug:
+        return None, "a project name is required"
+    if get_project(slug):
+        return None, f"a project named '{clean}' already exists"
+    project = {"id": slug, "name": clean, "created_at": _iso()}
+    with _PROJECTS_LOCK:
+        PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
+        (PROJECTS_DIR / f"{slug}.json").write_text(
+            json.dumps(project, indent=2, ensure_ascii=False))
+    return {**project, "resources": {c: [] for c in RESOURCE_CATEGORIES}}, None
 
 
 # --------------------------------------------------------------------------
@@ -241,7 +492,27 @@ class _Engine:
         finally:
             tools.set_engine(prev)
 
+    def _maybe_compact_hint(self) -> None:
+        """OpenCode-style compaction suggestion: when enough user messages
+        have passed since the last compaction, raise pending_compact and emit
+        a compact_request event. A declined hint re-arms after REASK_EVERY
+        more messages — it keeps asking until the human compacts."""
+        if self.session is None or self.session.get("pending_compact"):
+            return
+        msgs = sum(1 for e in self.session["conversation"]
+                   if e.get("type") == "user_message")
+        last = self.session.get("compact_last_count", 0)
+        if msgs - last < COMPACT_EVERY:
+            return
+        last_no = self.session.get("compact_last_no")
+        if last_no is not None and msgs - last_no < REASK_EVERY:
+            return
+        self.session["pending_compact"] = True
+        self.emit("compact_request",
+                  content="This conversation is getting long — compact it?")
+
     def _run(self) -> dict[str, Any]:
+        self._maybe_compact_hint()
         system = self._build_system_prompt()
         user = self._build_user_prompt()
         defs = tools.definitions(self.agent_id, self.role)
@@ -335,8 +606,9 @@ class _Engine:
         session["approval"] = None
         self.emit("approval_result", content=status,
                   approval={"title": name, "status": status})
-        if session.get("stop_requested"):
-            session["stop_requested"] = False
+        # NOTE: do NOT clear stop_requested here — the run loop checks it right
+        # after this tool result and must still observe the stop (otherwise a
+        # stop issued while an approval is pending would silently be ignored).
         return answer == "approve"
 
     # --- prompt building ----------------------------------------------------
@@ -350,8 +622,8 @@ class _Engine:
                          "You exist for one task, return your findings, and vanish.")
             caps = ""
         else:
-            name = NAMES.get(self.agent_id, self.agent_id)
-            role = DESCRIPTIONS.get(self.agent_id, "an agent")
+            name = a.get("name") or NAMES.get(self.agent_id, self.agent_id)
+            role = a.get("description") or DESCRIPTIONS.get(self.agent_id, "an agent")
             identity = a.get("identity", f"I'm the {name} — {role}.")
             role_line = f"You are {name} — {role}. {identity}"
             caps = (f"Your capabilities: "
@@ -400,17 +672,37 @@ class _Engine:
         mem_lines = "\n".join(
             f"- {label}: {'available' if value else 'not produced yet'}"
             for label, value in _memory_labels(self.state))
+        ws_memory = self.state.get("memory") or {}
+        ws_lines = "\n".join(
+            f"- {label}: {ws_memory.get(key, '')}"
+            for key, label in MEMORY_SLOTS if ws_memory.get(key))
+        if not ws_lines:
+            ws_lines = "(workspace memory: none set yet)"
         history = "\n".join(self._history_lines())
         extra = ""
         if self.role == "primary" and self.session and self.session.get("run_id"):
             extra = (f"\n\nYou have received a handoff package in the folder "
                      f"data/runs/{self.session['run_id']}/ — examine it with "
                      "list_run / read_run_file and decide.")
+        project_block = ""
+        if self.session and self.session.get("project"):
+            p = get_project(str(self.session["project"]))
+            if p:
+                res = list_resources(p["id"])
+                res_lines = "\n".join(
+                    f"- {cat}: {', '.join(r['name'] for r in files) or '(empty)'}"
+                    for cat, files in res.items())
+                project_block = (f"\n\nactive project: {p['name']}\n"
+                                 f"project resources:\n{res_lines}")
         return "\n".join([
             f"task: {self.task}",
             "",
             "current project state:",
             mem_lines,
+            "",
+            "workspace memory:",
+            ws_lines,
+            project_block,
             extra,
             "",
             "conversation so far:",
@@ -419,6 +711,9 @@ class _Engine:
 
     def _history_lines(self) -> list[str]:
         out = []
+        summary = (self.session or {}).get("summary")
+        if summary:
+            out.append(f"(conversation summary) {summary[:400]}")
         for e in (self.session or {}).get("conversation", [])[-16:]:
             t = e.get("type")
             if t == "user_message":
@@ -496,15 +791,17 @@ def run_session(agent_id: str, session_id: str, task: str, state: dict[str, Any]
 # --------------------------------------------------------------------------
 
 def _engine_subagent(state: dict[str, Any], agent_id: str,
-                     args: list[Any]) -> dict[str, Any]:
+                      args: list[Any]) -> dict[str, Any]:
     eng = tools.current_engine()
     cls = str(args[0]) if args else ""
     task = str(args[1]) if len(args) > 1 else ""
     toolset = args[2] if len(args) > 2 and isinstance(args[2], list) else None
-    if cls not in tools.SUBAGENT_CLASSES:
+    if cls not in tools.SUBAGENT_CLASSES and \
+            agents_mod.BY_ID.get(cls, {}).get("tier") != "subagent":
         return {"error": f"subagent class must be one of "
-                         f"{sorted(tools.SUBAGENT_CLASSES)}"}
-    if cls in agents_mod.BY_ID:
+                         f"{sorted(tools.SUBAGENT_CLASSES)} or a named sub-agent "
+                         f"({sorted(agents_mod.SUBAGENT_IDS)})"}
+    if cls in agents_mod.PRIMARY_IDS:
         return {"error": f"'{cls}' is a primary agent — never a subagent"}
     if eng.parent_depth >= 3:
         return {"error": "subagent depth cap reached (3)"}
@@ -543,7 +840,7 @@ def _engine_handoff(state: dict[str, Any], agent_id: str,
         f"# Decisions\n\n{decisions or '(none recorded)'}\n")
     (folder / "context.json").write_text(json.dumps({
         "run_id": run_id, "sender": agent_id, "target": target,
-        "topic": state.get("topic"), "mode": eng.mode,
+        "topic": state.get("topic"), "mode": tools.current_engine().mode,
         "exists": {k: state.get(k) is not None for k in tools.ARTIFACT_KEYS},
         "missing": [k for k in tools.ARTIFACT_KEYS if state.get(k) is None],
     }, indent=2))
@@ -697,8 +994,9 @@ def _agent_header(agent_id: str) -> dict[str, Any]:
     a = agents_mod.BY_ID.get(agent_id, {})
     return {
         "id": agent_id,
-        "name": NAMES.get(agent_id, agent_id),
-        "description": DESCRIPTIONS.get(agent_id, a.get("department", "")),
+        "name": a.get("name") or NAMES.get(agent_id, agent_id),
+        "description": a.get("description")
+        or DESCRIPTIONS.get(agent_id, a.get("department", "")),
         "department": a.get("department", ""),
         "tier": a.get("tier", ""),
         "identity": a.get("identity", f"I'm the {NAMES.get(agent_id, agent_id)}."),
@@ -713,8 +1011,13 @@ def _agent_header(agent_id: str) -> dict[str, Any]:
 def _capabilities(agent_id: str) -> list[dict[str, Any]]:
     a = agents_mod.BY_ID.get(agent_id, {})
     out = [{"name": c, "created": False} for c in (a.get("capabilities") or [])]
-    out += [{"name": c.get("name", "Unnamed capability"), "created": True}
-            for c in tools.load_capabilities(agent_id)]
+    for c in tools.load_capabilities(agent_id):
+        entry = {"name": c.get("name", "Unnamed capability"), "created": True}
+        for k in ("description", "knowledge", "guidance", "skills", "tools",
+                  "resources", "created_at"):
+            if c.get(k):
+                entry[k] = c[k]
+        out.append(entry)
     return out
 
 
@@ -729,11 +1032,18 @@ def _agent_tools(agent_id: str) -> list[dict[str, Any]]:
 
 
 def build_workspace_snapshot(agent_id: str,
-                             session_id: Optional[str] = None) -> dict[str, Any]:
+                             session_id: Optional[str] = None,
+                             project: Optional[str] = None) -> dict[str, Any]:
     """The workspace contract: agent + session list + the active session's
-    conversation (one timeline)."""
-    session = get_session(agent_id, session_id)
-    sessions = list_sessions(agent_id)
+    conversation (one timeline). With `project`, the list is scoped to that
+    project and the active session is its most recent one (W6.7)."""
+    if session_id:
+        session = get_session(agent_id, session_id)
+    elif project:
+        session = get_project_session(agent_id, project)
+    else:
+        session = get_session(agent_id)
+    sessions = list_sessions(agent_id, project)
 
     active = None
     if session is not None:
@@ -741,6 +1051,7 @@ def build_workspace_snapshot(agent_id: str,
             "id": session["id"], "title": session["title"],
             "status": session["status"], "mode": session["mode"],
             "task": session["task"], "run_id": session.get("run_id"),
+            "project": session.get("project"),
             "conversation": session["conversation"][-200:],
             "pending_approval": None if not session.get("approval") else {
                 "id": session["approval"]["id"],
@@ -750,9 +1061,13 @@ def build_workspace_snapshot(agent_id: str,
                 "target": session["handoff"]["target"],
                 "prompt": session["handoff"]["prompt"][:300],
                 "decision": session["handoff"]["decision"]},
+            "pending_compact": bool(session.get("pending_compact")),
             "can_stop": session["status"] in ("working", "waiting"),
-            "memory": [{"label": label, "available": bool(session["state"].get(key))}
-                       for key, label in _memory_labels(session["state"])],
+            "memory": session["state"].get("memory") or {},
+            "memory_slots": [
+                {"key": key, "label": label,
+                 "available": bool((session["state"].get("memory") or {}).get(key))}
+                for key, label in MEMORY_SLOTS],
         }
     return {"agent": _agent_header(agent_id),
             "sessions": sessions,
@@ -770,19 +1085,28 @@ def _session_status(agent_id: str) -> str:
 
 
 def build_dashboard_snapshot() -> dict[str, Any]:
-    """Org overview (§8): every agent's workspace, sessions, and live
-    activity. There is no Run flow and no graph — only the human drives work."""
+    """Org overview (§8): every primary agent's workspace, sessions, live
+    activity, and its named sub-agents. There is no Run flow and no graph —
+    only the human drives work."""
+    primaries = [a for a in agents_mod.ALL_AGENTS if a["tier"] != "subagent"]
+    subagents = {a.get("parent"): [] for a in agents_mod.ALL_AGENTS}
+    for a in agents_mod.ALL_AGENTS:
+        if a["tier"] == "subagent" and a.get("parent") in subagents:
+            subagents[a["parent"]].append(a["id"])
     agents = []
-    for a in agents_mod.AGENTS:
+    for a in primaries:
         agent_id = a["id"]
         sessions = list_sessions(agent_id)
         active = get_session(agent_id)
         handoffs = [s for s in sessions if s["handoff_pending"]]
         last_ts = max((s["last_activity_at"] for s in sessions), default=None)
         agents.append({
-            "id": agent_id, "name": NAMES.get(agent_id, agent_id),
-            "description": DESCRIPTIONS.get(agent_id, a.get("department", "")),
+            "id": agent_id,
+            "name": a.get("name") or NAMES.get(agent_id, agent_id),
+            "description": a.get("description")
+            or DESCRIPTIONS.get(agent_id, a.get("department", "")),
             "department": a["department"], "tier": a["tier"],
+            "sub_agents": subagents.get(agent_id, []),
             "status": active["status"] if active else "idle",
             "session_count": len(sessions),
             "handoff_pending": len(handoffs),
@@ -807,9 +1131,10 @@ def _recent_activity(limit: int = 12) -> list[dict[str, Any]]:
     meta = {a["id"]: a for a in registry()}
     for e in reversed(events.bus.history()):
         agent_id = e.get("agent", "")
-        if agent_id not in meta and not str(agent_id).startswith(("explore", "scout", "general")):
+        lookup = agents_mod.resolve(agent_id)
+        if lookup not in meta and not str(agent_id).startswith(("explore", "scout", "general")):
             continue
-        name = (NAMES.get(agent_id, agent_id) if agent_id in meta
+        name = (NAMES.get(lookup, lookup) if lookup in meta
                 else f"subagent:{agent_id}")
         kind = e.get("kind", "note")
         text = e.get("text") or kind

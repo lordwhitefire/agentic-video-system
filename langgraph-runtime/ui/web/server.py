@@ -30,18 +30,22 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import threading
 import time
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
+from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
+import avis.agents as agents_mod
 import avis.brain as brain_mod
 import avis.events as events
 import avis.knowledge as knowledge
 import avis.studio as studio
+import avis.tools as tools
 
 STATIC = Path(__file__).parent / "static"
 EXAMPLES = Path(__file__).resolve().parent.parent.parent / "examples"
@@ -88,6 +92,11 @@ def _pump_workspace(ev: dict[str, Any]) -> None:
         lambda: [q.put_nowait(ev) for q in list(_workspace_queues)])
 
 
+def _known_agent(agent_id: str) -> bool:
+    """Any live agent — the built-in 14 or a created one (W2)."""
+    return agent_id in studio.NAMES or agent_id in agents_mod.BY_ID
+
+
 @app.on_event("startup")
 def _startup() -> None:
     global _loop
@@ -99,6 +108,10 @@ def _startup() -> None:
 
 # --- static pages ---------------------------------------------------------
 
+STATIC = Path(__file__).parent / "static"
+REACT_APP = STATIC / "react" / "index.html"
+
+
 def _static(name: str) -> HTMLResponse:
     return HTMLResponse((STATIC / name).read_text())
 
@@ -108,11 +121,28 @@ def index() -> HTMLResponse:
     return _static("dashboard.html")
 
 
+@app.get("/workspace")
+def workspace_root() -> HTMLResponse:
+    if not REACT_APP.exists():
+        raise HTTPException(
+            status_code=503,
+            detail="React workspace not built — run `npm install && npm run build` in ui/web/react",
+        )
+    return HTMLResponse(REACT_APP.read_text())
+
+
 @app.get("/workspace/{agent_id}")
 def workspace_view(agent_id: str) -> HTMLResponse:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
-    return _static("workspace.html")
+    return workspace_root()
+
+
+app.mount(
+    "/workspace/assets",
+    StaticFiles(directory=STATIC / "react" / "assets"),
+    name="workspace-assets",
+)
 
 
 # --- registry & agents ----------------------------------------------------
@@ -122,12 +152,115 @@ def api_agents() -> dict[str, Any]:
     return {"agents": studio.registry()}
 
 
+@app.post("/api/studio/agents")
+async def api_create_agent(payload: dict[str, Any]) -> dict[str, Any]:
+    """W2 — create a real agent from the wizard's tabs. Persists to
+    data/agents/; the agent immediately gets a workspace, sessions, and
+    tool definitions."""
+    name = str(payload.get("name", "")).strip()
+    if not name:
+        return {"ok": False, "error": "name is required"}
+    tier = str(payload.get("type", "")).lower().replace("-", "").replace(" ", "")
+    if tier == "sub":
+        tier = "subagent"
+    if tier not in ("primary", "subagent"):
+        return {"ok": False, "error": "type must be 'primary' or 'sub-agent'"}
+    raw_slug = str(payload.get("slug", "") or "").strip().lower()
+    slug = re.sub(r"[^a-z0-9]+", "-", raw_slug).strip("-")
+    if not slug:
+        return {"ok": False, "error": "a slug is required (lowercase letters, digits, dashes)"}
+    parent = str(payload.get("parent") or "").strip()
+    if tier == "subagent":
+        if not parent:
+            return {"ok": False, "error": "sub-agents need a parent primary agent"}
+        if agents_mod.BY_ID.get(parent, {}).get("tier") != "primary":
+            return {"ok": False, "error": f"unknown parent agent: {parent}"}
+
+    capabilities = [str(c).strip() for c in (payload.get("capabilities") or []) if str(c).strip()]
+    skills = [str(s).strip() for s in (payload.get("skills") or []) if str(s).strip()]
+    tools_list = [str(t).strip() for t in (payload.get("tools") or []) if str(t).strip()]
+    tool_labels = [str(t).strip() for t in (payload.get("tool_labels") or []) if str(t).strip()]
+    unknown = [t for t in tools_list if t not in tools.REGISTRY]
+    if unknown:
+        return {"ok": False, "error": f"unknown tools: {', '.join(unknown)}"}
+    department = str(payload.get("department") or "Custom").strip()
+    description = str(payload.get("description") or "").strip() or department
+
+    entry: dict[str, Any] = {
+        "id": slug,
+        "name": name,
+        "description": description,
+        "department": department,
+        "tier": tier,
+        "identity": str(payload.get("identity") or f"I'm the {name}.").strip(),
+        "capabilities": capabilities or ["General Expertise"],
+        "skills": skills,
+        "tools": tools_list,
+        "tool_labels": tool_labels,
+    }
+    if tier == "subagent":
+        entry["parent"] = parent
+    manages = [str(m).strip() for m in (payload.get("manages") or []) if str(m).strip()]
+    if manages:
+        entry["manages"] = manages
+
+    err = agents_mod.create(entry)
+    if err:
+        return {"ok": False, "error": err}
+    meta = next((a for a in studio.registry() if a["id"] == slug), None)
+    return {"ok": True, "agent": meta}
+
+
 @app.get("/api/agents/{agent_id}")
 def api_agent(agent_id: str) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     meta = {a["id"]: a for a in studio.registry()}[agent_id]
     return {"agent": meta, "department": meta["department"], "tier": meta["tier"]}
+
+
+# --- projects & resources (W3/W4) ------------------------------------------
+
+@app.get("/api/projects")
+def api_projects() -> dict[str, Any]:
+    return {"projects": studio.projects_list()}
+
+
+@app.post("/api/projects")
+def api_create_project(payload: dict[str, Any]) -> dict[str, Any]:
+    summary, err = studio.create_project(str(payload.get("name", "")))
+    if err:
+        return {"ok": False, "error": err}
+    return {"ok": True, "project": summary}
+
+
+@app.get("/api/projects/{project_id}/resources")
+def api_project_resources(project_id: str) -> dict[str, Any]:
+    if not studio.get_project(project_id):
+        raise HTTPException(status_code=404, detail=f"unknown project: {project_id}")
+    return {"project_id": project_id,
+            "resources": studio.list_resources(project_id)}
+
+
+@app.post("/api/projects/{project_id}/resources")
+async def api_upload_resource(project_id: str,
+                              file: UploadFile = File(...),
+                              category: str = Form(...)) -> dict[str, Any]:
+    if not studio.get_project(project_id):
+        raise HTTPException(status_code=404, detail=f"unknown project: {project_id}")
+    data = await file.read()
+    err = studio.add_resource(project_id, category, file.filename or "upload", data)
+    if err:
+        return {"ok": False, "error": err}
+    return {"ok": True, "name": file.filename}
+
+
+@app.get("/api/projects/{project_id}/resources/{category}/{filename}")
+def api_get_resource(project_id: str, category: str, filename: str):
+    p = studio.get_resource_path(project_id, category, filename)
+    if p is None:
+        raise HTTPException(status_code=404, detail="resource not found")
+    return FileResponse(p, filename=Path(p).name)
 
 
 # --- dashboard ------------------------------------------------------------
@@ -169,15 +302,16 @@ async def api_studio_events(request: Request):
 
 @app.get("/api/studio/agents/{agent_id}")
 def api_workspace_snapshot(agent_id: str,
-                           session_id: Optional[str] = None) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+                           session_id: Optional[str] = None,
+                           project: Optional[str] = None) -> dict[str, Any]:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
-    return studio.build_workspace_snapshot(agent_id, session_id)
+    return studio.build_workspace_snapshot(agent_id, session_id, project)
 
 
 @app.get("/api/studio/agents/{agent_id}/sessions/{session_id}")
 def api_session_detail(agent_id: str, session_id: str) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     sess = studio.get_session(agent_id, session_id)
     if sess is None:
@@ -194,7 +328,7 @@ def api_session_detail(agent_id: str, session_id: str) -> dict[str, Any]:
 
 @app.post("/api/studio/agents/{agent_id}/sessions")
 async def api_new_session(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     task = str(payload.get("task", "")).strip()
     if not task:
@@ -202,13 +336,16 @@ async def api_new_session(agent_id: str, payload: dict[str, Any]) -> dict[str, A
     mode = str(payload.get("mode", "plan")).lower()
     if mode not in ("plan", "build"):
         return {"ok": False, "error": "mode must be 'plan' or 'build'"}
-    sess = studio.new_session(agent_id, task, mode=mode)
+    project_id = str(payload.get("project") or "").strip() or None
+    if project_id and not studio.get_project(project_id):
+        return {"ok": False, "error": f"unknown project: {project_id}"}
+    sess = studio.new_session(agent_id, task, mode=mode, project=project_id)
     return {"ok": True, "session_id": sess["id"], "title": sess["title"]}
 
 
 @app.post("/api/studio/agents/{agent_id}/sessions/{session_id}/activate")
 async def api_activate_session(agent_id: str, session_id: str) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     if not studio.activate_session(agent_id, session_id):
         raise HTTPException(status_code=404, detail=f"no such session: {session_id}")
@@ -217,7 +354,7 @@ async def api_activate_session(agent_id: str, session_id: str) -> dict[str, Any]
 
 @app.delete("/api/studio/agents/{agent_id}/sessions/{session_id}")
 async def api_delete_session(agent_id: str, session_id: str) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     err = studio.delete_session(agent_id, session_id)
     if err:
@@ -225,25 +362,63 @@ async def api_delete_session(agent_id: str, session_id: str) -> dict[str, Any]:
     return {"ok": True}
 
 
+@app.get("/api/studio/agents/{agent_id}/sessions/{session_id}/memory")
+async def api_session_memory(agent_id: str, session_id: str) -> dict[str, Any]:
+    if not _known_agent(agent_id):
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    session = studio.get_session(agent_id, session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail=f"no such session: {session_id}")
+    return {"memory": session["state"].get("memory") or {}}
+
+
+@app.put("/api/studio/agents/{agent_id}/sessions/{session_id}/memory")
+async def api_set_session_memory(agent_id: str, session_id: str,
+                                 payload: dict[str, Any]) -> dict[str, Any]:
+    if not _known_agent(agent_id):
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    err = studio.set_session_memory(agent_id, session_id, payload.get("memory") or {})
+    if err:
+        return {"ok": False, "error": err}
+    session = studio.get_session(agent_id, session_id)
+    return {"ok": True, "memory": (session or {}).get("state", {}).get("memory") or {}}
+
+
 @app.post("/api/studio/agents/{agent_id}/messages")
 async def api_workspace_message(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     message = str(payload.get("message", "")).strip()
     if not message:
         return {"ok": False, "error": "message is empty"}
     session_id = payload.get("session_id")
     session = studio.get_session(agent_id, session_id) if session_id else None
+    project_id = str(payload.get("project") or "").strip() or None
+    if project_id and not studio.get_project(project_id):
+        return {"ok": False, "error": f"unknown project: {project_id}"}
     if session is None:
-        # no session specified → active or new
-        session = studio.get_session(agent_id) or studio.new_session(
-            agent_id, message, mode="plan")
+        # no session specified → the project's latest session (W6.7), the
+        # global active, or a brand-new session tagged with the project
+        session = (studio.get_project_session(agent_id, project_id)
+                   or studio.get_session(agent_id)
+                   or studio.new_session(agent_id, message, mode="plan",
+                                         project=project_id))
+    elif project_id:
+        session["project"] = project_id
     if session["status"] in ("working", "waiting", "stopping"):
         return {"ok": False, "error": "agent is already running — wait or stop it"}
 
     # append user message
     session["conversation"].append({"type": "user_message", "agent_id": "you",
                                      "timestamp": _iso(), "content": message})
+
+    # opencode-style naming: a placeholder-titled session is renamed from the
+    # first user message (first line, markdown stripped, truncated)
+    if session.get("title") in ("New discussion", "new session"):
+        first_line = message.splitlines()[0] if message else message
+        title = re.sub(r"[*_`#\[\]]+", "", first_line).strip()[:60]
+        if title:
+            session["title"] = title
 
     threading.Thread(target=_run_session_worker,
                      args=(agent_id, session["id"], message),
@@ -291,7 +466,7 @@ def _run_session_worker(agent_id: str, session_id: str, message: str) -> None:
 
 @app.post("/api/studio/agents/{agent_id}/mode")
 async def api_workspace_mode(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     mode = str(payload.get("mode", "")).strip().lower()
     if mode not in ("plan", "build"):
@@ -308,7 +483,7 @@ async def api_workspace_mode(agent_id: str, payload: dict[str, Any]) -> dict[str
 
 @app.post("/api/studio/agents/{agent_id}/approval")
 async def api_workspace_approval(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     session_id = payload.get("session_id")
     session = studio.get_session(agent_id, session_id)
@@ -332,7 +507,7 @@ async def api_workspace_approval(agent_id: str, payload: dict[str, Any]) -> dict
 
 @app.post("/api/studio/agents/{agent_id}/stop")
 async def api_workspace_stop(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     session_id = payload.get("session_id")
     session = studio.get_session(agent_id, session_id)
@@ -351,7 +526,7 @@ async def api_workspace_stop(agent_id: str, payload: dict[str, Any]) -> dict[str
 
 @app.post("/api/studio/agents/{agent_id}/handoff")
 async def api_workspace_handoff(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     decision = str(payload.get("decision", "")).strip().lower()
     if decision not in ("accept", "reject", "redirect"):
@@ -384,11 +559,23 @@ async def api_workspace_handoff(agent_id: str, payload: dict[str, Any]) -> dict[
     return result
 
 
+@app.post("/api/studio/agents/{agent_id}/compact")
+async def api_workspace_compact(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Compaction (W6.7): answer yes|no to the agent's compaction suggestion.
+    'yes' (also the manual Compact button) summarizes the older conversation;
+    'no' postpones and re-arms the suggestion after ~10 more messages."""
+    if not _known_agent(agent_id):
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    session_id = payload.get("session_id")
+    answer = str(payload.get("answer", "")).strip().lower()
+    return studio.answer_compact(agent_id, session_id, answer)
+
+
 # --- workspace SSE --------------------------------------------------------
 
 @app.get("/api/studio/agents/{agent_id}/events")
 async def api_workspace_events(agent_id: str, request: Request):
-    if agent_id not in studio.NAMES:
+    if not _known_agent(agent_id):
         raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
     session_id = request.query_params.get("session_id")
     session = studio.get_session(agent_id, session_id)
