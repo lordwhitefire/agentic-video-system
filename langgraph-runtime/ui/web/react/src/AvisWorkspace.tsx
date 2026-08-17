@@ -57,10 +57,12 @@ import {
   mergeCapabilities,
   mergeSubAgents,
   mergeTools,
+  proposeHandoff,
   resolveHandoff,
   sendMessage,
   setSessionMode,
   slugify,
+  spawnSubagent,
   stopSession,
   toolIdsForLabels,
   uploadResource,
@@ -354,14 +356,87 @@ export default function AvisWorkspace() {
   const handleSend = () => {
     const text = composerValue.trim();
     if (!text) return;
+
+    // Parse @mentions: @agent-name (kebab-case IDs from the registry)
+    const mentionRegex = /@([a-z0-9-]+)/g;
+    const mentions: string[] = [];
+    let match;
+    while ((match = mentionRegex.exec(text)) !== null) {
+      mentions.push(match[1]);
+    }
+
+    const primaryAgentIds = agents.map((a) => a.id);
+    const subAgentIds = mockSubAgents.map((s) => s.id);
+    const allAgentIds = [...primaryAgentIds, ...subAgentIds];
+
+    // Check if any mention is a known agent
+    const validMentions = mentions.filter((m) => allAgentIds.includes(m));
+    const firstValidMention = validMentions[0];
+
+    const sessionId = liveSession?.id ?? null;
+    const projectId = realProject?.id ?? null;
+
+    // If the message has a valid @mention as the first thing (or only mention), handle it
+    if (firstValidMention && text.trim().startsWith(`@${firstValidMention}`)) {
+      const restOfMessage = text.slice(text.indexOf(firstValidMention) + firstValidMention.length + 1).trim();
+      const prompt = restOfMessage || text; // use full text if no extra content
+
+      if (primaryAgentIds.includes(firstValidMention)) {
+        // @primary-agent → handoff proposal
+        proposeHandoff(agent.id, sessionId, firstValidMention, prompt)
+          .then((result) => {
+            if (!result.ok) {
+              pushToast("Handoff not proposed", result.error ?? "Could not reach the backend.");
+              setComposerValue(text);
+              return;
+            }
+            setComposerValue("");
+            refreshSnapshot(agent.id, projectId);
+          })
+          .catch(() => {
+            pushToast("Handoff not proposed", "Could not reach the backend.");
+            setComposerValue(text);
+          });
+        return;
+      }
+
+      if (subAgentIds.includes(firstValidMention)) {
+        // @sub-agent → spawn subagent in current session
+        if (!liveSession) {
+          pushToast("No active session", "Start a session first to spawn a sub-agent.");
+          setComposerValue(text);
+          return;
+        }
+        spawnSubagent(agent.id, sessionId, firstValidMention, prompt)
+          .then((result) => {
+            if (!result.ok) {
+              pushToast("Sub-agent not spawned", result.error ?? "Could not reach the backend.");
+              setComposerValue(text);
+              return;
+            }
+            setComposerValue("");
+            if (liveTimeline) {
+              setLocalSends((current) => [...current, msg]);
+            } else {
+              setMessages((current) => [...current, msg]);
+            }
+            refreshSnapshot(agent.id, projectId);
+          })
+          .catch(() => {
+            pushToast("Sub-agent not spawned", "Could not reach the backend.");
+            setComposerValue(text);
+          });
+        return;
+      }
+    }
+
+    // Normal message (no valid @mention at start)
     const msg: Message = {
       id: crypto.randomUUID(),
       role: "user",
       paragraphs: [text],
       time: "Now",
     };
-    const sessionId = liveSession?.id ?? null;
-    const projectId = realProject?.id ?? null;
     sendMessage(agent.id, text, sessionId, projectId)
       .then((result) => {
         if (!result.ok) {
@@ -595,7 +670,26 @@ export default function AvisWorkspace() {
 
   const confirmAttach = (file: File) => {
     setModal(null);
-    pushToast("File attached", `${file.name} is ready to send.`);
+    if (!realProject) {
+      pushToast("No active project", "Select a project first to attach files.");
+      return;
+    }
+    // Upload to project's Media Library
+    uploadResource(realProject.id, "Media Library", file)
+      .then((result) => {
+        if (result.ok) {
+          pushToast("File uploaded", `${file.name} added to ${realProject.name}'s Media Library.`);
+          // Update local resource state
+          setResourceState((current) => {
+            const seen = new Set(current["Media Library"] ?? []);
+            if (seen.has(file.name)) return current;
+            return { ...current, "Media Library": [...(current["Media Library"] ?? []), file.name] };
+          });
+        } else {
+          pushToast("Upload failed", result.error ?? "Could not upload file.");
+        }
+      })
+      .catch(() => pushToast("Upload failed", "Could not reach the backend."));
   };
 
   const selectResourceFromPicker = (_category: string, item: string) => {
@@ -610,7 +704,35 @@ export default function AvisWorkspace() {
 
   const addUrl = (url: string) => {
     setModal(null);
-    pushToast("Reference added", url);
+    // Call webfetch (read-only, allowed in both modes)
+    if (!liveSession) {
+      pushToast("No active session", "Start a session first to fetch URLs.");
+      return;
+    }
+    const sessionId = liveSession.id;
+    // Use the webfetch tool via a message that triggers it
+    // For now, send a message that will cause the agent to call webfetch
+    const msg: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      paragraphs: [`Fetch URL: ${url}`],
+      time: "Now",
+    };
+    const projectId = realProject?.id ?? null;
+    sendMessage(agent.id, `Fetch URL: ${url}`, sessionId, projectId)
+      .then((result) => {
+        if (!result.ok) {
+          pushToast("Fetch not sent", result.error ?? "Could not reach the backend.");
+          return;
+        }
+        if (liveTimeline) {
+          setLocalSends((current) => [...current, msg]);
+        } else {
+          setMessages((current) => [...current, msg]);
+        }
+        refreshSnapshot(agent.id, projectId);
+      })
+      .catch(() => pushToast("Fetch not sent", "Could not reach the backend."));
   };
 
   const mentionAgent = (name: string) => {

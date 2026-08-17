@@ -571,6 +571,29 @@ async def api_workspace_compact(agent_id: str, payload: dict[str, Any]) -> dict[
     return studio.answer_compact(agent_id, session_id, answer)
 
 
+@app.post("/api/studio/agents/{agent_id}/handoff/propose")
+async def api_workspace_handoff_propose(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Propose a handoff to a primary agent (W5: user @mention).
+    Creates a handoff request that the human must approve/reject."""
+    if not _known_agent(agent_id):
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    session_id = payload.get("session_id")
+    target = str(payload.get("target", "")).strip()
+    prompt = str(payload.get("prompt", "")).strip()
+    return studio.propose_handoff(agent_id, session_id, target, prompt)
+
+
+@app.post("/api/studio/agents/{agent_id}/subagent/spawn")
+async def api_workspace_subagent_spawn(agent_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Spawn a named sub-agent in the current session (W5: user @mention of sub-agent)."""
+    if not _known_agent(agent_id):
+        raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+    session_id = payload.get("session_id")
+    subagent_id = str(payload.get("subagent_id", "")).strip()
+    task = str(payload.get("task", "")).strip()
+    return studio.spawn_subagent(agent_id, session_id, subagent_id, task)
+
+
 # --- workspace SSE --------------------------------------------------------
 
 @app.get("/api/studio/agents/{agent_id}/events")

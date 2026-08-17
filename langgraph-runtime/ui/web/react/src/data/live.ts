@@ -192,6 +192,32 @@ export function resolveHandoff(
   return postStudio(agentId, "/handoff", { session_id: sessionId, decision });
 }
 
+export function proposeHandoff(
+  agentId: string,
+  sessionId: string | null,
+  target: string,
+  prompt: string,
+): Promise<StudioActionResult> {
+  return postStudio(agentId, "/handoff/propose", {
+    session_id: sessionId ?? undefined,
+    target,
+    prompt,
+  });
+}
+
+export function spawnSubagent(
+  agentId: string,
+  sessionId: string | null,
+  subagentId: string,
+  task: string,
+): Promise<StudioActionResult> {
+  return postStudio(agentId, "/subagent/spawn", {
+    session_id: sessionId ?? undefined,
+    subagent_id: subagentId,
+    task,
+  });
+}
+
 export function stopSession(
   agentId: string,
   sessionId: string,
