@@ -598,7 +598,7 @@ async def api_workspace_subagent_spawn(agent_id: str, payload: dict[str, Any]) -
 async def api_notifications(limit: int = 20) -> dict[str, Any]:
     """Get recent events as notifications (W7: seed + live merge).
     Returns events from the bus that are relevant for human attention:
-    handoff requests, approval asks, session completions, errors."""
+    handoff requests, approval asks, session completions, errors, tool failures."""
     import avis.events as events
     recent = events.bus.recent(limit)
     notifications = []
@@ -632,6 +632,14 @@ async def api_notifications(limit: int = 20) -> dict[str, Any]:
             "kind": kind,
         })
     return {"notifications": notifications}
+
+
+@app.get("/api/system/tools")
+async def api_system_tools() -> dict[str, Any]:
+    """System tool health check (W12). Reports installed status and version
+    for each tool in scripts/system-tools.json."""
+    import avis.tools as tools
+    return {"tools": tools.check_system_tools()}
 
 
 # --- workspace SSE --------------------------------------------------------

@@ -718,3 +718,49 @@ def call(state: dict[str, Any], agent_id: str, name: str, args: dict[str, Any],
 
 def _fmt_args(args: list[Any]) -> str:
     return ", ".join(json.dumps(a, ensure_ascii=False, default=str)[:60] for a in args)
+
+
+# --- W12: system tool health check -----------------------------------------
+
+import subprocess
+import shutil
+
+
+def check_system_tools() -> list[dict[str, Any]]:
+    """Check installed system tools from the manifest (scripts/system-tools.json)."""
+    import json as _json
+    from pathlib import Path as _Path
+
+    manifest_path = _Path(__file__).parent.parent / "scripts" / "system-tools.json"
+    if not manifest_path.is_file():
+        return []
+
+    try:
+        manifest = _json.loads(manifest_path.read_text())
+    except Exception:
+        return []
+
+    results = []
+    for tool in manifest.get("tools", []):
+        name = tool.get("name", "")
+        version_flag = tool.get("version_flag", ["--version"])
+        installed = False
+        version = ""
+
+        # Check if command exists
+        if shutil.which(name):
+            installed = True
+            try:
+                out = subprocess.run([name] + version_flag, capture_output=True, text=True, timeout=5)
+                version = (out.stdout or out.stderr).splitlines()[0].strip()[:80]
+            except Exception:
+                version = "unknown"
+
+        results.append({
+            "name": name,
+            "installed": installed,
+            "version": version,
+            "description": tool.get("description", ""),
+            "required": tool.get("required", False),
+        })
+    return results

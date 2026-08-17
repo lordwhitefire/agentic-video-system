@@ -230,3 +230,64 @@ export function ProfileMenu({
     </>
   );
 }
+
+export function SystemToolsDrawer({
+  open,
+  tools,
+  onClose,
+}: {
+  open: boolean;
+  tools: { name: string; installed: boolean; version: string; description: string; required: boolean }[];
+  onClose: () => void;
+}) {
+  if (!open) return null;
+  const requiredMissing = tools.filter((t) => t.required && !t.installed).length;
+
+  return (
+    <div className="drawer-backdrop" onMouseDown={onClose}>
+      <aside className="avis-drawer" onMouseDown={(e) => e.stopPropagation()}>
+        <header className="drawer-header">
+          <div>
+            <div className="eyebrow">SYSTEM TOOLS</div>
+            <h2>Health Check</h2>
+            <p>{requiredMissing > 0 ? `${requiredMissing} required tool(s) missing` : "All tools installed"}</p>
+          </div>
+          <button className="icon-button" onClick={onClose} aria-label="Close">
+            <Icon type="x" />
+          </button>
+        </header>
+        <div className="drawer-body">
+          {tools.length === 0 ? (
+            <div className="empty-state">No tool manifest found</div>
+          ) : (
+            tools.map((tool) => (
+              <div className="tool-health-row" key={tool.name}>
+                <div className="tool-health-main">
+                  <span className={`tool-health-dot ${tool.installed ? "ok" : tool.required ? "missing" : "optional"}`} />
+                  <div>
+                    <strong>{tool.name}</strong>
+                    <small>{tool.description}</small>
+                  </div>
+                </div>
+                <div className="tool-health-status">
+                  {tool.installed ? (
+                    <span className="tool-version">{tool.version || "installed"}</span>
+                  ) : tool.required ? (
+                    <span className="tool-missing">Required — missing</span>
+                  ) : (
+                    <span className="tool-optional">Optional — not installed</span>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <footer className="drawer-footer">
+          <button type="button" className="primary-button" onClick={onClose}>
+            Close
+          </button>
+        </footer>
+      </aside>
+    </div>
+  );
+}

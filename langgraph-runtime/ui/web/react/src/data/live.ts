@@ -252,6 +252,21 @@ export async function fetchNotifications(
   return data?.notifications ?? null;
 }
 
+// --- W12: system tools -----------------------------------------------------
+
+export type SystemTool = {
+  name: string;
+  installed: boolean;
+  version: string;
+  description: string;
+  required: boolean;
+};
+
+export async function fetchSystemTools(): Promise<SystemTool[] | null> {
+  const data = await fetchJson<{ tools: SystemTool[] }>("/api/system/tools");
+  return data?.tools ?? null;
+}
+
 // --- W2: agent creation -----------------------------------------------------
 
 export type CreateAgentPayload = {

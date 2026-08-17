@@ -17,6 +17,7 @@ import {
   CreateWorkspaceModal,
   NotificationsPopover,
   ProfileMenu,
+  SystemToolsDrawer,
 } from "./components/Workspace";
 import { Conversation, Composer, AttachmentModal, MediaPicker, UrlModal, AgentMentionPicker, AgentIcon } from "./components/Chat";
 import { AgentHeader } from "./components/AgentHeader";
@@ -55,6 +56,7 @@ import {
   fetchProjects,
   fetchRegistry,
   fetchSnapshot,
+  fetchSystemTools,
   mergeCapabilities,
   mergeSubAgents,
   mergeTools,
@@ -72,6 +74,7 @@ import {
   type LiveNotification,
   type LiveProject,
   type LiveSnapshot,
+  type SystemTool,
   type ToolRow,
 } from "./data/live";
 
@@ -144,7 +147,7 @@ type ModalName =
   | "resource-add"
   | "directory";
 
-type DrawerName = "agent-info" | "agent-context" | "agent-settings" | "resource-detail";
+type DrawerName = "agent-info" | "agent-context" | "agent-settings" | "resource-detail" | "system-tools";
 type PopoverName = "workspace-menu" | "notifications" | "profile" | "more";
 
 export default function AvisWorkspace() {
@@ -208,6 +211,9 @@ export default function AvisWorkspace() {
     fetchNotifications().then((notifs) => {
       if (!cancelled && notifs) setLiveNotifications(notifs);
     });
+    fetchSystemTools().then((tools) => {
+      if (!cancelled && tools) setSystemTools(tools);
+    });
     return () => {
       cancelled = true;
     };
@@ -232,6 +238,7 @@ export default function AvisWorkspace() {
   const [popover, setPopover] = useState<PopoverName | null>(null);
   const [railOpen, setRailOpen] = useState(false);
   const [liveNotifications, setLiveNotifications] = useState<LiveNotification[]>([]);
+  const [systemTools, setSystemTools] = useState<SystemTool[]>([]);
 
   const [resourceDetail, setResourceDetail] = useState<{ category: string; item: string } | null>(null);
   const [addResourceCategory, setAddResourceCategory] = useState<string | null>(null);
@@ -872,6 +879,18 @@ export default function AvisWorkspace() {
               <Icon type="bell" size={21} />
             </button>
 
+            <button
+              type="button"
+              className={`icon-button system-tools-indicator ${systemTools.some(t => t.required && !t.installed) ? "warning" : ""}`}
+              aria-label="System tools status"
+              title={systemTools.length > 0
+                ? systemTools.map(t => `${t.name}: ${t.installed ? "installed" : "missing"}`).join("\n")
+                : "System tools status unknown"}
+              onClick={() => setDrawer("system-tools")}
+            >
+              <Icon type={systemTools.some(t => t.required && !t.installed) ? "info" : "check"} size={21} />
+            </button>
+
             <div className="profile">
               <button
                 type="button"
@@ -1113,6 +1132,12 @@ export default function AvisWorkspace() {
       />
 
       <AgentSettingsDrawer open={drawer === "agent-settings"} onClose={() => setDrawer(null)} />
+
+      <SystemToolsDrawer
+        open={drawer === "system-tools"}
+        tools={systemTools}
+        onClose={() => setDrawer(null)}
+      />
 
       <NotificationsPopover
         open={popover === "notifications"}

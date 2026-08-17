@@ -1,0 +1,34 @@
+{
+  "tools": [
+    {
+      "name": "ffmpeg",
+      "description": "Video/audio processing (required for media operations)",
+      "version_flag": ["-version"],
+      "apt": "ffmpeg",
+      "dnf": "ffmpeg",
+      "brew": "ffmpeg",
+      "winget": "Gyan.FFmpeg",
+      "required": true
+    },
+    {
+      "name": "git",
+      "description": "Version control",
+      "version_flag": ["--version"],
+      "apt": "git",
+      "dnf": "git",
+      "brew": "git",
+      "winget": "Git.Git",
+      "required": true
+    },
+    {
+      "name": "python3",
+      "description": "Python runtime",
+      "version_flag": ["--version"],
+      "apt": "python3",
+      "dnf": "python3",
+      "brew": "python",
+      "winget": "Python.Python.3",
+      "required": true
+    }
+  ]
+}
