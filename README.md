@@ -9,7 +9,9 @@ A reference-driven, script-driven, audio-as-master video editing system built fo
 2. **`langgraph-runtime/` — a runnable Python implementation** of the same org
    chart as a deterministic LangGraph orchestrator: CLI + FastAPI web dashboard,
    human-in-the-loop CEO approvals, optional LLM brain (OpenAI-compatible, Zhipu
-   GLM supported), and a persistent BM25 RAG knowledge repository.
+   GLM supported), persistent BM25 RAG knowledge repository, and an **Agent
+   Workspace** (conversation-first, multi-session, project-scoped chat with
+   OpenCode-style compaction).
 
 ```bash
 cd langgraph-runtime
@@ -20,7 +22,7 @@ uvicorn ui.web.server:app --port 8000                            # web dashboard
 ```
 
 See [`langgraph-runtime/README.md`](langgraph-runtime/README.md) for the full
-runtime architecture, API reference, and test suite (36 tests).
+runtime architecture, API reference, and test suite (88 tests).
 
 ## Quick Start (Agenticine)
 
@@ -291,6 +293,25 @@ agentic-video-system/
 - Setup, Testing, and README guides
 - Human sourcing guideline
 - Tools registry, skills registry, system overview, visual types
+
+### LangGraph Runtime — Done (88 tests pass)
+- Full deterministic pipeline (17 nodes, hard-wired edges, watchpoints, review cap)
+- 12 laws as runtime guards + Watcher/Blocker + Investigator escalation
+- Human-in-the-loop CEO approvals via `interrupt()` (CLI stdin / web modal)
+- Optional LLM brain (OpenAI-compatible, Zhipu GLM) with scripted fallback
+- RAG: per-run persistence + deterministic BM25 retrieval
+- CLI (streaming, ANSI, stdin approvals) + FastAPI web dashboard + mermaid graph
+- **Agent Studio Dashboard** — 17 agent cards, real event-bus status, attention badges, production overview, heatmap, live SSE
+- **Agent Workspace** — per-agent conversation-first chat:
+  - Plan/Build modes (Plan = read-only gate in tools.py)
+  - Real node execution in Build, pauses on approval, real Stop cancellation
+  - Handoff with decision (no auto-routing)
+  - Context carries across agents (record=False, RAG for full pipeline only)
+  - **Multi-session, project-scoped histories** (W6.7) — one workspace per agent, projects as folders, sessions as chats
+  - **Opencode-style session naming** — first user message → title (markdown stripped, 60 chars)
+  - **Suggested + manual compaction** — auto-hint at ~20 messages, re-ask after ~10 if declined; summaries fold into prompt
+  - Right panel = real agent context (capabilities, memory, used tools)
+  - Inline working row with Stop, suggestions strip, markdown rendering
 
 ### To Build
 - 12 custom skills (TTS, 6 visual agents, Editor, Reviewer, Watcher/Blocker, Investigator, approval-loop-protocol)

@@ -119,6 +119,26 @@ activity panel.
 - **Deterministic by default** — workspace runs use the scripted brain unless you send
   `{"message": ..., "llm": true}`; every outcome is still derived from real events.
 
+**W6.7 — Projects & Sessions (OpenCode-style):**
+
+- **One workspace per agent; projects as folders; sessions as chats** — every agent has
+  one workspace, inside it multiple projects, each project holds its own session history.
+  Two projects never share a chat. The project selector shows only real projects (empty
+  state: "No projects yet" + Create Project). Switching projects lands on that project's
+  most recent session.
+- **Session naming** — first user message becomes the title (first line, markdown
+  stripped, truncated to 60 chars). Placeholder titles ("New discussion") are auto-renamed
+  on the first send.
+- **Compaction (suggested + manual)** — when ~20 user messages pass since the last
+  compaction, the agent raises `pending_compact` and emits a `compact_request` event.
+  The UI shows a card: "Compact now / Not now". Declined → re-suggested after ~10 more
+  messages until accepted. "Yes" summarizes everything before the last 16 events into
+  `session.summary` (incremental, folds prior summary) which the prompt reads. No model
+  → honest trim with placeholder note. Manual "Compact" button also available in Past
+  Discussions.
+- **Tool payload display** — tool lines show `→ {tool}: {arg}` from the actual args
+  (priority: file, filename, key, url, query, run_id, target, class).
+
 API:
 
 ```
@@ -173,8 +193,9 @@ POST /api/knowledge/retrieve      {"query": "asset bundle"} → BM25-ranked hits
 | `GET /api/pending` | the pending CEO question (script / proposals) |
 | `POST /api/run` | `{topic, reference_analysis, llm, auto_approve}` |
 | `POST /api/answer` | `{resume: "approve" | "rejected"}` |
-| `GET /api/studio/agents/<id>` | workspace snapshot (see Agent Workspace) |
-| `POST /api/studio/agents/<id>/messages` | run a workspace agent's real node |
+| `GET /api/studio/agents/<id>` | workspace snapshot (`?project=` scopes to project) |
+| `POST /api/studio/agents/<id>/messages` | run a workspace agent's real node (project-aware session pick + naming) |
+| `POST /api/studio/agents/<id>/compact` | compaction answer `{session_id, answer: "yes"|"no"}` |
 | `POST /api/studio/agents/<id>/handoff` | approve / redirect / continue a handoff |
 | `GET /api/studio/agents/<id>/events` | per-agent workspace SSE stream |
 
@@ -182,7 +203,7 @@ POST /api/knowledge/retrieve      {"query": "asset bundle"} → BM25-ranked hits
 
 ```bash
 pip install pytest
-python -m pytest tests -q        # 59 tests: laws, tools, graph, API, studio
+python -m pytest tests -q        # 88 tests: laws, tools, graph, API, studio, agents, projects
 ```
 
 Tests force the scripted brain (offline, deterministic, fast).
