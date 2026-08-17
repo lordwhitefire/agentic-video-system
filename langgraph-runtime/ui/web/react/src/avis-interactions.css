@@ -1396,7 +1396,14 @@ button:disabled {
   white-space: nowrap;
 }
 
-.discussion-delete {
+.discussion-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.discussion-delete,
+.discussion-compact {
   width: 26px;
   height: 26px;
   display: inline-flex;
@@ -1409,9 +1416,15 @@ button:disabled {
   cursor: pointer;
 }
 
-.discussion-delete:hover {
+.discussion-delete:hover,
+.discussion-compact:hover {
   background: rgba(229, 72, 77, 0.12);
   color: #e5484d;
+}
+
+.discussion-compact:hover {
+  background: rgba(124, 58, 237, 0.12);
+  color: #a78bfa;
 }
 
 .modal-actions-top {
@@ -1426,6 +1439,17 @@ button:disabled {
 
 .discussion-row svg {
   color: #5d6673;
+}
+
+/* Compact card (W6.7) */
+
+.compact-card {
+  border-color: rgba(167, 139, 250, 0.35) !important;
+  background: rgba(167, 139, 250, 0.08) !important;
+}
+
+.compact-card .control-card-head {
+  color: #c4b5fd;
 }
 
 /* Media grid */

@@ -26,7 +26,8 @@ export type IconName =
   | "send"
   | "external"
   | "plus"
-  | "x";
+  | "x"
+  | "compress";
 
 export function Icon({
   type,
@@ -248,6 +249,12 @@ export function Icon({
       return (
         <svg {...common}>
           <path d="m6 6 12 12M18 6 6 18" />
+        </svg>
+      );
+    case "compress":
+      return (
+        <svg {...common}>
+          <path d="M15 9 9 15M9 9l6 6" />
         </svg>
       );
     default:

@@ -29,6 +29,8 @@ export function Conversation({
   onRejectHandoff,
   canStop,
   onStop,
+  pendingCompact,
+  onCompact,
 }: {
   messages: Message[];
   agent: Agent;
@@ -40,6 +42,8 @@ export function Conversation({
   onRejectHandoff?: () => void;
   canStop?: boolean;
   onStop?: () => void;
+  pendingCompact?: boolean;
+  onCompact?: (answer: "yes" | "no") => void;
 }) {
   const headerColor = agent.headerColor ?? agent.color;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -137,6 +141,27 @@ export function Conversation({
             </button>
             <button type="button" className="secondary-button" onClick={onRejectHandoff}>
               Reject
+            </button>
+          </div>
+        </div>
+      )}
+
+      {pendingCompact && onCompact && (
+        <div className="control-card compact-card">
+          <div className="control-card-head">
+            <Icon type="info" size={15} />
+            <strong>Compact conversation?</strong>
+          </div>
+          <p className="control-card-body">
+            This conversation is getting long. Summarize the older messages to keep
+            context focused?
+          </p>
+          <div className="control-card-actions">
+            <button type="button" className="primary-button" onClick={() => onCompact("yes")}>
+              Compact now
+            </button>
+            <button type="button" className="secondary-button" onClick={() => onCompact("no")}>
+              Not now
             </button>
           </div>
         </div>

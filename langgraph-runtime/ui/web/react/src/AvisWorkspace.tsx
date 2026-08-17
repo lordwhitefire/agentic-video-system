@@ -34,9 +34,6 @@ import {
   agents,
   agentById,
   capabilityOptions,
-  greetingMessages,
-  exampleUserMessage,
-  questionMessage,
   resources as mockResources,
   subAgents as mockSubAgents,
   suggestions,
@@ -50,6 +47,7 @@ import {
 } from "./data/mock";
 import {
   answerApproval,
+  compactSession,
   createAgent,
   createProject,
   eventsToMessages,
@@ -197,7 +195,8 @@ export default function AvisWorkspace() {
         });
       }
     });
-    fetchSnapshot(activeAgentId).then((snap) => {
+    const projectId = realProject?.id ?? null;
+    fetchSnapshot(activeAgentId, projectId).then((snap) => {
       if (!cancelled && snap) {
         setSnapshotCache((current) => ({ ...current, [snap.agent.id]: snap }));
       }
@@ -207,11 +206,7 @@ export default function AvisWorkspace() {
     };
   }, []);
 
-  const [messages, setMessages] = useState<Message[]>(() => [
-    ...greetingMessages(agentById("video-strategy")),
-    exampleUserMessage,
-    questionMessage,
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [composerValue, setComposerValue] = useState("");
 
   const [expandedResources, setExpandedResources] = useState<Record<string, boolean>>({});
@@ -279,22 +274,21 @@ export default function AvisWorkspace() {
 
   const selectAgent = (agentId: string) => {
     setActiveAgentId(agentId);
-    const next = allAgents.find((a) => a.id === agentId) ?? allAgents[0];
-    setMessages([...greetingMessages(next), exampleUserMessage, questionMessage]);
+    setMessages([]);
     setComposerValue("");
     setPopover(null);
     setLocalSends([]);
-    if (!snapshotCache[agentId]) {
-      fetchSnapshot(agentId).then((snap) => {
-        if (snap) {
-          setSnapshotCache((current) => ({ ...current, [snap.agent.id]: snap }));
-        }
-      });
-    }
+    // Fetch snapshot with current project so we land on the project's latest session
+    const projectId = realProject?.id ?? null;
+    fetchSnapshot(agentId, projectId).then((snap) => {
+      if (snap) {
+        setSnapshotCache((current) => ({ ...current, [snap.agent.id]: snap }));
+      }
+    });
   };
 
-  const refreshSnapshot = (agentId: string) => {
-    fetchSnapshot(agentId).then((snap) => {
+  const refreshSnapshot = (agentId: string, projectId?: string | null) => {
+    fetchSnapshot(agentId, projectId).then((snap) => {
       if (snap) {
         setSnapshotCache((current) => ({ ...current, [snap.agent.id]: snap }));
       }
@@ -302,15 +296,17 @@ export default function AvisWorkspace() {
   };
 
   const activateSession = (sessionId: string) => {
+    const projectId = realProject?.id ?? null;
     void fetch(
       `/api/studio/agents/${encodeURIComponent(agent.id)}/sessions/${encodeURIComponent(sessionId)}/activate`,
       { method: "POST" },
     )
-      .then(() => refreshSnapshot(agent.id))
+      .then(() => refreshSnapshot(agent.id, projectId))
       .catch(() => pushToast("Session switch failed", "Could not reach the backend."));
   };
 
   const deleteSession = (sessionId: string) => {
+    const projectId = realProject?.id ?? null;
     void fetch(
       `/api/studio/agents/${encodeURIComponent(agent.id)}/sessions/${encodeURIComponent(sessionId)}`,
       { method: "DELETE" },
@@ -318,7 +314,7 @@ export default function AvisWorkspace() {
       .then((r) => r.json())
       .then((body) => {
         if (body?.ok) {
-          refreshSnapshot(agent.id);
+          refreshSnapshot(agent.id, projectId);
           pushToast("Session deleted", "Conversation removed.");
         } else {
           pushToast("Session not deleted", body?.error ?? "Unknown error.");
@@ -328,15 +324,16 @@ export default function AvisWorkspace() {
   };
 
   const newSession = () => {
+    const projectId = realProject?.id ?? null;
     void fetch(`/api/studio/agents/${encodeURIComponent(agent.id)}/sessions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ task: "New discussion", mode: "plan" }),
+      body: JSON.stringify({ task: "New discussion", mode: "plan", project: projectId }),
     })
       .then((r) => r.json())
       .then((body) => {
         if (body?.ok) {
-          refreshSnapshot(agent.id);
+          refreshSnapshot(agent.id, projectId);
           pushToast("Session started", `${body.title ?? "New discussion"} is now active.`);
         } else {
           pushToast("Session not started", body?.error ?? "Unknown error.");
@@ -347,7 +344,11 @@ export default function AvisWorkspace() {
 
   const selectWorkspace = (workspaceId: string) => {
     setActiveWorkspaceId(workspaceId);
-    setMessages([...greetingMessages(agent), exampleUserMessage, questionMessage]);
+    setMessages([]);
+    // When switching projects, fetch snapshot with the new project to land on its latest session
+    const project = liveProjects.find((p) => p.id === workspaceId);
+    const projectId = project?.id ?? null;
+    refreshSnapshot(agent.id, projectId);
   };
 
   const handleSend = () => {
@@ -374,7 +375,7 @@ export default function AvisWorkspace() {
         } else {
           setMessages((current) => [...current, msg]);
         }
-        refreshSnapshot(agent.id);
+        refreshSnapshot(agent.id, projectId);
       })
       .catch(() => {
         pushToast("Message not sent", "Could not reach the backend.");
@@ -433,12 +434,13 @@ export default function AvisWorkspace() {
   useEffect(() => {
     if (!liveSession) return;
     if (!["working", "waiting", "stopping"].includes(liveSession.status)) return;
+    const projectId = realProject?.id ?? null;
     const timer = window.setInterval(() => {
-      refreshSnapshot(agent.id);
+      refreshSnapshot(agent.id, projectId);
     }, 1500);
     return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agent.id, liveSession?.status]);
+  }, [agent.id, liveSession?.status, realProject?.id]);
 
   const openMemoryEditor = (item: string) => {
     if (item === "Past Discussions") {
@@ -552,10 +554,11 @@ export default function AvisWorkspace() {
     const result = await createProject(name);
     if (result.ok && result.project) {
       setLiveProjects((current) => [...current, result.project!]);
-      setAllWorkspaces((current) => [...current, { id: result.project!.id, name: result.project!.name }]);
       setActiveWorkspaceId(result.project!.id);
       setModal(null);
       pushToast("Project created", `${result.project!.name} is now the active project.`);
+      // Refresh snapshot with the new project to land on its session
+      refreshSnapshot(agent.id, result.project!.id);
       return;
     }
     const id = `ws-${Date.now()}`;
@@ -687,7 +690,7 @@ export default function AvisWorkspace() {
 
           <WorkspaceSelector
             activeWorkspace={activeWorkspaceId}
-            workspaces={allWorkspaces}
+            workspaces={liveProjects}
             open={popover === "workspace-menu"}
             setOpen={(open) => setPopover(open ? "workspace-menu" : null)}
             onSelect={selectWorkspace}
@@ -770,6 +773,16 @@ export default function AvisWorkspace() {
               onRejectHandoff={() => handleHandoff("reject")}
               canStop={liveSession?.can_stop ?? false}
               onStop={handleStop}
+              pendingCompact={liveSession?.pending_compact ?? false}
+              onCompact={(answer) => {
+                if (!liveSession) return;
+                compactSession(agent.id, liveSession.id, answer)
+                  .then((result) => {
+                    if (!result.ok) pushToast("Compact failed", result.error ?? "Unknown error.");
+                    refreshSnapshot(agent.id, realProject?.id ?? null);
+                  })
+                  .catch(() => pushToast("Compact failed", "Could not reach the backend."));
+              }}
             />
 
             <div className="suggestions">
@@ -918,13 +931,19 @@ export default function AvisWorkspace() {
 
       <PastDiscussionsModal
         open={modal === "past-discussions"}
-        workspace={workspace}
         sessions={liveSessions}
         onClose={() => setModal(null)}
-        onOpenDiscussion={(title) => pushToast("Discussion opened", `${title} (front-end only).`)}
         onActivate={activateSession}
         onDelete={deleteSession}
         onNewSession={newSession}
+        onCompact={(sessionId) => {
+          compactSession(agent.id, sessionId, "yes")
+            .then((result) => {
+              if (!result.ok) pushToast("Compact failed", result.error ?? "Unknown error.");
+              refreshSnapshot(agent.id, realProject?.id ?? null);
+            })
+            .catch(() => pushToast("Compact failed", "Could not reach the backend."));
+        }}
       />
 
       <CapabilityDetailModal

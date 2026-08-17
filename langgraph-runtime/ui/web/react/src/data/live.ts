@@ -55,6 +55,7 @@ export type LiveSession = {
   last_activity_at: string;
   handoff_pending: boolean;
   run_id: string | null;
+  project: string | null;
 };
 
 export type ConversationEvent = {
@@ -81,6 +82,7 @@ export type LiveActiveSession = {
     prompt: string;
     decision: string | null;
   } | null;
+  pending_compact: boolean;
   can_stop: boolean;
   memory: Record<string, string>;
   memory_slots: LiveMemorySlot[];
@@ -116,8 +118,14 @@ export async function fetchAgentHeader(agentId: string): Promise<LiveAgentHeader
   return data?.agent ?? null;
 }
 
-export async function fetchSnapshot(agentId: string): Promise<LiveSnapshot | null> {
-  return fetchJson<LiveSnapshot>(`/api/studio/agents/${encodeURIComponent(agentId)}`);
+export async function fetchSnapshot(
+  agentId: string,
+  projectId?: string | null,
+): Promise<LiveSnapshot | null> {
+  const url = projectId
+    ? `/api/studio/agents/${encodeURIComponent(agentId)}?project=${encodeURIComponent(projectId)}`
+    : `/api/studio/agents/${encodeURIComponent(agentId)}`;
+  return fetchJson<LiveSnapshot>(url);
 }
 
 // --- W6.5: conversation controls ---------------------------------------------
@@ -189,6 +197,14 @@ export function stopSession(
   sessionId: string,
 ): Promise<StudioActionResult> {
   return postStudio(agentId, "/stop", { session_id: sessionId });
+}
+
+export function compactSession(
+  agentId: string,
+  sessionId: string,
+  answer: "yes" | "no",
+): Promise<StudioActionResult> {
+  return postStudio(agentId, "/compact", { session_id: sessionId, answer });
 }
 
 // --- W2: agent creation -----------------------------------------------------
@@ -327,7 +343,8 @@ export function eventsToMessages(events: ConversationEvent[]): Message[] {
         return { id, role: "agent", paragraphs: [ev.content ?? ""], time };
       case "tool_call": {
         const name = ev.tool?.name ?? "tool";
-        return { id, role: "agent", paragraphs: [`\u2192 ${name}`], time };
+        const arg = formatToolArg(ev.tool?.args);
+        return { id, role: "agent", paragraphs: [`\u2192 ${name}${arg ? `: ${arg}` : ""}`], time };
       }
       case "tool_result": {
         const name = ev.tool?.name ?? "tool";
@@ -342,10 +359,35 @@ export function eventsToMessages(events: ConversationEvent[]): Message[] {
           paragraphs: [ev.content ?? "Approval requested."],
           time,
         };
+      case "compact_request":
+        return {
+          id,
+          role: "agent",
+          question: true,
+          paragraphs: [ev.content ?? "This conversation is getting long — compact it?"],
+          time,
+        };
       default:
         return { id, role: "agent", paragraphs: [ev.content ?? ""], time };
     }
   });
+}
+
+function formatToolArg(args: unknown): string {
+  if (!args || typeof args !== "object") return "";
+  const a = args as Record<string, unknown>;
+  // priority keys that make a good one-line summary
+  const priority = ["file", "filename", "key", "url", "query", "run_id", "target", "class"];
+  for (const k of priority) {
+    const v = a[k];
+    if (typeof v === "string" && v.length > 0) return v;
+    if (typeof v === "number") return String(v);
+  }
+  // fallback: first non-empty string value
+  for (const v of Object.values(a)) {
+    if (typeof v === "string" && v.length > 0) return v;
+  }
+  return "";
 }
 
 export function dayOf(iso: string | null): string {

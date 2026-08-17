@@ -111,7 +111,7 @@ export function AgentContextDrawer({
           ))}
           <div className="context-block">
             <div className="context-block-title">Past Discussions</div>
-            {ctx.discussions.map((d) => (
+            {ctx.discussions.map((d: { title: string; day: string }) => (
               <div className="discussion-line" key={d.title}>
                 <Icon type="clock" size={13} />
                 <span>{d.title}</span>
@@ -242,66 +242,37 @@ export function MemoryEditorModal({
 
 export function PastDiscussionsModal({
   open,
-  workspace,
   sessions,
   onClose,
-  onOpenDiscussion,
   onActivate,
   onDelete,
   onNewSession,
+  onCompact,
 }: {
   open: boolean;
-  workspace: Workspace;
   sessions: LiveSession[] | null;
   onClose: () => void;
-  onOpenDiscussion?: (title: string) => void;
   onActivate?: (sessionId: string) => void;
   onDelete?: (sessionId: string) => void;
   onNewSession?: () => void;
+  onCompact?: (sessionId: string) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [deletedSeeds, setDeletedSeeds] = useState<string[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("avis.deleted-discussions") ?? "[]") as string[];
-    } catch {
-      return [];
-    }
-  });
   if (!open) return null;
-  const ctx = workspaceContext[workspace.id] ?? workspaceContext["cinematic-brand-film"];
-  const seedDiscussions = ctx.discussions.filter((d) => !deletedSeeds.includes(d.title));
   const realSessions = (sessions ?? []).map((s) => ({
     id: s.id,
     title: s.title,
     day: dayOf(s.last_activity_at),
-    real: true,
   }));
-  type DiscussionItem =
-    | { title: string; day: string; real: false }
-    | { id: string; title: string; day: string; real: true };
-  const items: DiscussionItem[] = [
-    ...seedDiscussions.map((d) => ({ title: d.title, day: d.day, real: false as const })),
-    ...realSessions,
-  ];
   const days = ["Today", "Yesterday", "Last Week", "Earlier"];
   const groups = days
     .map((day) => ({
       day,
-      items: items.filter(
+      items: realSessions.filter(
         (d) => d.day === day && d.title.toLowerCase().includes(query.toLowerCase()),
       ),
     }))
     .filter((group) => group.items.length > 0);
-
-  const rememberDeletedSeed = (title: string) => {
-    const next = [...deletedSeeds, title];
-    setDeletedSeeds(next);
-    try {
-      localStorage.setItem("avis.deleted-discussions", JSON.stringify(next));
-    } catch {
-      /* per-browser best effort */
-    }
-  };
 
   return (
     <Modal open={open} onClose={onClose} title="Past Discussions" width={620}>
@@ -323,11 +294,13 @@ export function PastDiscussionsModal({
           </button>
         )}
       </div>
-      {groups.map((group) => (
-        <div className="discussion-group" key={group.day}>
-          <div className="discussion-group-title">{group.day}</div>
-          {group.items.map((d) =>
-            d.real ? (
+      {groups.length === 0 ? (
+        <div className="empty-state">No history yet.</div>
+      ) : (
+        groups.map((group) => (
+          <div className="discussion-group" key={group.day}>
+            <div className="discussion-group-title">{group.day}</div>
+            {group.items.map((d) => (
               <div className="discussion-row real" key={d.id}>
                 <button
                   type="button"
@@ -340,44 +313,41 @@ export function PastDiscussionsModal({
                   <Icon type="chat" size={14} />
                   <span>{d.title}</span>
                 </button>
-                <button
-                  type="button"
-                  className="discussion-delete"
-                  aria-label="Delete session"
-                  title="Delete session"
-                  onClick={() => onDelete?.(d.id)}
-                >
-                  <Icon type="x" size={12} />
-                </button>
+                <div className="discussion-actions">
+                  {onCompact && (
+                    <button
+                      type="button"
+                      className="discussion-compact"
+                      aria-label="Compact session"
+                      title="Compact this conversation"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCompact?.(d.id);
+                      }}
+                    >
+                      <Icon type="compress" size={12} />
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      type="button"
+                      className="discussion-delete"
+                      aria-label="Delete session"
+                      title="Delete session"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete?.(d.id);
+                      }}
+                    >
+                      <Icon type="x" size={12} />
+                    </button>
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="discussion-row real" key={d.title}>
-                <button
-                  type="button"
-                  className="discussion-row-main"
-                  onClick={() => {
-                    onClose();
-                    onOpenDiscussion?.(d.title);
-                  }}
-                >
-                  <Icon type="chat" size={14} />
-                  <span>{d.title}</span>
-                  <Icon type="chevronRight" size={12} />
-                </button>
-                <button
-                  type="button"
-                  className="discussion-delete"
-                  aria-label="Dismiss"
-                  title="Dismiss"
-                  onClick={() => rememberDeletedSeed(d.title)}
-                >
-                  <Icon type="x" size={12} />
-                </button>
-              </div>
-            ),
-          )}
-        </div>
-      ))}
+            ))}
+          </div>
+        ))
+      )}
     </Modal>
   );
 }
