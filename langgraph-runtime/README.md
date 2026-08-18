@@ -28,6 +28,10 @@ CEO (you) ──► 5 department heads ──► 12 workers
 ## Quick start
 
 ```bash
+# One-command bootstrap (installs system tools, Python deps, builds React)
+./scripts/setup.sh
+
+# Or manually:
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 
@@ -119,6 +123,18 @@ activity panel.
 - **Deterministic by default** — workspace runs use the scripted brain unless you send
   `{"message": ..., "llm": true}`; every outcome is still derived from real events.
 
+**W5 — Composer Tools (mode-gated):**
+
+- **@mention a primary agent** — creates a handoff proposal card (your text becomes the
+  prompt). The target agent's workspace receives a pending handoff; you Accept/Reject/Redirect.
+- **@mention a sub-agent** — spawns it via the `subagent` tool in the current session.
+  Named sub-agents: audience-analyzer, competitor-analyzer, market-research-analyzer,
+  shot-analyzer, clip-cutter, continuity-checker. Primaries are refused.
+- **Attachment / media picker** — uploads to the active project's Media Library.
+  Mutating: Plan Mode asks for approval, Build Mode acts directly.
+- **URL** — triggers `webfetch` (read-only: allowed in both modes).
+- All tool events render as normal `tool_call` / `tool_result` cards in the conversation.
+
 **W6.7 — Projects & Sessions (OpenCode-style):**
 
 - **One workspace per agent; projects as folders; sessions as chats** — every agent has
@@ -138,6 +154,22 @@ activity panel.
   Discussions.
 - **Tool payload display** — tool lines show `→ {tool}: {arg}` from the actual args
   (priority: file, filename, key, url, query, run_id, target, class).
+
+**W7 — Notifications (seed + live merge):**
+
+- The bell popover keeps the mock notification list as the seed; real events from the bus
+  (pending handoff requests, Plan-mode approval asks, session completions, errors) append
+  as unread notifications on top and drown out the mock ones over time.
+
+**W12 — System Tool Dependencies (install with the repo):**
+
+- `scripts/setup.sh`: installs packages from `scripts/system-tools.json` (ffmpeg first,
+  extendable) via the platform package manager (apt / dnf / brew / winget detection),
+  then pip-installs `requirements.txt` and builds the React app. One command for a fresh machine.
+- `avis/tools.py`: `check_system_tools()` — `shutil.which` per manifest entry →
+  `/api/system/tools` → `{name, installed, version}` per dependency.
+- UI: small indicator in the header (green check = all ok, amber = required missing);
+  details drawer with per-tool status.
 
 API:
 
@@ -198,6 +230,10 @@ POST /api/knowledge/retrieve      {"query": "asset bundle"} → BM25-ranked hits
 | `POST /api/studio/agents/<id>/compact` | compaction answer `{session_id, answer: "yes"|"no"}` |
 | `POST /api/studio/agents/<id>/handoff` | approve / redirect / continue a handoff |
 | `GET /api/studio/agents/<id>/events` | per-agent workspace SSE stream |
+| `POST /api/studio/agents/<id>/handoff/propose` | propose handoff to primary agent (user @mention) |
+| `POST /api/studio/agents/<id>/subagent/spawn` | spawn named sub-agent in session (user @mention) |
+| `GET /api/notifications` | live notifications from event bus (handoffs, approvals, completions, errors) |
+| `GET /api/system/tools` | system tool health check `{name, installed, version}` from manifest |
 
 ## Tests
 
